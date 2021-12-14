@@ -38,7 +38,11 @@
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
+  "dependencies": {
+    "debug": "^4.3.3"
+  },
   "devDependencies": {
+    "@types/debug": "^4.1.7",
     "@types/node": "^16.11.12",
     "doctoc": "^2.1.0",
     "prettier": "^2.5.1",
