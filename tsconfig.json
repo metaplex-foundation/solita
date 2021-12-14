@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": false,
+    "noEmit": false,
+    "preserveWatchOutput": true,
+    "emitDeclarationOnly": false,
+    "importHelpers": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "incremental": false,
+    "types": ["node"],
+    "moduleResolution": "node",
+    "skipLibCheck": true
+  },
+  "include": ["src", "test"]
+}

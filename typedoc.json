@@ -1,0 +1,7 @@
+{
+  "entryPoints": ["src/anchor-idl-api.ts"],
+  "excludePrivate": true,
+  "categorizeByGroup": false,
+  "readme": "none",
+  "emit": "both"
+}
