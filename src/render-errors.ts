@@ -1,6 +1,6 @@
-import { AnchorError } from './types'
+import { IdlError } from './types'
 
-function renderError(error: AnchorError) {
+function renderError(error: IdlError) {
   const { code, name, msg } = error
   const className = name
     .charAt(0)
@@ -22,7 +22,7 @@ createErrorFromNameLookup.set('${name}', () => new ${className}())
 `
 }
 
-export function renderErrors(errors: AnchorError[]) {
+export function renderErrors(errors: IdlError[]) {
   const errorsCode = errors.map(renderError).join('\n')
   return `const createErrorFromCodeLookup: Map<number, () => Error> = new Map();
 const createErrorFromNameLookup: Map<string, () => Error> = new Map();

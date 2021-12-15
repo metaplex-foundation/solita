@@ -1,41 +1,81 @@
-export type AnchorInstructionAccount = {
+// Currently a limited version of the types found inside https://github.com/project-serum/anchor/blob/master/ts/src/idl.ts
+// Will be extended to include the full spec eventually. At this point only cases actually encountered in contracts were
+// addressed
+export type IdlInstructionAccount = {
   name: string
   isMut: boolean
   isSigner: boolean
 }
 
-export type AnchorInstructionArg = {
-  name: string
-  type: string | { option: 'string' }
+export type IdlType =
+  | 'bool'
+  | 'u8'
+  | 'i8'
+  | 'u16'
+  | 'i16'
+  | 'u32'
+  | 'i32'
+  | 'u64'
+  | 'i64'
+  | 'u128'
+  | 'i128'
+  | 'bytes'
+  | 'string'
+  | 'publicKey'
+  | IdlTypeDefined
+  | IdlTypeOption
+  | IdlTypeVec
+  | IdlTypeArray
+
+// User defined type.
+export type IdlTypeDefined = {
+  defined: string
 }
 
-export type AnchorInstruction = {
-  name: string
-  accounts: AnchorInstructionAccount[]
-  args: AnchorInstructionArg[]
+export type IdlTypeOption = {
+  option: IdlType
 }
 
-export type AnchorAccountField = {
+export type IdlTypeVec = {
+  vec: IdlType
+}
+
+export type IdlTypeArray = {
+  array: [idlType: IdlType, size: number]
+}
+
+export type IdlInstructionArg = {
+  name: string
+  type: IdlType
+}
+
+export type IdlInstruction = {
+  name: string
+  accounts: IdlInstructionAccount[]
+  args: IdlInstructionArg[]
+}
+
+export type IdlAccountField = {
   name: string
   type: string
 }
 
-export type AnchorAccount = {
+export type IdlAccount = {
   name: string
   kind: 'struct' // could also be enum?
-  fields: AnchorAccountField[]
+  fields: IdlAccountField[]
 }
 
-export type AnchorError = {
+export type IdlError = {
   code: number
   name: string
   msg: string
 }
 
-export type AnchorIDL = {
+export type Idl = {
   version: string
   name: string
-  instructions: AnchorInstruction[]
-  accounts: AnchorAccount[]
-  errors: AnchorError[]
+  instructions: IdlInstruction[]
+  accounts: IdlAccount[]
+  errors: IdlError[]
 }

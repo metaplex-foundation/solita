@@ -1,5 +1,11 @@
 import { DEFAULT_TYPE_MAPPER, TypeMapper } from './type-mapper'
-import { AnchorInstruction, AnchorInstructionArg } from './types'
+import {
+  IdlInstruction,
+  IdlInstructionArg,
+  IdlType,
+  IdlTypeOption,
+} from './types'
+import { strict as assert } from 'assert'
 import { logDebug } from './utils'
 
 function renderWeb3Imports() {
@@ -17,7 +23,7 @@ class InstructionRenderer {
   readonly accountsTypename: string
 
   constructor(
-    readonly ix: AnchorInstruction,
+    readonly ix: IdlInstruction,
     readonly typeMapper: TypeMapper,
     readonly programId: string
   ) {
@@ -30,16 +36,22 @@ class InstructionRenderer {
     this.accountsTypename = `${this.upperCamelIxName}InstructionAccounts`
   }
 
-  private renderIxArgField = (arg: AnchorInstructionArg) => {
+  private renderIxArgField = (arg: IdlInstructionArg) => {
     let typescriptType
     let needCOption = false
     if (typeof arg.type === 'string') {
       typescriptType = this.mapType(arg.name, arg.type)
-    } else {
-      const ty: { option: string } = arg.type
+    } else if ((arg.type as IdlTypeOption).option != null) {
+      const ty: IdlTypeOption = arg.type as IdlTypeOption
+      assert(
+        typeof ty.option === 'string',
+        'only string options types supported for now'
+      )
       const inner = this.mapType(arg.name, ty.option)
       typescriptType = `COption<${inner}>`
       needCOption = true
+    } else {
+      throw new Error(`Type ${arg.type} is not supported yet`)
     }
     return {
       code: `${arg.name}: ${typescriptType}`,
@@ -47,7 +59,7 @@ class InstructionRenderer {
     }
   }
 
-  private mapType(name: string, ty: string) {
+  private mapType(name: string, ty: IdlType & string) {
     let typescriptType = this.typeMapper[ty]
     if (typescriptType == null) {
       logDebug(`No mapped type found for ${name}: ${ty}, using any`)
@@ -140,7 +152,7 @@ export function create${this.upperCamelIxName}Instruction(
 }
 
 export function renderInstruction(
-  ix: AnchorInstruction,
+  ix: IdlInstruction,
   typeMapper: TypeMapper = DEFAULT_TYPE_MAPPER
 ) {
   const programId = 'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk'
