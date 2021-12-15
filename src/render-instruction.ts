@@ -78,15 +78,13 @@ class InstructionRenderer {
       })
       .join(',\n  ')
 
-    const coption = accNeedCOption ? 'type COption<T> = T | null\n' : ''
+    const coption = accNeedCOption ? 'type COption<T> = T | null' : ''
 
-    const code = `
-${coption}
+    const code = `${coption}
 export type ${this.argsTypename} = {
   ${fields}
-}
-`
-    return { code }
+}`
+    return code
   }
 
   private renderIxAccountKeys() {
@@ -95,7 +93,7 @@ export type ${this.argsTypename} = {
         ({ name, isMut, isSigner }) =>
           `{
       pubkey: ${name},
-      isMut: ${isMut.toString()},
+      isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     }`
       )
@@ -123,13 +121,12 @@ export type ${this.argsTypename} = {
   }
 
   render() {
-    const { code: ixArgType } = this.renderIxArgsType()
+    const ixArgType = this.renderIxArgsType()
     const accountsType = this.renderAccountsType()
     const web3Imports = renderWeb3Imports()
     const keys = this.renderIxAccountKeys()
     const accountsDestructure = this.renderAccountsDestructure()
-    return `
-${web3Imports}
+    return `${web3Imports}
 ${ixArgType}
 ${accountsType}
 export function create${this.upperCamelIxName}Instruction(
@@ -137,11 +134,11 @@ export function create${this.upperCamelIxName}Instruction(
   args: ${this.argsTypename}
 ) {
   ${accountsDestructure}
-  // TODO: serialize with beet
-  const data = args;
-  const keys: AccountMeta = ${keys}
+  // TODO: serialize for real with beet
+  const data = Buffer.from(args.toString());
+  const keys: AccountMeta[] = ${keys}
   const ix = new TransactionInstruction({
-    programId: '${this.programId}',
+    programId: new PublicKey('${this.programId}'),
     keys,
     data
   });
