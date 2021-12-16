@@ -1,6 +1,9 @@
 // Currently a limited version of the types found inside https://github.com/project-serum/anchor/blob/master/ts/src/idl.ts
 // Will be extended to include the full spec eventually. At this point only cases actually encountered in contracts were
 // addressed
+
+import { BeetTypeMapKeys } from '@metaplex-foundation/beet'
+
 export type IdlInstructionAccount = {
   name: string
   isMut: boolean
@@ -8,19 +11,7 @@ export type IdlInstructionAccount = {
 }
 
 export type IdlType =
-  | 'bool'
-  | 'u8'
-  | 'i8'
-  | 'u16'
-  | 'i16'
-  | 'u32'
-  | 'i32'
-  | 'u64'
-  | 'i64'
-  | 'u128'
-  | 'i128'
-  | 'bytes'
-  | 'string'
+  | BeetTypeMapKeys
   | 'publicKey'
   | IdlTypeDefined
   | IdlTypeOption

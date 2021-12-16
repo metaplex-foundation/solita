@@ -41,6 +41,7 @@
     "debug": "^4.3.3"
   },
   "devDependencies": {
+    "@metaplex-foundation/beet": "^0.0.1",
     "@solana/web3.js": "^1.31.0",
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.12",

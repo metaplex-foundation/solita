@@ -1,6 +1,18 @@
-import { IdlInstruction, IdlInstructionArg } from './types'
+import { IdlInstruction, IdlInstructionArg, IdlTypeOption } from './types'
+import { strict as assert } from 'assert'
+import * as beet from '@metaplex-foundation/beet'
 
-type Field = IdlInstructionArg & { name: string; type: string }
+type Field = IdlInstructionArg & { name: string; type: string | IdlTypeOption }
+
+function assertBeetSupported(
+  serde: string,
+  context: string
+): asserts serde is beet.BeetTypeMapKeys {
+  assert(
+    beet.supportedTypeMap[serde] != null,
+    `Types to ${context} need to be supported by Beet, ${serde} is not`
+  )
+}
 
 export class BeetStructRenderer {
   readonly structName: string
@@ -15,10 +27,21 @@ export class BeetStructRenderer {
     this.structName = `${camelCaseTypename}Struct`
   }
 
+  private renderBeetOptionType(optionType: IdlTypeOption) {
+    const serde = optionType.option
+    assertBeetSupported(serde, 'de/serialize as part of an Option')
+    return `beet.coption(beet.${serde})`
+  }
+
   private renderBeetField({ name, type }: Field) {
     // TODO(thlorenz): if we need to map to beet types we need a mapper here in the future
     // TODO(thlorenz): provide a way for people to use custom types once that is needed
-    return `['${name}', beet.${type}]`
+    if (typeof type === 'string') {
+      return `['${name}', beet.${type}]`
+    } else if (typeof type.option != null) {
+      const optionType = this.renderBeetOptionType(type)
+      return `['${name}', ${optionType}]`
+    }
   }
 
   render() {
