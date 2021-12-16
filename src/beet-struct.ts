@@ -15,16 +15,21 @@ function assertBeetSupported(
 }
 
 export class BeetStructRenderer {
-  readonly structName: string
+  private readonly typeName: string
+  readonly structArgName: string
   private constructor(
     private readonly fields: Field[],
-    private readonly typeName: string
+    private readonly isArgsStruct: boolean,
+    name: string
   ) {
-    const camelCaseTypename = this.typeName
+    const upperCamelCaseTypename = name
       .charAt(0)
-      .toLowerCase()
-      .concat(this.typeName.slice(1))
-    this.structName = `${camelCaseTypename}Struct`
+      .toUpperCase()
+      .concat(name.slice(1))
+    const camelCaseTypename = name.charAt(0).toLowerCase().concat(name.slice(1))
+
+    this.typeName = upperCamelCaseTypename
+    this.structArgName = `${camelCaseTypename}Struct`
   }
 
   private renderBeetOptionType(optionType: IdlTypeOption) {
@@ -49,7 +54,9 @@ export class BeetStructRenderer {
       .map((f: Field) => this.renderBeetField(f))
       .join(',\n    ')
 
-    return `const ${this.structName} = new beet.BeetStruct<${this.typeName}>(
+    const beetStructType = this.isArgsStruct ? 'BeetArgsStruct' : 'BeetStruct'
+
+    return `const ${this.structArgName} = new beet.${beetStructType}<${this.typeName}>(
   [
     ${fields}
   ]
@@ -59,10 +66,15 @@ export class BeetStructRenderer {
   static forInstruction(ix: IdlInstruction) {
     // TODO(thlorenz): support more complex args, i.e. with composite types (see
     // `updateAuctionHouse` instruction) which has an `option` type
-    return new BeetStructRenderer(ix.args as Field[], ix.name)
+    return new BeetStructRenderer(
+      ix.args as Field[],
+      true,
+      `${ix.name}InstructionArgs`
+    )
   }
 }
 
+/*
 if (module === require.main) {
   async function main() {
     const ix = require('../test/fixtures/auction_house.json').instructions[2]
@@ -77,3 +89,4 @@ if (module === require.main) {
       process.exit(1)
     })
 }
+*/

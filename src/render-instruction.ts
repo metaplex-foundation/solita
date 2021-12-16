@@ -7,13 +7,15 @@ import {
 } from './types'
 import { strict as assert } from 'assert'
 import { logDebug } from './utils'
+import { BeetStructRenderer } from './beet-struct'
 
-function renderWeb3Imports() {
-  const imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
+function renderImports() {
+  const web3Imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
 
   return `import {
-  ${imports.join(',\n  ')}
+  ${web3Imports.join(',\n  ')}
 } from '@solana/web3.js';
+import * as beet from '@metaplex-foundation/beet';
 `
 }
 
@@ -38,7 +40,6 @@ class InstructionRenderer {
 
   private renderIxArgField = (arg: IdlInstructionArg) => {
     let typescriptType
-    let needCOption = false
     if (typeof arg.type === 'string') {
       typescriptType = this.mapType(arg.name, arg.type)
     } else if ((arg.type as IdlTypeOption).option != null) {
@@ -48,15 +49,11 @@ class InstructionRenderer {
         'only string options types supported for now'
       )
       const inner = this.mapType(arg.name, ty.option)
-      typescriptType = `COption<${inner}>`
-      needCOption = true
+      typescriptType = `beet.COption<${inner}>`
     } else {
       throw new Error(`Type ${arg.type} is not supported yet`)
     }
-    return {
-      code: `${arg.name}: ${typescriptType}`,
-      needCOption,
-    }
+    return `${arg.name}: ${typescriptType}`
   }
 
   private mapType(name: string, ty: IdlType & string) {
@@ -69,19 +66,11 @@ class InstructionRenderer {
   }
 
   private renderIxArgsType() {
-    let accNeedCOption = false
     const fields = this.ix.args
-      .map((field) => {
-        const { code, needCOption } = this.renderIxArgField(field)
-        accNeedCOption = accNeedCOption || needCOption
-        return code
-      })
+      .map((field) => this.renderIxArgField(field))
       .join(',\n  ')
 
-    const coption = accNeedCOption ? 'type COption<T> = T | null' : ''
-
-    const code = `${coption}
-export type ${this.argsTypename} = {
+    const code = `export type ${this.argsTypename} = {
   ${fields}
 }`
     return code
@@ -123,19 +112,24 @@ export type ${this.argsTypename} = {
   render() {
     const ixArgType = this.renderIxArgsType()
     const accountsType = this.renderAccountsType()
-    const web3Imports = renderWeb3Imports()
+    const imports = renderImports()
+
+    const structRenderer = BeetStructRenderer.forInstruction(this.ix)
+    const argsStructType = structRenderer.render()
+    const argsStructName = structRenderer.structArgName
+
     const keys = this.renderIxAccountKeys()
     const accountsDestructure = this.renderAccountsDestructure()
-    return `${web3Imports}
+    return `${imports}
 ${ixArgType}
+${argsStructType}
 ${accountsType}
 export function create${this.upperCamelIxName}Instruction(
   accounts: ${this.accountsTypename},
   args: ${this.argsTypename}
 ) {
   ${accountsDestructure}
-  // TODO: serialize for real with beet
-  const data = Buffer.from(args.toString());
+  const [data, _ ] = ${argsStructName}.serialize(args);
   const keys: AccountMeta[] = ${keys}
   const ix = new TransactionInstruction({
     programId: new PublicKey('${this.programId}'),
@@ -159,7 +153,7 @@ export function renderInstruction(
 
 if (module === require.main) {
   async function main() {
-    const ix = require('../test/fixtures/auction_house.json').instructions[0]
+    const ix = require('../test/fixtures/auction_house.json').instructions[2]
     console.log(renderInstruction(ix))
   }
 
