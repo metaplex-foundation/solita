@@ -1,4 +1,4 @@
-# anchor-idl-api
+# solana-idl-to-api
 
 ## LICENSE
 

@@ -1,9 +1,9 @@
 {
-  "name": "@metaplex-foundation/anchor-idl-api",
+  "name": "@metaplex-foundation/solana-idl-to-api",
   "version": "0.0.0",
-  "description": "Generates SDK API from anchor IDL.",
-  "main": "dist/anchor-idl-api.js",
-  "types": "dist/anchor-idl-api.d.ts",
+  "description": "Generates SDK API from solana contract IDL.",
+  "main": "dist/solana-idl-to-api.js",
+  "types": "dist/solana-idl-to-api.d.ts",
   "scripts": {
     "check:publish-ready": "yarn build",
     "preversion": "yarn check:publish-ready",
@@ -17,7 +17,7 @@
     "doc:update": "./sh/update-docs",
     "doctoc": "doctoc README.md"
   },
-  "repository": "git@github.com:metaplex-foundation/anchor-idl-api.git",
+  "repository": "git@github.com:metaplex-foundation/solana-idl-to-api.git",
   "author": "Thorsten Lorenz <thlorenz@gmx.de>",
   "license": "Apache-2.0",
   "private": false,
@@ -30,7 +30,6 @@
   "keywords": [
     "solana",
     "blockchain",
-    "anchor",
     "IDL",
     "API"
   ],
@@ -38,7 +37,13 @@
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
+  "dependencies": {
+    "debug": "^4.3.3"
+  },
   "devDependencies": {
+    "@metaplex-foundation/beet": "^0.0.1",
+    "@solana/web3.js": "^1.31.0",
+    "@types/debug": "^4.1.7",
     "@types/node": "^16.11.12",
     "doctoc": "^2.1.0",
     "prettier": "^2.5.1",

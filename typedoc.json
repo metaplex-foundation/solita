@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["src/anchor-idl-api.ts"],
+  "entryPoints": ["src/solana-idl-to-api.ts"],
   "excludePrivate": true,
   "categorizeByGroup": false,
   "readme": "none",
