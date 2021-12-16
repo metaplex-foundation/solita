@@ -39,25 +39,3 @@ export function errorFromName(name: string): Error | null {
 }
 `
 }
-
-if (module === require.main) {
-  async function main() {
-    const errors = require('../test/fixtures/auction_house.json').errors
-    console.log(renderErrors(errors))
-  }
-
-  main()
-    .then(() => process.exit(0))
-    .catch((err: any) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
-
-export class MyError extends Error {
-  readonly code: number = 6000
-  readonly name: string = 'PublicKeyMismatch'
-  constructor() {
-    super('PublicKeyMismatch')
-  }
-}

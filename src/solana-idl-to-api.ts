@@ -1,5 +1,6 @@
 import { PathLike, promises as fs } from 'fs'
 import path from 'path'
+import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
 import { Idl } from './types'
 import { logDebug, logInfo, prepareTargetDir } from './utils'
@@ -18,14 +19,23 @@ export class SolanaIdlToApi {
     for (const ix of this.idl.instructions) {
       instructions[ix.name] = renderInstruction(ix)
     }
-    return { instructions }
+    const errors = renderErrors(this.idl.errors)
+    return { instructions, errors }
   }
 
   async renderAndWriteTo(outputDir: PathLike) {
+    const { instructions, errors } = this.renderCode()
+    await this.writeInstructions(outputDir, instructions)
+    await this.writeErrors(outputDir, errors)
+  }
+
+  private async writeInstructions(
+    outputDir: PathLike,
+    instructions: Record<string, string>
+  ) {
     const instructionsDir = path.join(outputDir.toString(), 'instructions')
     await prepareTargetDir(instructionsDir)
     logInfo('Writing instructions to directory: %s', instructionsDir)
-    const { instructions } = this.renderCode()
     for (const [name, code] of Object.entries(instructions)) {
       logDebug('Writing instruction: %s', name)
       await fs.writeFile(path.join(instructionsDir, `${name}.ts`), code, 'utf8')
@@ -37,6 +47,14 @@ export class SolanaIdlToApi {
       indexCode,
       'utf8'
     )
+  }
+
+  private async writeErrors(outputDir: PathLike, errorsCode: string) {
+    const errorsDir = path.join(outputDir.toString(), 'errors')
+    await prepareTargetDir(errorsDir)
+    logInfo('Writing errors to directory: %s', errorsDir)
+    logDebug('Writing index.ts containing all errors')
+    await fs.writeFile(path.join(errorsDir, `index.ts`), errorsCode, 'utf8')
   }
 }
 
