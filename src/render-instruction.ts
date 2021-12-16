@@ -127,7 +127,7 @@ export function create${this.upperCamelIxName}Instruction(
   args: ${this.argsTypename}
 ) {
   ${accountsDestructure}
-  const [data, _ ] = ${argsStructName}.serialize(args);
+  const [data ] = ${argsStructName}.serialize(args);
   const keys: AccountMeta[] = ${keys}
   const ix = new TransactionInstruction({
     programId: new PublicKey('${this.programId}'),
