@@ -1,4 +1,3 @@
-import { DEFAULT_TYPE_MAPPER, TypeMapper } from './type-mapper'
 import {
   IdlInstruction,
   IdlInstructionArg,
@@ -8,6 +7,8 @@ import {
 import { strict as assert } from 'assert'
 import { logDebug } from './utils'
 import { BeetStructRenderer } from './beet-struct'
+import * as beet from '@metaplex-foundation/beet'
+import { assertBeetSupported } from './asserts'
 
 function renderImports() {
   const web3Imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
@@ -24,11 +25,7 @@ class InstructionRenderer {
   readonly argsTypename: string
   readonly accountsTypename: string
 
-  constructor(
-    readonly ix: IdlInstruction,
-    readonly typeMapper: TypeMapper,
-    readonly programId: string
-  ) {
+  constructor(readonly ix: IdlInstruction, readonly programId: string) {
     this.upperCamelIxName = ix.name
       .charAt(0)
       .toUpperCase()
@@ -41,14 +38,14 @@ class InstructionRenderer {
   private renderIxArgField = (arg: IdlInstructionArg) => {
     let typescriptType
     if (typeof arg.type === 'string') {
-      typescriptType = this.mapType(arg.name, arg.type)
+      typescriptType = this.mapPrimitiveType(arg.name, arg.type)
     } else if ((arg.type as IdlTypeOption).option != null) {
       const ty: IdlTypeOption = arg.type as IdlTypeOption
       assert(
         typeof ty.option === 'string',
         'only string options types supported for now'
       )
-      const inner = this.mapType(arg.name, ty.option)
+      const inner = this.mapPrimitiveType(arg.name, ty.option)
       typescriptType = `beet.COption<${inner}>`
     } else {
       throw new Error(`Type ${arg.type} is not supported yet`)
@@ -56,8 +53,9 @@ class InstructionRenderer {
     return `${arg.name}: ${typescriptType}`
   }
 
-  private mapType(name: string, ty: IdlType & string) {
-    let typescriptType = this.typeMapper[ty]
+  private mapPrimitiveType(name: string, ty: IdlType & string) {
+    assertBeetSupported(ty, 'map primitive type')
+    let typescriptType = beet.supportedTypeMap[ty].ts
     if (typescriptType == null) {
       logDebug(`No mapped type found for ${name}: ${ty}, using any`)
       typescriptType = 'any'
@@ -142,15 +140,13 @@ export function create${this.upperCamelIxName}Instruction(
   }
 }
 
-export function renderInstruction(
-  ix: IdlInstruction,
-  typeMapper: TypeMapper = DEFAULT_TYPE_MAPPER
-) {
+export function renderInstruction(ix: IdlInstruction) {
   const programId = 'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk'
-  const renderer = new InstructionRenderer(ix, typeMapper, programId)
+  const renderer = new InstructionRenderer(ix, programId)
   return renderer.render()
 }
 
+/*
 if (module === require.main) {
   async function main() {
     const ix = require('../test/fixtures/auction_house.json').instructions[2]
@@ -164,3 +160,4 @@ if (module === require.main) {
       process.exit(1)
     })
 }
+*/

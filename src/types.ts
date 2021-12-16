@@ -2,7 +2,7 @@
 // Will be extended to include the full spec eventually. At this point only cases actually encountered in contracts were
 // addressed
 
-import { BeetTypeMapKeys } from '@metaplex-foundation/beet'
+import { BeetTypeMapKey } from '@metaplex-foundation/beet'
 
 export type IdlInstructionAccount = {
   name: string
@@ -11,7 +11,7 @@ export type IdlInstructionAccount = {
 }
 
 export type IdlType =
-  | BeetTypeMapKeys
+  | BeetTypeMapKey
   | 'publicKey'
   | IdlTypeDefined
   | IdlTypeOption
