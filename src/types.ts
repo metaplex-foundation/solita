@@ -2,7 +2,15 @@
 // Will be extended to include the full spec eventually. At this point only cases actually encountered in contracts were
 // addressed
 
-import { BeetTypeMapKey } from '@metaplex-foundation/beet'
+import {
+  BeetExports,
+  BeetTypeMapKey,
+  SupportedTypeDefinition,
+} from '@metaplex-foundation/beet'
+import {
+  BeetSolanaExports,
+  BeetSolanaTypeMapKey,
+} from '@metaplex-foundation/beet-solana'
 
 export type IdlInstructionAccount = {
   name: string
@@ -70,3 +78,10 @@ export type Idl = {
   accounts: IdlAccount[]
   errors: IdlError[]
 }
+
+export type PrimaryTypeMap = Record<
+  BeetTypeMapKey | BeetSolanaTypeMapKey,
+  SupportedTypeDefinition & {
+    beet: BeetExports | BeetSolanaExports
+  }
+>
