@@ -1,4 +1,11 @@
-import { BEET_SOLANA_LIB, serdeLibPrefix, TypeMapper } from './type-mapper'
+import {
+  assertKnownPackage,
+  BEET_SOLANA_PACKAGE,
+  SerdePackage,
+  serdePackageExportName,
+  serdePackageTypePrefix,
+} from './serdes'
+import { TypeMapper } from './type-mapper'
 import { IdlAccount } from './types'
 
 function colonSeparatedTypedField(
@@ -6,6 +13,12 @@ function colonSeparatedTypedField(
   prefix = ''
 ) {
   return `${prefix}${field.name}: ${field.tsType}`
+}
+
+type AccountBeetField = {
+  name: string
+  sourcePack: SerdePackage
+  type: string
 }
 
 class AccountRenderer {
@@ -30,9 +43,9 @@ class AccountRenderer {
       .toLowerCase()
       .concat(account.name.slice(1))
 
-    this.accountDataClassName = `${this.upperCamelAccountName}Data`
+    this.accountDataClassName = `${this.upperCamelAccountName}AccountData`
     this.accountDataArgsTypeName = `${this.accountDataClassName}Args`
-    this.dataStructName = `${this.camelAccountName}DataStruct`
+    this.dataStructName = `${this.camelAccountName}AccountDataStruct`
   }
 
   private getTypedFields() {
@@ -43,15 +56,18 @@ class AccountRenderer {
     })
   }
 
-  private getBeetFields(): { name: string; lib: string; type: string }[] {
+  private getBeetFields(): AccountBeetField[] {
     return this.account.type.fields.map((f) => {
       this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-      const { serdeLib } = this.typeMapper.map(f.type, f.name)
-      if (serdeLib === BEET_SOLANA_LIB) {
+      const { pack, sourcePack } = this.typeMapper.map(f.type, f.name)
+      if (pack === BEET_SOLANA_PACKAGE) {
         this.needsBeetSolana = true
       }
-      const lib = serdeLibPrefix(serdeLib)
-      return { name: f.name, lib, type: f.type }
+      if (pack != null) {
+        assertKnownPackage(pack)
+      }
+      const packExportName = serdePackageExportName(pack)
+      return { name: f.name, packExportName, type: f.type, sourcePack }
     })
   }
 
@@ -93,31 +109,53 @@ import * as beet from '@metaplex-foundation/beet';${beetSolana}`
     ${constructorArgs}
   ) {}
 
+  /**
+   * Creates a {@link ${this.accountDataClassName}} instance from the provided args.
+   */
   static fromArgs(args: ${this.accountDataArgsTypeName}) {
     return new ${this.accountDataClassName}(
       ${constructorParams}
     );
   }
 
-  static fromAccountInfo(accountInfo: AccountInfo<Buffer>, offset = 0) {
+  /**
+   * Deserializes the {@link ${this.accountDataClassName}} from the data of the provided {@link AccountInfo}.
+   * @returns a tuple of the account data and the offset up to which the buffer was read to obtain it.
+   */
+  static fromAccountInfo(
+    accountInfo: AccountInfo<Buffer>,
+    offset = 0
+  ): [ ${this.accountDataClassName}, number ]  {
     return ${this.accountDataClassName}.deserialize(accountInfo.data, offset)
   }
 
-  static deserialize(buf: Buffer, offset = 0) {
+  /**
+   * Deserializes the {@link ${this.accountDataClassName}} from the provided data Buffer.
+   * @returns a tuple of the account data and the offset up to which the buffer was read to obtain it.
+   */
+  static deserialize(
+    buf: Buffer,
+    offset = 0
+  ): [ ${this.accountDataClassName}, number ]{
     return ${this.dataStructName}.deserialize(buf, offset);
   }
 
-  serialize() {
+  /**
+   * Serializes the {@link ${this.accountDataClassName}} into a Buffer.
+   * @returns a tuple of the created Buffer and the offset up to which the buffer was written to store it.
+   */
+  serialize(): [ Buffer, number ] {
     return ${this.dataStructName}.serialize(this)
   }
 }`
   }
 
-  private renderDataStruct(
-    fields: { name: string; lib: string; type: string }[]
-  ) {
+  private renderDataStruct(fields: AccountBeetField[]) {
     const fieldDecls = fields
-      .map(({ name, lib, type }) => `[ '${name}', ${lib}.${type} ]`)
+      .map(({ name, sourcePack, type }) => {
+        const typePrefix = serdePackageTypePrefix(sourcePack)
+        return `[ '${name}', ${typePrefix}${type} ]`
+      })
       .join(',\n    ')
 
     return `const ${this.dataStructName} = new beet.BeetStruct<
