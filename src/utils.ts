@@ -48,3 +48,9 @@ async function canAccess(p: PathLike) {
     return false
   }
 }
+
+export class UnreachableCaseError extends Error {
+  constructor(value: never) {
+    super(`Unreachable case: ${value}`)
+  }
+}

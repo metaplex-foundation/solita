@@ -1,6 +1,6 @@
 import { IdlInstruction, IdlInstructionArg } from './types'
 import { BeetStructRenderer } from './beet-struct'
-import { TypeMapper } from './type-mapper'
+import { serdeLibPrefix, TypeMapper } from './type-mapper'
 
 function renderImports() {
   const web3Imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
@@ -32,8 +32,9 @@ class InstructionRenderer {
   }
 
   private renderIxArgField = (arg: IdlInstructionArg) => {
-    const typescriptType = this.typeMapper.map(arg.type, arg.name)
-    return `${arg.name}: ${typescriptType}`
+    const { typescriptType, serdeLib } = this.typeMapper.map(arg.type, arg.name)
+    const libPrefix = serdeLibPrefix(serdeLib)
+    return `${arg.name}: ${libPrefix}.${typescriptType}`
   }
 
   private renderIxArgsType() {

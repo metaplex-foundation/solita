@@ -59,10 +59,14 @@ export type IdlAccountField = {
   type: string
 }
 
+export type IdlAccountType = {
+  kind: 'struct' | 'enum'
+  fields: IdlAccountField[]
+}
+
 export type IdlAccount = {
   name: string
-  kind: 'struct' // could also be enum?
-  fields: IdlAccountField[]
+  type: IdlAccountType
 }
 
 export type IdlError = {
