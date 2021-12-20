@@ -1,5 +1,10 @@
-import { assertBeetSupported } from './asserts'
-import { IdlInstruction, IdlInstructionArg, IdlTypeOption } from './types'
+import { TypeMapper } from './type-mapper'
+import {
+  IdlInstruction,
+  IdlInstructionArg,
+  IdlTypeOption,
+  PrimaryTypeMap,
+} from './types'
 
 type Field = IdlInstructionArg & { name: string; type: string | IdlTypeOption }
 
@@ -8,6 +13,7 @@ export class BeetStructRenderer {
   readonly structArgName: string
 
   private constructor(
+    private readonly typeMapper: TypeMapper,
     private readonly fields: Field[],
     private readonly isArgsStruct: boolean,
     name: string
@@ -25,7 +31,10 @@ export class BeetStructRenderer {
   private renderBeetOptionType(optionType: IdlTypeOption) {
     const serde = optionType.option
     // TODO(thlorenz): support deeper type nesting when needed
-    assertBeetSupported(serde as string, 'de/serialize as part of an Option')
+    this.typeMapper.assertBeetSupported(
+      serde as string,
+      'de/serialize as part of an Option'
+    )
     return `beet.coption(beet.${serde})`
   }
 
@@ -53,10 +62,13 @@ export class BeetStructRenderer {
 );`
   }
 
-  static forInstruction(ix: IdlInstruction) {
-    // TODO(thlorenz): support more complex args, i.e. with composite types (see
-    // `updateAuctionHouse` instruction) which has an `option` type
+  static forInstruction(
+    ix: IdlInstruction,
+    primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
+  ) {
+    const typeMapper = new TypeMapper(primaryTypeMap)
     return new BeetStructRenderer(
+      typeMapper,
       ix.args as Field[],
       true,
       `${ix.name}InstructionArgs`

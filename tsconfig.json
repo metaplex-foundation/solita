@@ -19,6 +19,7 @@
     "incremental": false,
     "types": ["node"],
     "moduleResolution": "node",
+    "noImplicitReturns": true,
     "skipLibCheck": true
   },
   "include": ["src", "test"]

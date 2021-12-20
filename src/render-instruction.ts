@@ -1,14 +1,7 @@
-import {
-  IdlInstruction,
-  IdlInstructionArg,
-  IdlType,
-  IdlTypeOption,
-} from './types'
-import { strict as assert } from 'assert'
-import { logDebug } from './utils'
+import { IdlInstruction, IdlInstructionArg } from './types'
 import { BeetStructRenderer } from './beet-struct'
-import * as beet from '@metaplex-foundation/beet'
-import { assertBeetSupported } from './asserts'
+import { TypeMapper } from './type-mapper'
+import { serdePackageTypePrefix } from './serdes'
 
 function renderImports() {
   const web3Imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
@@ -25,7 +18,11 @@ class InstructionRenderer {
   readonly argsTypename: string
   readonly accountsTypename: string
 
-  constructor(readonly ix: IdlInstruction, readonly programId: string) {
+  constructor(
+    readonly ix: IdlInstruction,
+    readonly programId: string,
+    private readonly typeMapper = new TypeMapper()
+  ) {
     this.upperCamelIxName = ix.name
       .charAt(0)
       .toUpperCase()
@@ -36,31 +33,9 @@ class InstructionRenderer {
   }
 
   private renderIxArgField = (arg: IdlInstructionArg) => {
-    let typescriptType
-    if (typeof arg.type === 'string') {
-      typescriptType = this.mapPrimitiveType(arg.name, arg.type)
-    } else if ((arg.type as IdlTypeOption).option != null) {
-      const ty: IdlTypeOption = arg.type as IdlTypeOption
-      assert(
-        typeof ty.option === 'string',
-        'only string options types supported for now'
-      )
-      const inner = this.mapPrimitiveType(arg.name, ty.option)
-      typescriptType = `beet.COption<${inner}>`
-    } else {
-      throw new Error(`Type ${arg.type} is not supported yet`)
-    }
-    return `${arg.name}: ${typescriptType}`
-  }
-
-  private mapPrimitiveType(name: string, ty: IdlType & string) {
-    assertBeetSupported(ty, 'map primitive type')
-    let typescriptType = beet.supportedTypeMap[ty].ts
-    if (typescriptType == null) {
-      logDebug(`No mapped type found for ${name}: ${ty}, using any`)
-      typescriptType = 'any'
-    }
-    return typescriptType
+    const { typescriptType, pack } = this.typeMapper.map(arg.type, arg.name)
+    const typePrefix = serdePackageTypePrefix(pack)
+    return `${arg.name}: ${typePrefix}${typescriptType}`
   }
 
   private renderIxArgsType() {
