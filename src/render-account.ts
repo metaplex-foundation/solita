@@ -48,6 +48,9 @@ class AccountRenderer {
     this.dataStructName = `${this.camelAccountName}AccountDataStruct`
   }
 
+  // -----------------
+  // Rendered Fields
+  // -----------------
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
       this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
@@ -71,8 +74,18 @@ class AccountRenderer {
     })
   }
 
+  private getPrettyFields() {
+    return this.account.type.fields.map((f) => {
+      const postfix = f.type === 'publicKey' ? '.toBase58()' : ''
+      return `${f.name}: this.${f.name}${postfix}`
+    })
+  }
+
+  // -----------------
+  // Imports
+  // -----------------
   private renderImports() {
-    const web3Imports = ['AccountInfo', 'PublicKey']
+    const web3Imports = ['AccountInfo', 'Connection', 'Commitment', 'PublicKey']
     const beetSolana = this.needsBeetSolana
       ? `\nimport * as beetSolana from '@metaplex-foundation/beet-solana';`
       : ''
@@ -83,6 +96,9 @@ class AccountRenderer {
 import * as beet from '@metaplex-foundation/beet';${beetSolana}`
   }
 
+  // -----------------
+  // Account Args
+  // -----------------
   private renderAccountDataArgsType(
     fields: { name: string; tsType: string }[]
   ) {
@@ -90,11 +106,17 @@ import * as beet from '@metaplex-foundation/beet';${beetSolana}`
       .map((f) => colonSeparatedTypedField(f))
       .join('\n  ')
 
-    return `export type ${this.accountDataArgsTypeName} = {
+    return `/**
+ * Arguments used to create {@link ${this.accountDataClassName}}
+ */
+export type ${this.accountDataArgsTypeName} = {
   ${renderedFields}
 }`
   }
 
+  // -----------------
+  // AccountData class
+  // -----------------
   private renderAccountDataClass(fields: { name: string; tsType: string }[]) {
     const constructorArgs = fields
       .map((f) => colonSeparatedTypedField(f, 'readonly '))
@@ -104,7 +126,13 @@ import * as beet from '@metaplex-foundation/beet';${beetSolana}`
       .map((f) => `args.${f.name}`)
       .join(',\n      ')
 
-    return `export class ${this.accountDataClassName} {
+    const prettyFields = this.getPrettyFields().join(',\n      ')
+
+    return `/**
+ * Holds the data for the {@link ${this.upperCamelAccountName}Account} and provides de/serialization
+ * functionality for that data
+ */
+export class ${this.accountDataClassName} {
   private constructor(
     ${constructorArgs}
   ) {}
@@ -146,6 +174,46 @@ import * as beet from '@metaplex-foundation/beet';${beetSolana}`
    */
   serialize(): [ Buffer, number ] {
     return ${this.dataStructName}.serialize(this)
+  }
+
+  /**
+   * Returns the byteSize of a {@link Buffer} holding the serialized data of
+   * {@link ${this.accountDataClassName}}
+   */
+  static get byteSize() {
+    return auctionHouseAccountDataStruct.byteSize;
+  }
+
+  /**
+   * Fetches the minimum balance needed to exempt an account holding 
+   * {@link ${this.accountDataClassName}} data from rent
+   */
+  static async getMinimumBalanceForRentExemption(
+    connection: Connection,
+    commitment?: Commitment,
+  ): Promise<number> {
+    return connection.getMinimumBalanceForRentExemption(
+      ${this.accountDataClassName}.byteSize,
+      commitment,
+    );
+  }
+
+  /**
+   * Determines if the provided {@link Buffer} has the correct byte size to
+   * hold {@link ${this.accountDataClassName}} data.
+   */
+  static hasCorrectByteSize(buf: Buffer, offset = 0) {
+    return buf.byteLength - offset === AuctionHouseAccountData.byteSize;
+  }
+
+  /**
+   * Returns a readable version of {@link ${this.accountDataClassName}} properties
+   * and can be used to convert to JSON and/or logging
+   */
+  pretty() {
+    return {
+      ${prettyFields}
+    };
   }
 }`
   }
