@@ -1,6 +1,9 @@
 import { PathLike, promises as fs } from 'fs'
 import debug from 'debug'
 import path from 'path'
+import { sha256 } from 'js-sha256'
+import camelcase from 'camelcase'
+import { snakeCase } from 'snake-case'
 
 export const logError = debug('idl-ts:error')
 export const logInfo = debug('idl-ts:info')
@@ -53,4 +56,46 @@ export class UnreachableCaseError extends Error {
   constructor(value: never) {
     super(`Unreachable case: ${value}`)
   }
+}
+
+// -----------------
+// Discriminators
+// -----------------
+
+/**
+ * Number of bytes of the account discriminator.
+ */
+export const ACCOUNT_DISCRIMINATOR_SIZE = 8
+
+/**
+ * Calculates and returns a unique 8 byte discriminator prepended to all
+ * accounts.
+ *
+ * @param name The name of the account to calculate the discriminator.
+ */
+export function accountDiscriminator(name: string): Buffer {
+  return Buffer.from(
+    sha256.digest(`account:${camelcase(name, { pascalCase: true })}`)
+  ).slice(0, ACCOUNT_DISCRIMINATOR_SIZE)
+}
+
+/**
+ * Namespace for global instruction function signatures (i.e. functions
+ * that aren't namespaced by the state or any of its trait implementations).
+ */
+export const SIGHASH_GLOBAL_NAMESPACE = 'global'
+
+/**
+ * Calculates and returns a unique 8 byte discriminator prepended to all instruction data.
+ *
+ * @param name The name of the instruction to calculate the discriminator.
+ */
+export function instructionDiscriminator(name: string): Buffer {
+  return sighash(SIGHASH_GLOBAL_NAMESPACE, name)
+}
+
+function sighash(nameSpace: string, ixName: string): Buffer {
+  let name = snakeCase(ixName)
+  let preimage = `${nameSpace}:${name}`
+  return Buffer.from(sha256.digest(preimage)).slice(0, 8)
 }
