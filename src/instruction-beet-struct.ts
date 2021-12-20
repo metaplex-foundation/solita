@@ -8,7 +8,7 @@ import {
 
 type Field = IdlInstructionArg & { name: string; type: string | IdlTypeOption }
 
-export class BeetStructRenderer {
+export class InstructionBeetStructRenderer {
   private readonly typeName: string
   readonly structArgName: string
 
@@ -46,6 +46,7 @@ export class BeetStructRenderer {
       const optionType = this.renderBeetOptionType(type)
       return `['${name}', ${optionType}]`
     }
+    throw new Error(`Unsupported type ${type} for instruction field ${name}`)
   }
 
   render() {
@@ -55,19 +56,24 @@ export class BeetStructRenderer {
 
     const beetStructType = this.isArgsStruct ? 'BeetArgsStruct' : 'BeetStruct'
 
-    return `const ${this.structArgName} = new beet.${beetStructType}<${this.typeName}>(
+    return `const ${this.structArgName} = new beet.${beetStructType}<${this.typeName} & {
+    instructionDiscriminator: number[];
+  }
+>(
   [
+    [ 'instructionDiscriminator', beet.fixedSizeArray(beet.u8, 8) ],
     ${fields}
-  ]
+  ],
+  '${this.typeName}'
 );`
   }
 
-  static forInstruction(
+  static create(
     ix: IdlInstruction,
     primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {
     const typeMapper = new TypeMapper(primaryTypeMap)
-    return new BeetStructRenderer(
+    return new InstructionBeetStructRenderer(
       typeMapper,
       ix.args as Field[],
       true,

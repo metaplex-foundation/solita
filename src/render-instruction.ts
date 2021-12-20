@@ -1,7 +1,8 @@
 import { IdlInstruction, IdlInstructionArg } from './types'
-import { BeetStructRenderer } from './beet-struct'
+import { InstructionBeetStructRenderer } from './instruction-beet-struct'
 import { TypeMapper } from './type-mapper'
 import { serdePackageTypePrefix } from './serdes'
+import { instructionDiscriminator } from './utils'
 
 function renderImports() {
   const web3Imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
@@ -15,8 +16,10 @@ import * as beet from '@metaplex-foundation/beet';
 
 class InstructionRenderer {
   readonly upperCamelIxName: string
+  readonly camelIxName: string
   readonly argsTypename: string
   readonly accountsTypename: string
+  readonly instructionDiscriminatorName: string
 
   constructor(
     readonly ix: IdlInstruction,
@@ -28,8 +31,11 @@ class InstructionRenderer {
       .toUpperCase()
       .concat(ix.name.slice(1))
 
+    this.camelIxName = ix.name.charAt(0).toLowerCase().concat(ix.name.slice(1))
+
     this.argsTypename = `${this.upperCamelIxName}InstructionArgs`
     this.accountsTypename = `${this.upperCamelIxName}InstructionAccounts`
+    this.instructionDiscriminatorName = `${this.camelIxName}AccountDiscriminator`
   }
 
   private renderIxArgField = (arg: IdlInstructionArg) => {
@@ -87,22 +93,30 @@ class InstructionRenderer {
     const accountsType = this.renderAccountsType()
     const imports = renderImports()
 
-    const structRenderer = BeetStructRenderer.forInstruction(this.ix)
+    const structRenderer = InstructionBeetStructRenderer.create(this.ix)
     const argsStructType = structRenderer.render()
     const argsStructName = structRenderer.structArgName
 
     const keys = this.renderIxAccountKeys()
     const accountsDestructure = this.renderAccountsDestructure()
+    const instructionDisc = JSON.stringify(
+      Array.from(instructionDiscriminator(this.ix.name))
+    )
     return `${imports}
 ${ixArgType}
 ${argsStructType}
 ${accountsType}
+const ${this.instructionDiscriminatorName} = ${instructionDisc};
+
 export function create${this.upperCamelIxName}Instruction(
   accounts: ${this.accountsTypename},
   args: ${this.argsTypename}
 ) {
   ${accountsDestructure}
-  const [data ] = ${argsStructName}.serialize(args);
+  const [data ] = ${argsStructName}.serialize({ 
+    instructionDiscriminator: ${this.instructionDiscriminatorName},
+    ...args
+  });
   const keys: AccountMeta[] = ${keys}
   const ix = new TransactionInstruction({
     programId: new PublicKey('${this.programId}'),
@@ -124,7 +138,7 @@ export function renderInstruction(ix: IdlInstruction) {
 /*
 if (module === require.main) {
   async function main() {
-    const ix = require('../test/fixtures/auction_house.json').instructions[2]
+    const ix = require('../test/fixtures/auction_house.json').instructions[3]
     console.log(renderInstruction(ix))
   }
 

@@ -7,6 +7,7 @@ import {
 } from './serdes'
 import { TypeMapper } from './type-mapper'
 import { IdlAccount } from './types'
+import { accountDiscriminator } from './utils'
 
 function colonSeparatedTypedField(
   field: { name: string; tsType: string },
@@ -26,6 +27,7 @@ class AccountRenderer {
   readonly camelAccountName: string
   readonly accountDataClassName: string
   readonly accountDataArgsTypeName: string
+  readonly accountDiscriminatorName: string
   readonly dataStructName: string
   needsBeetSolana: boolean = false
 
@@ -46,6 +48,7 @@ class AccountRenderer {
     this.accountDataClassName = `${this.upperCamelAccountName}AccountData`
     this.accountDataArgsTypeName = `${this.accountDataClassName}Args`
     this.dataStructName = `${this.camelAccountName}AccountDataStruct`
+    this.accountDiscriminatorName = `${this.camelAccountName}AccountDiscriminator`
   }
 
   // -----------------
@@ -127,8 +130,12 @@ export type ${this.accountDataArgsTypeName} = {
       .join(',\n      ')
 
     const prettyFields = this.getPrettyFields().join(',\n      ')
+    const accountDisc = JSON.stringify(
+      Array.from(accountDiscriminator(this.account.name))
+    )
 
-    return `/**
+    return `const ${this.accountDiscriminatorName} = ${accountDisc};
+/**
  * Holds the data for the {@link ${this.upperCamelAccountName}Account} and provides de/serialization
  * functionality for that data
  */
@@ -173,7 +180,10 @@ export class ${this.accountDataClassName} {
    * @returns a tuple of the created Buffer and the offset up to which the buffer was written to store it.
    */
   serialize(): [ Buffer, number ] {
-    return ${this.dataStructName}.serialize(this)
+    return ${this.dataStructName}.serialize({ 
+      accountDiscriminator: ${this.accountDiscriminatorName},
+      ...this
+    })
   }
 
   /**
@@ -218,19 +228,25 @@ export class ${this.accountDataClassName} {
 }`
   }
 
+  // -----------------
+  // Struct
+  // -----------------
   private renderDataStruct(fields: AccountBeetField[]) {
     const fieldDecls = fields
       .map(({ name, sourcePack, type }) => {
         const typePrefix = serdePackageTypePrefix(sourcePack)
-        return `[ '${name}', ${typePrefix}${type} ]`
+        return `['${name}', ${typePrefix}${type}]`
       })
       .join(',\n    ')
 
     return `const ${this.dataStructName} = new beet.BeetStruct<
     ${this.accountDataClassName},
-    ${this.accountDataArgsTypeName}
+    ${this.accountDataArgsTypeName} & {
+    accountDiscriminator: number[];
+  }
 >(
   [
+    ['accountDiscriminator', beet.fixedSizeArray(beet.u8, 8)],
     ${fieldDecls}
   ],
   ${this.accountDataClassName}.fromArgs,
