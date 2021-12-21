@@ -2,26 +2,26 @@
 // It is not expected users directly test with this example. For a more
 // ergonomic example, see `tests/basic-0.js` in this workspace.
 
-const anchor = require('@project-serum/anchor');
+const anchor = require('@project-serum/anchor')
 
 // Configure the local cluster.
-anchor.setProvider(anchor.Provider.local());
+anchor.setProvider(anchor.Provider.local())
 
 async function main() {
   // #region main
   // Read the generated IDL.
-  const idl = JSON.parse(require('fs').readFileSync('./target/idl/basic_0.json', 'utf8'));
+  const idl = require('./target/idl/basic_0.json')
 
   // Address of the deployed program.
-  const programId = new anchor.web3.PublicKey('<YOUR-PROGRAM-ID>');
+  const programId = new anchor.web3.PublicKey(process.env.PROGRAM_ID)
 
   // Generate the program client from IDL.
-  const program = new anchor.Program(idl, programId);
+  const program = new anchor.Program(idl, programId)
 
   // Execute the RPC.
-  await program.rpc.initialize();
+  await program.rpc.initialize()
   // #endregion main
 }
 
-console.log('Running client.');
-main().then(() => console.log('Success'));
+console.log('Running client.')
+main().then(() => console.log('Success'))
