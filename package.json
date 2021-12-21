@@ -47,6 +47,8 @@
     "snake-case": "^3.0.4"
   },
   "devDependencies": {
+    "@metaplex-foundation/amman": "^0.0.8",
+    "@project-serum/anchor": "^0.19.1-beta.1",
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.12",
     "doctoc": "^2.1.0",
