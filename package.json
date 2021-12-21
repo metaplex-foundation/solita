@@ -38,10 +38,13 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "debug": "^4.3.3",
     "@metaplex-foundation/beet": "^0.0.1",
     "@metaplex-foundation/beet-solana": "^0.0.1",
-    "@solana/web3.js": "^1.31.0"
+    "@solana/web3.js": "^1.31.0",
+    "camelcase": "^6.2.1",
+    "debug": "^4.3.3",
+    "js-sha256": "^0.9.0",
+    "snake-case": "^3.0.4"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
