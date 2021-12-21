@@ -57,8 +57,13 @@ class AccountRenderer {
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
       this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-      const { typescriptType } = this.typeMapper.map(f.type, f.name)
-      return { name: f.name, tsType: typescriptType }
+      const { typescriptType, pack } = this.typeMapper.map(f.type, f.name)
+      let tsType = typescriptType
+      if (pack != null) {
+        const packExportName = serdePackageExportName(pack)
+        tsType = `${packExportName}.${typescriptType}`
+      }
+      return { name: f.name, tsType }
     })
   }
 
@@ -191,7 +196,7 @@ export class ${this.accountDataClassName} {
    * {@link ${this.accountDataClassName}}
    */
   static get byteSize() {
-    return auctionHouseAccountDataStruct.byteSize;
+    return ${this.dataStructName}.byteSize;
   }
 
   /**
@@ -213,7 +218,7 @@ export class ${this.accountDataClassName} {
    * hold {@link ${this.accountDataClassName}} data.
    */
   static hasCorrectByteSize(buf: Buffer, offset = 0) {
-    return buf.byteLength - offset === AuctionHouseAccountData.byteSize;
+    return buf.byteLength - offset === ${this.accountDataClassName}.byteSize;
   }
 
   /**
