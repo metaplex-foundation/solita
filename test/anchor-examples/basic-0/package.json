@@ -6,9 +6,6 @@
     "test": "node dist/test/*.js",
     "posttest": "yarn amman:stop",
     "amman:start": "DEBUG=amman* amman validator",
-    "amman:stop": "pkill solana-test-validator",
-    "prestart": "solana airdrop 20 && anchor deploy",
-    "start": "PROGRAM_ID=`solana-keygen pubkey target/deploy/basic_0-keypair.json` ANCHOR_WALLET=`solana config get keypair | awk '{print $3}'` node client.js",
-    "start:debug": "PROGRAM_ID=`solana-keygen pubkey target/deploy/basic_0-keypair.json` ANCHOR_WALLET=`solana config get keypair | awk '{print $3}'` node --inspect-brk client.js"
+    "amman:stop": "pkill solana-test-validator"
   }
 }
