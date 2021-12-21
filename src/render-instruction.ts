@@ -129,8 +129,7 @@ export function create${this.upperCamelIxName}Instruction(
   }
 }
 
-export function renderInstruction(ix: IdlInstruction) {
-  const programId = 'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk'
+export function renderInstruction(ix: IdlInstruction, programId: string) {
   const renderer = new InstructionRenderer(ix, programId)
   return renderer.render()
 }
