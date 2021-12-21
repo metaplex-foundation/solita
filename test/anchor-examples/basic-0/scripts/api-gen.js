@@ -1,7 +1,7 @@
 // @ts-check
 'use strict'
 
-const PROGRAM_NAME = 'basic_1'
+const PROGRAM_NAME = 'basic_0'
 const PROGRAM_ID = 'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS'
 
 const path = require('path')
