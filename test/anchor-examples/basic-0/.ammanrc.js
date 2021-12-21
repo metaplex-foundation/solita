@@ -1,6 +1,6 @@
 'use strict'
 const path = require('path')
-const idl = require('./target/idl/basic_0.json')
+const idl = require('./idl/basic_0.json')
 const validator = {
   programs: [
     {

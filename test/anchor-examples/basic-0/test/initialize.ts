@@ -10,7 +10,8 @@ import {
   PayerTransactionHandler,
 } from '@metaplex-foundation/amman'
 
-import idl from '../target/idl/basic_0.json'
+const idl = require('../idl/basic_0.json')
+
 ;(function killStuckProcess() {
   test.onFinish(() => process.exit(0))
 })()
