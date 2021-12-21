@@ -20,7 +20,8 @@
     "types": ["node"],
     "moduleResolution": "node",
     "noImplicitReturns": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
   "include": ["src", "test"]
 }
