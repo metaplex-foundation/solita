@@ -91,13 +91,27 @@ export class SolanaIdlToApi {
   }
 }
 
+const AUCTION_HOUSE_OUTPUT_DIR = path.resolve(
+  __dirname,
+  '../../mpl/auction-house/js/src/generated'
+)
+const AUCTION_HOUSE_IDL_PATH = require.resolve(
+  '../test/fixtures/auction_house.json'
+)
+
 if (module === require.main) {
   async function main() {
-    const outputDir = path.resolve(
-      __dirname,
-      '../../mpl/auction-house/js/src/generated'
-    )
-    const idl = require('../test/fixtures/auction_house.json')
+    const OUTPUT_DIR = process.env.OUTPUT_DIR
+    const outputDir = OUTPUT_DIR
+      ? path.resolve(process.cwd(), OUTPUT_DIR)
+      : AUCTION_HOUSE_OUTPUT_DIR
+
+    const IDL = process.env.IDL
+    const idlPath = IDL
+      ? path.resolve(process.cwd(), IDL)
+      : AUCTION_HOUSE_IDL_PATH
+
+    const idl = require(idlPath)
     const solanaIdlToApi = new SolanaIdlToApi(idl)
     return solanaIdlToApi.renderAndWriteTo(outputDir)
   }
