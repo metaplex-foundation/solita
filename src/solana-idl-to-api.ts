@@ -5,6 +5,7 @@ import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
 import { Idl } from './types'
 import { logDebug, logInfo, prepareTargetDir } from './utils'
+import { format, Options } from 'prettier'
 
 export * from './types'
 
@@ -12,22 +13,71 @@ function renderIndex(modules: string[]) {
   return modules.map((x) => `export * from './${x}';`).join('\n')
 }
 
+const DEFAULT_FORMAT_OPTS: Options = {
+  semi: false,
+  singleQuote: true,
+  trailingComma: 'es5',
+  useTabs: false,
+  tabWidth: 2,
+  arrowParens: 'always',
+  printWidth: 80,
+  parser: 'typescript',
+}
+
 export class SolanaIdlToApi {
-  constructor(private readonly idl: Idl) {}
+  private readonly formatCode: boolean
+  private readonly formatOpts: Options
+  constructor(
+    private readonly idl: Idl,
+    {
+      formatCode = false,
+      formatOpts = {},
+    }: { formatCode?: boolean; formatOpts?: Options } = {}
+  ) {
+    this.formatCode = formatCode
+    this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
+  }
 
   renderCode() {
     const programId = this.idl.metadata.address
     const instructions: Record<string, string> = {}
     for (const ix of this.idl.instructions) {
-      instructions[ix.name] = renderInstruction(ix, programId)
+      let code = renderInstruction(ix, programId)
+      if (this.formatCode) {
+        try {
+          code = format(code, this.formatOpts)
+        } catch (err) {
+          console.error(`Failed to format ${ix.name} instruction`)
+          console.error(err)
+        }
+      }
+      instructions[ix.name] = code
     }
 
     const accounts: Record<string, string> = {}
     for (const account of this.idl.accounts ?? []) {
-      accounts[account.name] = renderAccount(account)
+      let code = renderAccount(account)
+      if (this.formatCode) {
+        try {
+          code = format(code, this.formatOpts)
+        } catch (err) {
+          console.error(`Failed to format ${account.name} account`)
+          console.error(err)
+        }
+      }
+      accounts[account.name] = code
     }
 
-    const errors = renderErrors(this.idl.errors ?? [])
+    let errors = renderErrors(this.idl.errors ?? [])
+    if (errors != null && this.formatCode) {
+      try {
+        errors = format(errors, this.formatOpts)
+      } catch (err) {
+        console.error(`Failed to format errors`)
+        console.error(err)
+      }
+    }
+
     return { instructions, accounts, errors }
   }
 
@@ -97,6 +147,7 @@ export class SolanaIdlToApi {
   }
 }
 
+/*
 const AUCTION_HOUSE_OUTPUT_DIR = path.resolve(
   __dirname,
   '../../mpl/auction-house/js/src/generated'
@@ -129,3 +180,4 @@ if (module === require.main) {
       process.exit(1)
     })
 }
+*/
