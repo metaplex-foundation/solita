@@ -35,7 +35,7 @@ class InstructionRenderer {
 
     this.argsTypename = `${this.upperCamelIxName}InstructionArgs`
     this.accountsTypename = `${this.upperCamelIxName}InstructionAccounts`
-    this.instructionDiscriminatorName = `${this.camelIxName}AccountDiscriminator`
+    this.instructionDiscriminatorName = `${this.camelIxName}InstructionDiscriminator`
   }
 
   private renderIxArgField = (arg: IdlInstructionArg) => {
