@@ -1,6 +1,10 @@
 import test from 'tape'
 import { Connection, SystemProgram, Transaction } from '@solana/web3.js'
-import { createInitializeInstruction, MyAccountAccountData } from '../src/'
+import {
+  createInitializeInstruction,
+  createUpdateInstruction,
+  MyAccountAccountData,
+} from '../src/'
 import {
   AddressLabels,
   airdrop,
@@ -57,7 +61,7 @@ async function initialize() {
   }
 }
 
-test('initialize', async (t) => {
+test.skip('initialize', async (t) => {
   const { res, connection, myAccount } = await initialize()
 
   assertConfirmedTransaction(t, res.txConfirmed)
@@ -73,4 +77,22 @@ test('initialize', async (t) => {
     '1',
     'initializes account with provided data'
   )
+})
+
+test('update', async (t) => {
+  const { connection, myAccount, transactionHandler } = await initialize()
+
+  const ix = createUpdateInstruction({ myAccount }, { data: 2 })
+  const tx = new Transaction().add(ix)
+  const res = await transactionHandler.sendAndConfirmTransaction(tx, [])
+
+  assertConfirmedTransaction(t, res.txConfirmed)
+  assertTransactionSummary(t, res.txSummary, {
+    msgRx: [/instruction: update/i, /success/],
+  })
+
+  const accountInfo = await connection.getAccountInfo(myAccount)
+  const [account] = MyAccountAccountData.fromAccountInfo(accountInfo!)
+
+  t.equal(account.data.toString(), '2', 'updates account with provided data')
 })
