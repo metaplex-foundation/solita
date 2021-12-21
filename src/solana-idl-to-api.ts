@@ -22,19 +22,24 @@ export class SolanaIdlToApi {
     }
 
     const accounts: Record<string, string> = {}
-    for (const account of this.idl.accounts) {
+    for (const account of this.idl.accounts ?? []) {
       accounts[account.name] = renderAccount(account)
     }
 
-    const errors = renderErrors(this.idl.errors)
+    const errors = renderErrors(this.idl.errors ?? [])
     return { instructions, accounts, errors }
   }
 
   async renderAndWriteTo(outputDir: PathLike) {
     const { instructions, accounts, errors } = this.renderCode()
     await this.writeInstructions(outputDir, instructions)
-    await this.writeAccounts(outputDir, accounts)
-    await this.writeErrors(outputDir, errors)
+
+    if (Object.keys(accounts).length !== 0) {
+      await this.writeAccounts(outputDir, accounts)
+    }
+    if (errors != null) {
+      await this.writeErrors(outputDir, errors)
+    }
   }
 
   // -----------------

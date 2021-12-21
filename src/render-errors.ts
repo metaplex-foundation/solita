@@ -23,6 +23,8 @@ createErrorFromNameLookup.set('${name}', () => new ${className}())
 }
 
 export function renderErrors(errors: IdlError[]) {
+  if (errors.length === 0) return null
+
   const errorsCode = errors.map(renderError).join('\n')
   return `const createErrorFromCodeLookup: Map<number, () => Error> = new Map();
 const createErrorFromNameLookup: Map<string, () => Error> = new Map();
