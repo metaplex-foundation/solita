@@ -1,9 +1,12 @@
 import {
   assertKnownPackage,
+  BEET_EXPORT_NAME,
+  BEET_SOLANA_EXPORT_NAME,
   BEET_SOLANA_PACKAGE,
   SerdePackage,
   serdePackageExportName,
   serdePackageTypePrefix,
+  SOLANA_WEB3_EXPORT_NAME,
 } from './serdes'
 import { TypeMapper } from './type-mapper'
 import { IdlAccount } from './types'
@@ -71,7 +74,7 @@ class AccountRenderer {
     return this.account.type.fields.map((f) => {
       this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
       const { pack, sourcePack } = this.typeMapper.map(f.type, f.name)
-      if (pack === BEET_SOLANA_PACKAGE) {
+      if (sourcePack === BEET_SOLANA_PACKAGE) {
         this.needsBeetSolana = true
       }
       if (pack != null) {
@@ -93,15 +96,12 @@ class AccountRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const web3Imports = ['AccountInfo', 'Connection', 'Commitment', 'PublicKey']
     const beetSolana = this.needsBeetSolana
-      ? `\nimport * as beetSolana from '@metaplex-foundation/beet-solana';`
+      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '@metaplex-foundation/beet-solana';`
       : ''
 
-    return `import {
-  ${web3Imports.join(',\n  ')}
-} from '@solana/web3.js';
-import * as beet from '@metaplex-foundation/beet';${beetSolana}`
+    return `import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
+import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
   }
 
   // -----------------
@@ -159,11 +159,11 @@ export class ${this.accountDataClassName} {
   }
 
   /**
-   * Deserializes the {@link ${this.accountDataClassName}} from the data of the provided {@link AccountInfo}.
+   * Deserializes the {@link ${this.accountDataClassName}} from the data of the provided {@link web3.AccountInfo}.
    * @returns a tuple of the account data and the offset up to which the buffer was read to obtain it.
    */
   static fromAccountInfo(
-    accountInfo: AccountInfo<Buffer>,
+    accountInfo: web3.AccountInfo<Buffer>,
     offset = 0
   ): [ ${this.accountDataClassName}, number ]  {
     return ${this.accountDataClassName}.deserialize(accountInfo.data, offset)
@@ -204,8 +204,8 @@ export class ${this.accountDataClassName} {
    * {@link ${this.accountDataClassName}} data from rent
    */
   static async getMinimumBalanceForRentExemption(
-    connection: Connection,
-    commitment?: Commitment,
+    connection: web3.Connection,
+    commitment?: web3.Commitment,
   ): Promise<number> {
     return connection.getMinimumBalanceForRentExemption(
       ${this.accountDataClassName}.byteSize,
