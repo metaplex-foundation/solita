@@ -3,12 +3,18 @@ import { strict as assert } from 'assert'
 
 export const BEET_PACKAGE = '@metaplex-foundation/beet'
 export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
+export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
 export const BEET_EXPORT_NAME = 'beet'
 export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
-export type SerdePackage = typeof BEET_PACKAGE | typeof BEET_SOLANA_PACKAGE
+export const SOLANA_WEB3_EXPORT_NAME = 'web3'
+export type SerdePackage =
+  | typeof BEET_PACKAGE
+  | typeof BEET_SOLANA_PACKAGE
+  | typeof SOLANA_WEB3_PACKAGE
 export type SerdePackageExportName =
   | typeof BEET_EXPORT_NAME
   | typeof BEET_SOLANA_EXPORT_NAME
+  | typeof SOLANA_WEB3_EXPORT_NAME
 
 export function serdePackageExportName(
   pack: SerdePackage | undefined
@@ -16,9 +22,11 @@ export function serdePackageExportName(
   if (pack == null) return null
   switch (pack) {
     case BEET_PACKAGE:
-      return 'beet'
+      return BEET_EXPORT_NAME
     case BEET_SOLANA_PACKAGE:
-      return 'beetSolana'
+      return BEET_SOLANA_EXPORT_NAME
+    case SOLANA_WEB3_PACKAGE:
+      return SOLANA_WEB3_EXPORT_NAME
     default:
       throw new UnreachableCaseError(pack)
   }
@@ -30,7 +38,11 @@ export function serdePackageTypePrefix(pack: SerdePackage | undefined): string {
 }
 
 export function isKnownPackage(pack: string): pack is SerdePackage {
-  return pack === BEET_PACKAGE || pack === BEET_SOLANA_PACKAGE
+  return (
+    pack === BEET_PACKAGE ||
+    pack === BEET_SOLANA_PACKAGE ||
+    pack === SOLANA_WEB3_PACKAGE
+  )
 }
 
 export function assertKnownPackage(pack: string): asserts pack is SerdePackage {

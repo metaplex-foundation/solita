@@ -146,38 +146,3 @@ export class SolanaIdlToApi {
     await fs.writeFile(path.join(errorsDir, `index.ts`), errorsCode, 'utf8')
   }
 }
-
-/*
-const AUCTION_HOUSE_OUTPUT_DIR = path.resolve(
-  __dirname,
-  '../../mpl/auction-house/js/src/generated'
-)
-const AUCTION_HOUSE_IDL_PATH = require.resolve(
-  '../test/fixtures/auction_house.json'
-)
-
-if (module === require.main) {
-  async function main() {
-    const OUTPUT_DIR = process.env.OUTPUT_DIR
-    const outputDir = OUTPUT_DIR
-      ? path.resolve(process.cwd(), OUTPUT_DIR)
-      : AUCTION_HOUSE_OUTPUT_DIR
-
-    const IDL = process.env.IDL
-    const idlPath = IDL
-      ? path.resolve(process.cwd(), IDL)
-      : AUCTION_HOUSE_IDL_PATH
-
-    const idl = require(idlPath)
-    const solanaIdlToApi = new SolanaIdlToApi(idl)
-    return solanaIdlToApi.renderAndWriteTo(outputDir)
-  }
-
-  main()
-    .then(() => process.exit(0))
-    .catch((err: any) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
-*/
