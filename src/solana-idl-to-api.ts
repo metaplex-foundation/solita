@@ -16,9 +16,10 @@ export class SolanaIdlToApi {
   constructor(private readonly idl: Idl) {}
 
   renderCode() {
+    const programId = this.idl.metadata.address
     const instructions: Record<string, string> = {}
     for (const ix of this.idl.instructions) {
-      instructions[ix.name] = renderInstruction(ix)
+      instructions[ix.name] = renderInstruction(ix, programId)
     }
 
     const accounts: Record<string, string> = {}

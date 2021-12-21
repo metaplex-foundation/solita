@@ -81,6 +81,9 @@ export type Idl = {
   instructions: IdlInstruction[]
   accounts?: IdlAccount[]
   errors?: IdlError[]
+  metadata: {
+    address: string
+  }
 }
 
 export type PrimaryTypeMap = Record<
