@@ -59,7 +59,7 @@ async function initialize() {
   }
 }
 
-test.skip('initialize', async (t) => {
+test('initialize', async (t) => {
   const { res, connection, myAccount } = await initialize()
 
   assertConfirmedTransaction(t, res.txConfirmed)

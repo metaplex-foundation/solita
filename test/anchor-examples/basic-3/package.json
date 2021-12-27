@@ -1,0 +1,11 @@
+{
+  "name": "basic-1",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp -R ./idl dist/",
+    "pretest": "node scripts/api-gen.js && yarn build && yarn amman:start",
+    "test": "node dist/test/*.js",
+    "posttest": "yarn amman:stop",
+    "amman:start": "DEBUG=amman* amman validator",
+    "amman:stop": "pkill solana-test-validator"
+  }
+}
