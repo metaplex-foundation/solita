@@ -10,10 +10,11 @@
     "prepublishOnly": "yarn check:publish-ready",
     "postpublish": "git push origin && git push origin --tags",
     "build": "rimraf dist && tsc -p tsconfig.json",
-    "test": "yarn test:anchor:basic0 && yarn test:anchor:basic1 && yarn test:anchor:basic2",
+    "test": "yarn test:anchor:basic0 && yarn test:anchor:basic1 && yarn test:anchor:basic2 && yarn test:anchor:basic3",
     "test:anchor:basic0": "cd ./test/anchor-examples/basic-0 && yarn test",
     "test:anchor:basic1": "cd ./test/anchor-examples/basic-1 && yarn test",
     "test:anchor:basic2": "cd ./test/anchor-examples/basic-2 && yarn test",
+    "test:anchor:basic3": "cd ./test/anchor-examples/basic-3 && yarn test",
     "lint": "prettier -c ./src/",
     "lint:fix": "prettier --format ./src",
     "doc": "rimraf ./docs && typedoc",
@@ -51,7 +52,7 @@
     "snake-case": "^3.0.4"
   },
   "devDependencies": {
-    "@metaplex-foundation/amman": "^0.0.8",
+    "@metaplex-foundation/amman": "^0.0.9",
     "@project-serum/anchor": "^0.19.1-beta.1",
     "@types/debug": "^4.1.7",
     "@types/node": "^16.11.12",
