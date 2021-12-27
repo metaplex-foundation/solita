@@ -1,12 +1,16 @@
-import { IdlInstruction, IdlInstructionArg, ProcessedSerde } from './types'
-import { TypeMapper } from './type-mapper'
 import {
+  IdlInstruction,
+  IdlInstructionArg,
+  ProcessedSerde,
   BEET_EXPORT_NAME,
   BEET_SOLANA_EXPORT_NAME,
+  SOLANA_WEB3_EXPORT_NAME,
+} from './types'
+import { TypeMapper } from './type-mapper'
+import {
   renderDataStruct,
   serdePackageTypePrefix,
   serdeProcess,
-  SOLANA_WEB3_EXPORT_NAME,
 } from './serdes'
 import { instructionDiscriminator } from './utils'
 

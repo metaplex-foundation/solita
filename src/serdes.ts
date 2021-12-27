@@ -1,20 +1,20 @@
 import { UnreachableCaseError } from './utils'
 import { strict as assert } from 'assert'
 import {
+  BEET_EXPORT_NAME,
+  BEET_PACKAGE,
+  BEET_SOLANA_EXPORT_NAME,
+  BEET_SOLANA_PACKAGE,
   IdlAccountField,
   IdlInstructionArg,
   IdlType,
   IdlTypeOption,
   ProcessedSerde,
+  SOLANA_WEB3_EXPORT_NAME,
+  SOLANA_WEB3_PACKAGE,
 } from './types'
 import { resolveSerdeAlias, TypeMapper } from './type-mapper'
 
-export const BEET_PACKAGE = '@metaplex-foundation/beet'
-export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
-export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
-export const BEET_EXPORT_NAME = 'beet'
-export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
-export const SOLANA_WEB3_EXPORT_NAME = 'web3'
 export type SerdePackage =
   | typeof BEET_PACKAGE
   | typeof BEET_SOLANA_PACKAGE

@@ -1,4 +1,9 @@
-import { IdlType, IdlTypeOption, PrimaryTypeMap } from './types'
+import {
+  BEET_EXPORT_NAME,
+  IdlType,
+  IdlTypeOption,
+  PrimaryTypeMap,
+} from './types'
 import { logDebug } from './utils'
 import { strict as assert } from 'assert'
 import {
@@ -9,7 +14,7 @@ import {
   BeetSolanaTypeMapKey,
   supportedTypeMap as beetSolanaSupportedTypeMap,
 } from '@metaplex-foundation/beet-solana'
-import { assertKnownPackage, BEET_EXPORT_NAME, SerdePackage } from './serdes'
+import { assertKnownPackage, SerdePackage } from './serdes'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
