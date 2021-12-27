@@ -11,6 +11,15 @@ import {
 } from '@metaplex-foundation/beet-solana'
 import { assertKnownPackage, BEET_EXPORT_NAME, SerdePackage } from './serdes'
 
+export function resolveSerdeAlias(ty: string) {
+  switch (ty) {
+    case 'option':
+      return 'coption'
+    default:
+      return ty
+  }
+}
+
 export class TypeMapper {
   constructor(
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
@@ -58,7 +67,7 @@ export class TypeMapper {
   }
 
   assertBeetSupported(
-    serde: string,
+    serde: IdlType,
     context: string
   ): asserts serde is BeetTypeMapKey | BeetSolanaTypeMapKey {
     assert(

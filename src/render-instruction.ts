@@ -1,18 +1,14 @@
-import { IdlInstruction, IdlInstructionArg } from './types'
-import { InstructionBeetStructRenderer } from './instruction-beet-struct'
+import { IdlInstruction, IdlInstructionArg, ProcessedSerde } from './types'
 import { TypeMapper } from './type-mapper'
-import { serdePackageTypePrefix } from './serdes'
+import {
+  BEET_EXPORT_NAME,
+  BEET_SOLANA_EXPORT_NAME,
+  renderDataStruct,
+  serdePackageTypePrefix,
+  serdeProcess,
+  SOLANA_WEB3_EXPORT_NAME,
+} from './serdes'
 import { instructionDiscriminator } from './utils'
-
-function renderImports() {
-  const web3Imports = ['AccountMeta', 'PublicKey', 'TransactionInstruction']
-
-  return `import {
-  ${web3Imports.join(',\n  ')}
-} from '@solana/web3.js';
-import * as beet from '@metaplex-foundation/beet';
-`
-}
 
 class InstructionRenderer {
   readonly upperCamelIxName: string
@@ -20,6 +16,8 @@ class InstructionRenderer {
   readonly argsTypename: string
   readonly accountsTypename: string
   readonly instructionDiscriminatorName: string
+  readonly structArgName: string
+  needsBeetSolana: boolean = false
 
   constructor(
     readonly ix: IdlInstruction,
@@ -36,8 +34,12 @@ class InstructionRenderer {
     this.argsTypename = `${this.upperCamelIxName}InstructionArgs`
     this.accountsTypename = `${this.upperCamelIxName}InstructionAccounts`
     this.instructionDiscriminatorName = `${this.camelIxName}InstructionDiscriminator`
+    this.structArgName = `${ix.name}Struct`
   }
 
+  // -----------------
+  // Instruction Args Type
+  // -----------------
   private renderIxArgField = (arg: IdlInstructionArg) => {
     const { typescriptType, pack } = this.typeMapper.map(arg.type, arg.name)
     const typePrefix = serdePackageTypePrefix(pack)
@@ -55,6 +57,21 @@ class InstructionRenderer {
     return code
   }
 
+  // -----------------
+  // Imports
+  // -----------------
+  private renderImports() {
+    const beetSolana = this.needsBeetSolana
+      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '@metaplex-foundation/beet-solana';`
+      : ''
+
+    return `import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
+import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
+  }
+
+  // -----------------
+  // Accounts
+  // -----------------
   private renderIxAccountKeys() {
     const keys = this.ix.accounts
       .map(
@@ -70,8 +87,9 @@ class InstructionRenderer {
   }
 
   private renderAccountsType() {
+    const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = this.ix.accounts
-      .map((x) => `${x.name}: PublicKey`)
+      .map((x) => `${x.name}: ${web3}.PublicKey`)
       .join('\n  ')
 
     return `export type ${this.accountsTypename} = {
@@ -88,21 +106,44 @@ class InstructionRenderer {
 `
   }
 
+  // -----------------
+  // Data Struct
+  // -----------------
+  private serdeProcess() {
+    const { processed, needsBeetSolana } = serdeProcess(
+      this.ix.args,
+      this.typeMapper
+    )
+    this.needsBeetSolana = needsBeetSolana
+    return processed
+  }
+
+  private renderDataStruct(args: ProcessedSerde[]) {
+    return renderDataStruct({
+      fields: args,
+      structVarName: this.structArgName,
+      argsTypename: this.argsTypename,
+      discriminatorName: 'instructionDiscriminator',
+    })
+  }
+
   render() {
     const ixArgType = this.renderIxArgsType()
     const accountsType = this.renderAccountsType()
-    const imports = renderImports()
 
-    const structRenderer = InstructionBeetStructRenderer.create(this.ix)
-    const argsStructType = structRenderer.render()
-    const argsStructName = structRenderer.structArgName
+    const processedArgs = this.serdeProcess()
+    const argsStructType = this.renderDataStruct(processedArgs)
 
     const keys = this.renderIxAccountKeys()
     const accountsDestructure = this.renderAccountsDestructure()
     const instructionDisc = JSON.stringify(
       Array.from(instructionDiscriminator(this.ix.name))
     )
+
+    const web3 = SOLANA_WEB3_EXPORT_NAME
+    const imports = this.renderImports()
     return `${imports}
+
 ${ixArgType}
 ${argsStructType}
 ${accountsType}
@@ -113,13 +154,13 @@ export function create${this.upperCamelIxName}Instruction(
   args: ${this.argsTypename}
 ) {
   ${accountsDestructure}
-  const [data ] = ${argsStructName}.serialize({ 
+  const [data ] = ${this.structArgName}.serialize({ 
     instructionDiscriminator: ${this.instructionDiscriminatorName},
     ...args
   });
-  const keys: AccountMeta[] = ${keys}
-  const ix = new TransactionInstruction({
-    programId: new PublicKey('${this.programId}'),
+  const keys: ${web3}.AccountMeta[] = ${keys}
+  const ix = new ${web3}.TransactionInstruction({
+    programId: new ${web3}.PublicKey('${this.programId}'),
     keys,
     data
   });
@@ -133,19 +174,3 @@ export function renderInstruction(ix: IdlInstruction, programId: string) {
   const renderer = new InstructionRenderer(ix, programId)
   return renderer.render()
 }
-
-/*
-if (module === require.main) {
-  async function main() {
-    const ix = require('../test/fixtures/auction_house.json').instructions[3]
-    console.log(renderInstruction(ix))
-  }
-
-  main()
-    .then(() => process.exit(0))
-    .catch((err: any) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
-*/

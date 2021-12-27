@@ -11,7 +11,11 @@ import {
   BeetSolanaExports,
   BeetSolanaTypeMapKey,
 } from '@metaplex-foundation/beet-solana'
+import { SerdePackage } from './serdes'
 
+// -----------------
+// IDL
+// -----------------
 export type IdlInstructionAccount = {
   name: string
   isMut: boolean
@@ -56,7 +60,7 @@ export type IdlInstruction = {
 
 export type IdlAccountField = {
   name: string
-  type: string
+  type: IdlType
 }
 
 export type IdlAccountType = {
@@ -86,9 +90,18 @@ export type Idl = {
   }
 }
 
+// -----------------
+// De/Serializers + Extensions
+// -----------------
 export type PrimaryTypeMap = Record<
   BeetTypeMapKey | BeetSolanaTypeMapKey,
   SupportedTypeDefinition & {
     beet: BeetExports | BeetSolanaExports
   }
 >
+export type ProcessedSerde = {
+  name: string
+  sourcePack: SerdePackage
+  type: string
+  inner?: ProcessedSerde
+}
