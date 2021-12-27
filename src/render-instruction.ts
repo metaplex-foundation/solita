@@ -5,6 +5,10 @@ import {
   BEET_EXPORT_NAME,
   BEET_SOLANA_EXPORT_NAME,
   SOLANA_WEB3_EXPORT_NAME,
+  IdlInstructionAccount,
+  SOLANA_SPL_TOKEN_PACKAGE,
+  BEET_SOLANA_PACKAGE,
+  SOLANA_SPL_TOKEN_EXPORT_NAME,
 } from './types'
 import { TypeMapper } from './type-mapper'
 import {
@@ -13,6 +17,15 @@ import {
   serdeProcess,
 } from './serdes'
 import { instructionDiscriminator } from './utils'
+import {
+  renderKnownPubkeyAccess,
+  ResolvedKnownPubkey,
+  resolveKnownPubkey,
+} from './known-pubkeys'
+
+type ProcessedAccountKey = IdlInstructionAccount & {
+  knownPubkey?: ResolvedKnownPubkey
+}
 
 class InstructionRenderer {
   readonly upperCamelIxName: string
@@ -64,35 +77,54 @@ class InstructionRenderer {
   // -----------------
   // Imports
   // -----------------
-  private renderImports() {
+  private renderImports(processedKeys: ProcessedAccountKey[]) {
     const beetSolana = this.needsBeetSolana
-      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '@metaplex-foundation/beet-solana';`
+      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '${BEET_SOLANA_PACKAGE}';`
       : ''
 
-    return `import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
-import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
+    const needsSplToken = processedKeys.some(
+      (x) => x.knownPubkey?.pack === SOLANA_SPL_TOKEN_PACKAGE
+    )
+    const splToken = needsSplToken
+      ? `\nimport * as ${SOLANA_SPL_TOKEN_EXPORT_NAME} from '${SOLANA_SPL_TOKEN_PACKAGE}';`
+      : ''
+
+    return `
+import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
+import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet'
+${splToken}
+${beetSolana}`.trim()
   }
 
   // -----------------
   // Accounts
   // -----------------
-  private renderIxAccountKeys() {
-    const keys = this.ix.accounts
-      .map(
-        ({ name, isMut, isSigner }) =>
-          `{
-      pubkey: ${name},
+  private processIxAccounts(): ProcessedAccountKey[] {
+    return this.ix.accounts.map((acc) => {
+      const knownPubkey = resolveKnownPubkey(acc.name)
+      return knownPubkey == null ? acc : { ...acc, knownPubkey }
+    })
+  }
+
+  private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
+    const keys = processedKeys
+      .map(({ name, isMut, isSigner, knownPubkey }) => {
+        const access =
+          knownPubkey == null ? name : renderKnownPubkeyAccess(knownPubkey)
+        return `{
+      pubkey: ${access},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     }`
-      )
+      })
       .join(',\n    ')
     return `[\n    ${keys}\n  ]\n`
   }
 
-  private renderAccountsType() {
+  private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
     const web3 = SOLANA_WEB3_EXPORT_NAME
-    const fields = this.ix.accounts
+    const fields = processedKeys
+      .filter((x) => x.knownPubkey == null)
       .map((x) => `${x.name}: ${web3}.PublicKey`)
       .join('\n  ')
 
@@ -102,8 +134,11 @@ import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
 `
   }
 
-  private renderAccountsDestructure() {
-    const params = this.ix.accounts.map((x) => `${x.name}`).join(',\n    ')
+  private renderAccountsDestructure(processedKeys: ProcessedAccountKey[]) {
+    const params = processedKeys
+      .filter((x) => x.knownPubkey == null)
+      .map((x) => `${x.name}`)
+      .join(',\n    ')
     return `const {
     ${params}
   } = accounts;
@@ -133,19 +168,20 @@ import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
 
   render() {
     const ixArgType = this.renderIxArgsType()
-    const accountsType = this.renderAccountsType()
+    const processedKeys = this.processIxAccounts()
+    const accountsType = this.renderAccountsType(processedKeys)
 
     const processedArgs = this.serdeProcess()
     const argsStructType = this.renderDataStruct(processedArgs)
 
-    const keys = this.renderIxAccountKeys()
-    const accountsDestructure = this.renderAccountsDestructure()
+    const keys = this.renderIxAccountKeys(processedKeys)
+    const accountsDestructure = this.renderAccountsDestructure(processedKeys)
     const instructionDisc = JSON.stringify(
       Array.from(instructionDiscriminator(this.ix.name))
     )
 
     const web3 = SOLANA_WEB3_EXPORT_NAME
-    const imports = this.renderImports()
+    const imports = this.renderImports(processedKeys)
     return `${imports}
 
 ${ixArgType}

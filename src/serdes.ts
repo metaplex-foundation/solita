@@ -45,7 +45,7 @@ export function serdePackageTypePrefix(pack: SerdePackage | undefined): string {
   return packExportName == null ? '' : `${packExportName}.`
 }
 
-export function isKnownPackage(pack: string): pack is SerdePackage {
+export function isKnownSerdePackage(pack: string): pack is SerdePackage {
   return (
     pack === BEET_PACKAGE ||
     pack === BEET_SOLANA_PACKAGE ||
@@ -53,9 +53,11 @@ export function isKnownPackage(pack: string): pack is SerdePackage {
   )
 }
 
-export function assertKnownPackage(pack: string): asserts pack is SerdePackage {
+export function assertKnownSerdePackage(
+  pack: string
+): asserts pack is SerdePackage {
   assert(
-    isKnownPackage(pack),
+    isKnownSerdePackage(pack),
     `${pack} is an unknown and thus not yet supported de/serializer package`
   )
 }
@@ -71,7 +73,7 @@ function processField(
     typeMapper.assertBeetSupported(field.type, `account field ${field.name}`)
     const { pack, sourcePack } = typeMapper.map(field.type, field.name)
     if (pack != null) {
-      assertKnownPackage(pack)
+      assertKnownSerdePackage(pack)
     }
     return { name: field.name, type: field.type, sourcePack }
   }
