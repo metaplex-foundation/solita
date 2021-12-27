@@ -1,15 +1,13 @@
 import {
-  assertKnownPackage,
   BEET_EXPORT_NAME,
   BEET_SOLANA_EXPORT_NAME,
-  BEET_SOLANA_PACKAGE,
-  SerdePackage,
+  renderDataStruct,
   serdePackageExportName,
-  serdePackageTypePrefix,
+  serdeProcess,
   SOLANA_WEB3_EXPORT_NAME,
 } from './serdes'
 import { TypeMapper } from './type-mapper'
-import { IdlAccount } from './types'
+import { IdlAccount, ProcessedSerde } from './types'
 import { accountDiscriminator } from './utils'
 
 function colonSeparatedTypedField(
@@ -17,12 +15,6 @@ function colonSeparatedTypedField(
   prefix = ''
 ) {
   return `${prefix}${field.name}: ${field.tsType}`
-}
-
-type AccountBeetField = {
-  name: string
-  sourcePack: SerdePackage
-  type: string
 }
 
 class AccountRenderer {
@@ -54,6 +46,15 @@ class AccountRenderer {
     this.accountDiscriminatorName = `${this.camelAccountName}AccountDiscriminator`
   }
 
+  private serdeProcess() {
+    const { processed, needsBeetSolana } = serdeProcess(
+      this.account.type.fields,
+      this.typeMapper
+    )
+    this.needsBeetSolana = needsBeetSolana
+    return processed
+  }
+
   // -----------------
   // Rendered Fields
   // -----------------
@@ -67,21 +68,6 @@ class AccountRenderer {
         tsType = `${packExportName}.${typescriptType}`
       }
       return { name: f.name, tsType }
-    })
-  }
-
-  private getBeetFields(): AccountBeetField[] {
-    return this.account.type.fields.map((f) => {
-      this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-      const { pack, sourcePack } = this.typeMapper.map(f.type, f.name)
-      if (sourcePack === BEET_SOLANA_PACKAGE) {
-        this.needsBeetSolana = true
-      }
-      if (pack != null) {
-        assertKnownPackage(pack)
-      }
-      const packExportName = serdePackageExportName(pack)
-      return { name: f.name, packExportName, type: f.type, sourcePack }
     })
   }
 
@@ -236,32 +222,19 @@ export class ${this.accountDataClassName} {
   // -----------------
   // Struct
   // -----------------
-  private renderDataStruct(fields: AccountBeetField[]) {
-    const fieldDecls = fields
-      .map(({ name, sourcePack, type }) => {
-        const typePrefix = serdePackageTypePrefix(sourcePack)
-        return `['${name}', ${typePrefix}${type}]`
-      })
-      .join(',\n    ')
-
-    return `const ${this.dataStructName} = new beet.BeetStruct<
-    ${this.accountDataClassName},
-    ${this.accountDataArgsTypeName} & {
-    accountDiscriminator: number[];
-  }
->(
-  [
-    ['accountDiscriminator', beet.fixedSizeArray(beet.u8, 8)],
-    ${fieldDecls}
-  ],
-  ${this.accountDataClassName}.fromArgs,
-  '${this.accountDataClassName}'
-)`
+  private renderDataStruct(fields: ProcessedSerde[]) {
+    return renderDataStruct({
+      fields,
+      structVarName: this.dataStructName,
+      className: this.accountDataClassName,
+      argsTypename: this.accountDataArgsTypeName,
+      discriminatorName: 'accountDiscriminator',
+    })
   }
 
   render() {
     const typedFields = this.getTypedFields()
-    const beetFields = this.getBeetFields()
+    const beetFields = this.serdeProcess()
     const imports = this.renderImports()
     const accountDataArgsType = this.renderAccountDataArgsType(typedFields)
     const accountDataClass = this.renderAccountDataClass(typedFields)

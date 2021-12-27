@@ -8,6 +8,8 @@ import {
 
 type Field = IdlInstructionArg & { name: string; type: string | IdlTypeOption }
 
+// TODO(thlorenz): Obsolete and should be removed, only serves as guide on how to handle COption ATM
+// see: renderBeetOptionType
 export class InstructionBeetStructRenderer {
   private readonly typeName: string
   readonly structArgName: string
