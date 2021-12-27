@@ -1,20 +1,20 @@
 import { UnreachableCaseError } from './utils'
 import { strict as assert } from 'assert'
 import {
+  BEET_EXPORT_NAME,
+  BEET_PACKAGE,
+  BEET_SOLANA_EXPORT_NAME,
+  BEET_SOLANA_PACKAGE,
   IdlAccountField,
   IdlInstructionArg,
   IdlType,
   IdlTypeOption,
   ProcessedSerde,
+  SOLANA_WEB3_EXPORT_NAME,
+  SOLANA_WEB3_PACKAGE,
 } from './types'
 import { resolveSerdeAlias, TypeMapper } from './type-mapper'
 
-export const BEET_PACKAGE = '@metaplex-foundation/beet'
-export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
-export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
-export const BEET_EXPORT_NAME = 'beet'
-export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
-export const SOLANA_WEB3_EXPORT_NAME = 'web3'
 export type SerdePackage =
   | typeof BEET_PACKAGE
   | typeof BEET_SOLANA_PACKAGE
@@ -45,7 +45,7 @@ export function serdePackageTypePrefix(pack: SerdePackage | undefined): string {
   return packExportName == null ? '' : `${packExportName}.`
 }
 
-export function isKnownPackage(pack: string): pack is SerdePackage {
+export function isKnownSerdePackage(pack: string): pack is SerdePackage {
   return (
     pack === BEET_PACKAGE ||
     pack === BEET_SOLANA_PACKAGE ||
@@ -53,9 +53,11 @@ export function isKnownPackage(pack: string): pack is SerdePackage {
   )
 }
 
-export function assertKnownPackage(pack: string): asserts pack is SerdePackage {
+export function assertKnownSerdePackage(
+  pack: string
+): asserts pack is SerdePackage {
   assert(
-    isKnownPackage(pack),
+    isKnownSerdePackage(pack),
     `${pack} is an unknown and thus not yet supported de/serializer package`
   )
 }
@@ -71,7 +73,7 @@ function processField(
     typeMapper.assertBeetSupported(field.type, `account field ${field.name}`)
     const { pack, sourcePack } = typeMapper.map(field.type, field.name)
     if (pack != null) {
-      assertKnownPackage(pack)
+      assertKnownSerdePackage(pack)
     }
     return { name: field.name, type: field.type, sourcePack }
   }

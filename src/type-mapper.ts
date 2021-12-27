@@ -1,4 +1,9 @@
-import { IdlType, IdlTypeOption, PrimaryTypeMap } from './types'
+import {
+  BEET_EXPORT_NAME,
+  IdlType,
+  IdlTypeOption,
+  PrimaryTypeMap,
+} from './types'
 import { logDebug } from './utils'
 import { strict as assert } from 'assert'
 import {
@@ -9,7 +14,7 @@ import {
   BeetSolanaTypeMapKey,
   supportedTypeMap as beetSolanaSupportedTypeMap,
 } from '@metaplex-foundation/beet-solana'
-import { assertKnownPackage, BEET_EXPORT_NAME, SerdePackage } from './serdes'
+import { assertKnownSerdePackage, SerdePackage } from './serdes'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
@@ -34,7 +39,7 @@ export class TypeMapper {
       logDebug(`No mapped type found for ${name}: ${ty}, using any`)
       typescriptType = 'any'
     }
-    assertKnownPackage(mapped.sourcePack)
+    assertKnownSerdePackage(mapped.sourcePack)
     return { typescriptType, pack: mapped.pack, sourcePack: mapped.sourcePack }
   }
 
@@ -45,7 +50,7 @@ export class TypeMapper {
     if (typeof type === 'string') {
       const mapped = this.mapPrimitiveType(name, type)
       if (mapped.pack != null) {
-        assertKnownPackage(mapped.pack)
+        assertKnownSerdePackage(mapped.pack)
         pack = mapped.pack
       }
       typescriptType = mapped.typescriptType

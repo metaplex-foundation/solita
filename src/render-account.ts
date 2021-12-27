@@ -1,13 +1,16 @@
 import {
-  BEET_EXPORT_NAME,
-  BEET_SOLANA_EXPORT_NAME,
   renderDataStruct,
   serdePackageExportName,
   serdeProcess,
-  SOLANA_WEB3_EXPORT_NAME,
 } from './serdes'
 import { TypeMapper } from './type-mapper'
-import { IdlAccount, ProcessedSerde } from './types'
+import {
+  IdlAccount,
+  ProcessedSerde,
+  BEET_EXPORT_NAME,
+  BEET_SOLANA_EXPORT_NAME,
+  SOLANA_WEB3_EXPORT_NAME,
+} from './types'
 import { accountDiscriminator } from './utils'
 
 function colonSeparatedTypedField(
