@@ -1,7 +1,13 @@
 import { UnreachableCaseError } from './utils'
 import { strict as assert } from 'assert'
-import { IdlAccountField, IdlInstructionArg, ProcessedSerde } from './types'
-import { TypeMapper } from './type-mapper'
+import {
+  IdlAccountField,
+  IdlInstructionArg,
+  IdlType,
+  IdlTypeOption,
+  ProcessedSerde,
+} from './types'
+import { resolveSerdeAlias, TypeMapper } from './type-mapper'
 
 export const BEET_PACKAGE = '@metaplex-foundation/beet'
 export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
@@ -57,31 +63,62 @@ export function assertKnownPackage(pack: string): asserts pack is SerdePackage {
 // -----------------
 // Processing Account fields and Instruction args
 // -----------------
+function processField(
+  field: { name: string; type: IdlType },
+  typeMapper: TypeMapper
+): ProcessedSerde {
+  if (typeof field.type === 'string') {
+    typeMapper.assertBeetSupported(field.type, `account field ${field.name}`)
+    const { pack, sourcePack } = typeMapper.map(field.type, field.name)
+    if (pack != null) {
+      assertKnownPackage(pack)
+    }
+    return { name: field.name, type: field.type, sourcePack }
+  }
+  const optionType: IdlTypeOption = field.type as IdlTypeOption
+  if (optionType.option != null) {
+    const sourcePack = BEET_PACKAGE
+
+    const inner = processField(
+      { name: '<inner>', type: optionType.option },
+      typeMapper
+    )
+    return {
+      name: field.name,
+      type: 'option',
+      sourcePack,
+      inner,
+    }
+  }
+
+  throw new Error('Only option and string field types supported for now')
+}
+
 export function serdeProcess(
   fields: (IdlAccountField | IdlInstructionArg)[],
   typeMapper: TypeMapper
 ): { processed: ProcessedSerde[]; needsBeetSolana: boolean } {
-  let needsBeetSolana = false
-  const processed = fields.map((f) => {
-    // TODO(thlorenz): Handle Option types
-    assert(typeof f.type === 'string', 'only supporting string types for now')
-    typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-    const { pack, sourcePack } = typeMapper.map(f.type, f.name)
-    if (sourcePack === BEET_SOLANA_PACKAGE) {
-      needsBeetSolana = true
-    }
-    if (pack != null) {
-      assertKnownPackage(pack)
-    }
-    const packExportName = serdePackageExportName(pack)
-    return { name: f.name, packExportName, type: f.type, sourcePack }
-  })
+  const processed = fields.map((f) => processField(f, typeMapper))
+  const needsBeetSolana = processed.some(
+    (x) => x.sourcePack === BEET_SOLANA_PACKAGE
+  )
   return { processed, needsBeetSolana }
 }
 
 // -----------------
 // Rendering processed serdes to struct
 // -----------------
+function renderFieldType({ sourcePack, type, inner }: ProcessedSerde) {
+  const typePrefix = serdePackageTypePrefix(sourcePack)
+  const ty = resolveSerdeAlias(type)
+  if (inner == null) {
+    return `${typePrefix}${ty}`
+  }
+
+  const renderedInnerType: string = renderFieldType(inner)
+  return `${typePrefix}${ty}(${renderedInnerType})`
+}
+
 export function renderDataStruct({
   fields,
   structVarName,
@@ -96,9 +133,9 @@ export function renderDataStruct({
   discriminatorName: string
 }) {
   const fieldDecls = fields
-    .map(({ name, sourcePack, type }) => {
-      const typePrefix = serdePackageTypePrefix(sourcePack)
-      return `['${name}', ${typePrefix}${type}]`
+    .map((f) => {
+      const renderedType = renderFieldType(f)
+      return `['${f.name}', ${renderedType}]`
     })
     .join(',\n    ')
 

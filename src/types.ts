@@ -60,7 +60,7 @@ export type IdlInstruction = {
 
 export type IdlAccountField = {
   name: string
-  type: string
+  type: IdlType
 }
 
 export type IdlAccountType = {
@@ -103,4 +103,5 @@ export type ProcessedSerde = {
   name: string
   sourcePack: SerdePackage
   type: string
+  inner?: ProcessedSerde
 }

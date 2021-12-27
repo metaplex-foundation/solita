@@ -254,19 +254,3 @@ export function renderAccount(account: IdlAccount) {
   const renderer = new AccountRenderer(account, typeMapper)
   return renderer.render()
 }
-
-/*
-if (module === require.main) {
-  async function main() {
-    const account = require('../test/fixtures/auction_house.json').accounts[0]
-    console.log(renderAccount(account))
-  }
-
-  main()
-    .then(() => process.exit(0))
-    .catch((err: any) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
-*/
