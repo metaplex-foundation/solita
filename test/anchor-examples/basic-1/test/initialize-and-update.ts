@@ -1,5 +1,5 @@
 import test from 'tape'
-import { Connection, SystemProgram, Transaction } from '@solana/web3.js'
+import { Connection, Transaction } from '@solana/web3.js'
 import {
   createInitializeInstruction,
   createUpdateInstruction,
@@ -41,8 +41,6 @@ async function initialize() {
     {
       user: payer,
       myAccount,
-      // TODO(thlorenz): don't require these but include the defaults with generated code
-      systemProgram: SystemProgram.programId,
     },
     { data: 1 }
   )
