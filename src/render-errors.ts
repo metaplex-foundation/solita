@@ -13,7 +13,9 @@ export class ${className} extends Error {
   readonly name: string = '${name}';
   constructor() {
     super('${msg.replace(/[']/g, `\\'`)}');
-    Error.captureStackTrace(this, ${className});
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, ${className});
+    }
   }
 }
 
@@ -26,18 +28,22 @@ export function renderErrors(errors: IdlError[]) {
   if (errors.length === 0) return null
 
   const errorsCode = errors.map(renderError).join('\n')
-  return `const createErrorFromCodeLookup: Map<number, () => Error> = new Map();
-const createErrorFromNameLookup: Map<string, () => Error> = new Map();
+  return `
+type ErrorWithCode = Error & { code: number }
+type MaybeErrorWithCode = ErrorWithCode | null | undefined
+
+const createErrorFromCodeLookup: Map<number, () => ErrorWithCode> = new Map();
+const createErrorFromNameLookup: Map<string, () => ErrorWithCode> = new Map();
 ${errorsCode}
 
-export function errorFromCode(code: number): Error | null {
+export function errorFromCode(code: number): MaybeErrorWithCode {
   const createError = createErrorFromCodeLookup.get(code)
   return createError != null ? createError() : null;
 }
 
-export function errorFromName(name: string): Error | null {
+export function errorFromName(name: string): MaybeErrorWithCode {
   const createError = createErrorFromNameLookup.get(name)
   return createError != null ? createError() : null;
 }
-`
+`.trim()
 }
