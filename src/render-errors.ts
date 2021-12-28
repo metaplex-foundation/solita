@@ -32,12 +32,12 @@ ${errorsCode}
 
 export function errorFromCode(code: number): Error | null {
   const createError = createErrorFromCodeLookup.get(code)
-  return createError == null ? createError() : null;
+  return createError != null ? createError() : null;
 }
 
 export function errorFromName(name: string): Error | null {
   const createError = createErrorFromNameLookup.get(name)
-  return createError == null ? createError() : null;
+  return createError != null ? createError() : null;
 }
 `
 }
