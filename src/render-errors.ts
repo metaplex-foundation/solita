@@ -1,7 +1,12 @@
 import { IdlError } from './types'
 
+function asHex(code: number) {
+  return `0x${code.toString(16)}`
+}
+
 function renderError(error: IdlError) {
-  const { code, name, msg } = error
+  const { code: codeNum, name, msg } = error
+  const code = asHex(codeNum)
   const className = name
     .charAt(0)
     .toUpperCase()
