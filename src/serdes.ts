@@ -134,12 +134,23 @@ export function renderDataStruct({
   argsTypename: string
   discriminatorName: string
 }) {
-  const fieldDecls = fields
-    .map((f) => {
-      const renderedType = renderFieldType(f)
-      return `['${f.name}', ${renderedType}]`
-    })
-    .join(',\n    ')
+  const fieldDecls =
+    fields.length === 0
+      ? ''
+      : fields
+          .map((f) => {
+            const renderedType = renderFieldType(f)
+            return `['${f.name}', ${renderedType}]`
+          })
+          .join(',\n    ')
+
+  const structType =
+    fields.length === 0
+      ? `{ ${discriminatorName}: number[]; }`
+      : `${argsTypename} & {
+    ${discriminatorName}: number[];
+  }
+`
 
   // -----------------
   // Beet Struct (Account)
@@ -147,9 +158,7 @@ export function renderDataStruct({
   if (className != null) {
     return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetStruct<
     ${className},
-    ${argsTypename} & {
-    ${discriminatorName}: number[];
-  }
+    ${structType}
 >(
   [
     ['${discriminatorName}', ${BEET_EXPORT_NAME}.fixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
@@ -162,11 +171,7 @@ export function renderDataStruct({
     // -----------------
     // Beet Args Struct (Instruction)
     // -----------------
-    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetArgsStruct<
-    ${argsTypename} & {
-    ${discriminatorName}: number[];
-  }
->(
+    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetArgsStruct<${structType}>(
   [
     ['${discriminatorName}', ${BEET_EXPORT_NAME}.fixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
     ${fieldDecls}

@@ -81,12 +81,7 @@ test('create', async (t) => {
 test('increment', async (t) => {
   const { connection, counter, payer, transactionHandler } = await create()
 
-  const ix = createIncrementInstruction(
-    { counter, authority: payer },
-    {
-      authority: payer,
-    }
-  )
+  const ix = createIncrementInstruction({ counter, authority: payer })
   const tx = new Transaction().add(ix)
   const res = await transactionHandler.sendAndConfirmTransaction(tx, [])
   assertConfirmedTransaction(t, res.txConfirmed)

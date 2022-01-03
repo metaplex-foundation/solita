@@ -43,13 +43,10 @@ async function init() {
 
   await airdrop(connection, payer, 2)
 
-  const ix = createInitializeInstruction(
-    {
-      user: payer,
-      puppet,
-    },
-    {}
-  )
+  const ix = createInitializeInstruction({
+    user: payer,
+    puppet,
+  })
   const tx = new Transaction().add(ix)
   const res = await transactionHandler.sendAndConfirmTransaction(tx, [
     puppetKeypair,
