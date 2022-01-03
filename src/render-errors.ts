@@ -13,6 +13,10 @@ function renderError(error: IdlError) {
     .concat(`${name.slice(1)}Error`)
 
   return `
+
+/**
+ * ${name}: '${msg}'
+ */
 export class ${className} extends Error {
   readonly code: number = ${code};
   readonly name: string = '${name}';
@@ -41,11 +45,17 @@ const createErrorFromCodeLookup: Map<number, () => ErrorWithCode> = new Map();
 const createErrorFromNameLookup: Map<string, () => ErrorWithCode> = new Map();
 ${errorsCode}
 
+/**
+ * Attempts to resolve a custom program error from the provided error code.
+ */
 export function errorFromCode(code: number): MaybeErrorWithCode {
   const createError = createErrorFromCodeLookup.get(code)
   return createError != null ? createError() : null;
 }
 
+/**
+ * Attempts to resolve a custom program error from the provided error name, i.e. 'Unauthorized'.
+ */
 export function errorFromName(name: string): MaybeErrorWithCode {
   const createError = createErrorFromNameLookup.get(name)
   return createError != null ? createError() : null;
