@@ -3,9 +3,11 @@ import { Connection, Transaction } from '@solana/web3.js'
 import {
   CounterAccountData,
   createCreateInstruction,
+  createDecrementInstruction,
   createIncrementInstruction,
   errorFromCode,
   MaxCountExceededError,
+  MinCountSubceededError,
 } from '../src/'
 import {
   AddressLabels,
@@ -15,7 +17,7 @@ import {
   LOCALHOST,
   PayerTransactionHandler,
 } from '@metaplex-foundation/amman'
-import { initCusper } from '@metaplex-foundation/cusper'
+import { initCusper, ErrorWithLogs } from '@metaplex-foundation/cusper'
 import { strict as assert } from 'assert'
 
 const idl = require('../idl/basic_4.json')
@@ -23,6 +25,15 @@ const idl = require('../idl/basic_4.json')
 ;(function killStuckProcess() {
   test.onFinish(() => process.exit(0))
 })()
+
+function assertIsErrorWithLogs(err: unknown): asserts err is ErrorWithLogs {
+  const er = err as ErrorWithLogs
+  assert(typeof er.message === 'string')
+  assert(typeof er.name === 'string')
+  assert(er.logs != null, `Has logs ${er.toString()}`)
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const addressLabels = new AddressLabels(
   { basic1: idl.metadata.address },
@@ -72,12 +83,7 @@ async function create() {
 test('increment two times', async (t) => {
   const { connection, counter, payer, transactionHandler } = await create()
 
-  const ix = createIncrementInstruction(
-    { counter, authority: payer },
-    {
-      authority: payer,
-    }
-  )
+  const ix = createIncrementInstruction({ counter, authority: payer }, {})
   {
     t.comment('+++ First Increment')
     const tx = new Transaction().add(ix)
@@ -95,11 +101,15 @@ test('increment two times', async (t) => {
   }
 
   {
+    // HACK: working around 'cannot get recent blockhash' issue of local test validator
+    await sleep(4000)
+
     t.comment('+++ Second Increment')
     const tx = new Transaction().add(ix)
     try {
       await transactionHandler.sendAndConfirmTransaction(tx, [])
-    } catch (err: any) {
+    } catch (err) {
+      assertIsErrorWithLogs(err)
       const resolvedError = cusper.errorFromProgramLogs(err.logs)
       assert(resolvedError != null, 'throws known error')
 
@@ -112,5 +122,23 @@ test('increment two times', async (t) => {
 
     t.ok(account.authority.equals(payer), 'payer is still authority')
     t.equal(account.count.toString(), '1', 'keeps count at 1')
+  }
+})
+
+test('decrement before incrementing', async (t) => {
+  const { counter, payer, transactionHandler } = await create()
+  const ix = createDecrementInstruction({ counter, authority: payer }, {})
+
+  const tx = new Transaction().add(ix)
+  try {
+    await transactionHandler.sendAndConfirmTransaction(tx, [])
+  } catch (err) {
+    assertIsErrorWithLogs(err)
+    const resolvedError = cusper.errorFromProgramLogs(err.logs)
+    assert(resolvedError != null, 'throws known error')
+
+    t.equal(resolvedError.name, 'MinCountSubceeded', 'err name')
+    t.ok(resolvedError instanceof MinCountSubceededError, 'err instance')
+    t.match(resolvedError.message, /cannot decrement more/i, 'err message')
   }
 })
