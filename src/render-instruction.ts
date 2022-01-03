@@ -64,6 +64,7 @@ class InstructionRenderer {
   }
 
   private renderIxArgsType() {
+    if (this.ix.args.length === 0) return ''
     const fields = this.ix.args
       .map((field) => this.renderIxArgField(field))
       .join(',\n  ')
@@ -182,6 +183,11 @@ ${beetSolana}`.trim()
 
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const imports = this.renderImports(processedKeys)
+
+    const [createInstructionArgs, createInstructionArgsSpread] =
+      this.ix.args.length === 0
+        ? ['', '']
+        : [`args: ${this.argsTypename}`, '...args']
     return `${imports}
 
 ${ixArgType}
@@ -191,12 +197,12 @@ const ${this.instructionDiscriminatorName} = ${instructionDisc};
 
 export function create${this.upperCamelIxName}Instruction(
   accounts: ${this.accountsTypename},
-  args: ${this.argsTypename}
+  ${createInstructionArgs}
 ) {
   ${accountsDestructure}
   const [data ] = ${this.structArgName}.serialize({ 
     instructionDiscriminator: ${this.instructionDiscriminatorName},
-    ...args
+    ${createInstructionArgsSpread}
   });
   const keys: ${web3}.AccountMeta[] = ${keys}
   const ix = new ${web3}.TransactionInstruction({

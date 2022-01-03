@@ -31,7 +31,7 @@ test('initialize', async (t) => {
 
   await airdrop(connection, payer, 2)
 
-  const ix = createInitializeInstruction({}, [])
+  const ix = createInitializeInstruction({})
   const tx = new Transaction().add(ix)
   const res = await transactionHandler.sendAndConfirmTransaction(tx, [
     payerKeypair,

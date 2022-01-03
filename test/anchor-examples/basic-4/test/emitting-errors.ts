@@ -83,7 +83,7 @@ async function create() {
 test('increment two times', async (t) => {
   const { connection, counter, payer, transactionHandler } = await create()
 
-  const ix = createIncrementInstruction({ counter, authority: payer }, {})
+  const ix = createIncrementInstruction({ counter, authority: payer })
   {
     t.comment('+++ First Increment')
     const tx = new Transaction().add(ix)
@@ -127,7 +127,7 @@ test('increment two times', async (t) => {
 
 test('decrement before incrementing', async (t) => {
   const { counter, payer, transactionHandler } = await create()
-  const ix = createDecrementInstruction({ counter, authority: payer }, {})
+  const ix = createDecrementInstruction({ counter, authority: payer })
 
   const tx = new Transaction().add(ix)
   try {
