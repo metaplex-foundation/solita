@@ -8,7 +8,7 @@ const path = require('path')
 const generatedIdlDir = path.join(__dirname, '..', 'idl')
 const generatedSDKDir = path.join(__dirname, '..', 'src', 'generated')
 const { spawn } = require('child_process')
-const { SolanaIdlToApi } = require('../../../../dist/src/solana-idl-to-api')
+const { Solita } = require('../../../../dist/solita')
 const { writeFile } = require('fs/promises')
 
 const anchor = spawn('anchor', ['build', '--idl', generatedIdlDir])
@@ -42,7 +42,7 @@ async function generateTypeScriptSDK() {
     idl.metadata = { ...idl.metadata, address: PROGRAM_ID }
     await writeFile(generatedIdlPath, JSON.stringify(idl, null, 2))
   }
-  const gen = new SolanaIdlToApi(idl, { formatCode: true })
+  const gen = new Solita(idl, { formatCode: true })
   await gen.renderAndWriteTo(generatedSDKDir)
 
   console.error('Success!')

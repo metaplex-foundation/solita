@@ -1,4 +1,6 @@
-# solana-idl-to-api
+# solita
+
+**Sol** ana **I** DL **t** o **A** PI generator.
 
 ## LICENSE
 

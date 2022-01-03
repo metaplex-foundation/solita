@@ -1,9 +1,9 @@
 {
-  "name": "@metaplex-foundation/solana-idl-to-api",
+  "name": "@metaplex-foundation/solita",
   "version": "0.0.0",
   "description": "Generates SDK API from solana contract IDL.",
-  "main": "dist/src/solana-idl-to-api.js",
-  "types": "dist/src/solana-idl-to-api.d.ts",
+  "main": "dist/solita.js",
+  "types": "dist/solita.d.ts",
   "scripts": {
     "check:publish-ready": "yarn build",
     "preversion": "yarn check:publish-ready",
@@ -22,7 +22,7 @@
     "doc:update": "./sh/update-docs",
     "doctoc": "doctoc README.md"
   },
-  "repository": "git@github.com:metaplex-foundation/solana-idl-to-api.git",
+  "repository": "git@github.com:metaplex-foundation/solita.git",
   "author": "Thorsten Lorenz <thlorenz@gmx.de>",
   "license": "Apache-2.0",
   "private": false,

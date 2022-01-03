@@ -24,7 +24,7 @@ const DEFAULT_FORMAT_OPTS: Options = {
   parser: 'typescript',
 }
 
-export class SolanaIdlToApi {
+export class Solita {
   private readonly formatCode: boolean
   private readonly formatOpts: Options
   constructor(

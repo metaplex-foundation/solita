@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["src/solana-idl-to-api.ts"],
+  "entryPoints": ["src/solita.ts"],
   "excludePrivate": true,
   "categorizeByGroup": false,
   "readme": "none",
