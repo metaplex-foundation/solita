@@ -66,7 +66,9 @@ export class TypeMapper {
       sourcePack = mapped.sourcePack
       typescriptType = `${BEET_EXPORT_NAME}.COption<${inner}>`
     } else {
-      throw new Error(`Type ${type} is not supported yet`)
+      throw new Error(
+        `Type ${type} needed for name '${name}' is not supported yet`
+      )
     }
     return { typescriptType, pack, sourcePack }
   }

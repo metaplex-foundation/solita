@@ -5,10 +5,10 @@ import { sha256 } from 'js-sha256'
 import camelcase from 'camelcase'
 import { snakeCase } from 'snake-case'
 
-export const logError = debug('idl-ts:error')
-export const logInfo = debug('idl-ts:info')
-export const logDebug = debug('idl-ts:debug')
-export const logTrace = debug('idl-ts:trace')
+export const logError = debug('solita:error')
+export const logInfo = debug('solita:info')
+export const logDebug = debug('solita:debug')
+export const logTrace = debug('solita:trace')
 
 /**
  * Ensures that the given directory exists by creating it recursively when necessary.
