@@ -11,11 +11,7 @@ import {
   SOLANA_SPL_TOKEN_EXPORT_NAME,
 } from './types'
 import { TypeMapper } from './type-mapper'
-import {
-  renderDataStruct,
-  serdePackageTypePrefix,
-  serdeProcess,
-} from './serdes'
+import { renderDataStruct, serdeProcess } from './serdes'
 import { instructionDiscriminator } from './utils'
 import {
   renderKnownPubkeyAccess,
@@ -58,9 +54,8 @@ class InstructionRenderer {
   // Instruction Args Type
   // -----------------
   private renderIxArgField = (arg: IdlInstructionArg) => {
-    const { typescriptType, pack } = this.typeMapper.mapOld(arg.type, arg.name)
-    const typePrefix = serdePackageTypePrefix(pack)
-    return `${arg.name}: ${typePrefix}${typescriptType}`
+    const typescriptType = this.typeMapper.map(arg.type, arg.name)
+    return `${arg.name}: ${typescriptType}`
   }
 
   private renderIxArgsType() {
@@ -79,7 +74,9 @@ class InstructionRenderer {
   // Imports
   // -----------------
   private renderImports(processedKeys: ProcessedAccountKey[]) {
-    const beetSolana = this.needsBeetSolana
+    const beetSolana = this.typeMapper.serdePackagesUsed.has(
+      BEET_SOLANA_PACKAGE
+    )
       ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '${BEET_SOLANA_PACKAGE}';`
       : ''
 
@@ -168,6 +165,8 @@ ${beetSolana}`.trim()
   }
 
   render() {
+    this.typeMapper.clearSerdePackagesUsed()
+
     const ixArgType = this.renderIxArgsType()
     const processedKeys = this.processIxAccounts()
     const accountsType = this.renderAccountsType(processedKeys)

@@ -1,7 +1,6 @@
 import { TypeMapper } from './type-mapper'
 import { IdlDefinedTypeDefinition, IdlField } from './types'
 import { strict as assert } from 'assert'
-import { serdePackageTypePrefix } from './serdes'
 
 class TypeRenderer {
   readonly upperCamelTyName: string
@@ -50,6 +49,7 @@ export function renderType(ty: IdlDefinedTypeDefinition) {
   return renderer.render()
 }
 
+/*
 if (module === require.main) {
   const types: IdlDefinedTypeDefinition[] = [
     {
@@ -172,3 +172,4 @@ if (module === require.main) {
       process.exit(1)
     })
 }
+*/

@@ -1,6 +1,6 @@
 import { PathLike, promises as fs } from 'fs'
 import path from 'path'
-import { renderAccount } from './render-account'
+// import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
 import { Idl } from './types'
@@ -58,20 +58,20 @@ export class Solita {
     }
 
     const accounts: Record<string, string> = {}
-    for (const account of this.idl.accounts ?? []) {
-      logDebug(`Rendering account ${account.name}`)
-      logTrace('type: %O', account.type)
-      let code = renderAccount(account)
-      if (this.formatCode) {
-        try {
-          code = format(code, this.formatOpts)
-        } catch (err) {
-          console.error(`Failed to format ${account.name} account`)
-          console.error(err)
-        }
-      }
-      accounts[account.name] = code
-    }
+    // for (const account of this.idl.accounts ?? []) {
+    //   logDebug(`Rendering account ${account.name}`)
+    //   logTrace('type: %O', account.type)
+    //   let code = renderAccount(account)
+    //   if (this.formatCode) {
+    //     try {
+    //       code = format(code, this.formatOpts)
+    //     } catch (err) {
+    //       console.error(`Failed to format ${account.name} account`)
+    //       console.error(err)
+    //     }
+    //   }
+    //   accounts[account.name] = code
+    // }
 
     logDebug('Rendering %d errors', this.idl.errors?.length ?? 0)
     let errors = renderErrors(this.idl.errors ?? [])
