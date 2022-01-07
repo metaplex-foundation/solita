@@ -64,7 +64,7 @@ class AccountRenderer {
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
       this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-      const { typescriptType, pack } = this.typeMapper.map(f.type, f.name)
+      const { typescriptType, pack } = this.typeMapper.mapOld(f.type, f.name)
       let tsType = typescriptType
       if (pack != null) {
         const packExportName = serdePackageExportName(pack)

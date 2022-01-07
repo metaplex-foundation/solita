@@ -9,6 +9,8 @@ import {
   IdlInstructionArg,
   IdlType,
   IdlTypeOption,
+  LOCAL_TYPES_EXPORT_NAME,
+  LOCAL_TYPES_PACKAGE,
   ProcessedSerde,
   SOLANA_WEB3_EXPORT_NAME,
   SOLANA_WEB3_PACKAGE,
@@ -19,10 +21,12 @@ export type SerdePackage =
   | typeof BEET_PACKAGE
   | typeof BEET_SOLANA_PACKAGE
   | typeof SOLANA_WEB3_PACKAGE
+  | typeof LOCAL_TYPES_PACKAGE
 export type SerdePackageExportName =
   | typeof BEET_EXPORT_NAME
   | typeof BEET_SOLANA_EXPORT_NAME
   | typeof SOLANA_WEB3_EXPORT_NAME
+  | typeof LOCAL_TYPES_EXPORT_NAME
 
 export function serdePackageExportName(
   pack: SerdePackage | undefined
@@ -35,6 +39,8 @@ export function serdePackageExportName(
       return BEET_SOLANA_EXPORT_NAME
     case SOLANA_WEB3_PACKAGE:
       return SOLANA_WEB3_EXPORT_NAME
+    case LOCAL_TYPES_PACKAGE:
+      return LOCAL_TYPES_EXPORT_NAME
     default:
       throw new UnreachableCaseError(pack)
   }
@@ -71,7 +77,7 @@ function processField(
 ): ProcessedSerde {
   if (typeof field.type === 'string') {
     typeMapper.assertBeetSupported(field.type, `account field ${field.name}`)
-    const { pack, sourcePack } = typeMapper.map(field.type, field.name)
+    const { pack, sourcePack } = typeMapper.mapOld(field.type, field.name)
     if (pack != null) {
       assertKnownSerdePackage(pack)
     }

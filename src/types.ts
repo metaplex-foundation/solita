@@ -117,13 +117,29 @@ export type ProcessedSerde = {
 }
 
 // -----------------
+// Guards
+// -----------------
+export function isIdlTypeOption(ty: IdlType): ty is IdlTypeOption {
+  return (ty as IdlTypeOption).option != null
+}
+export function isIdlTypeVec(ty: IdlType): ty is IdlTypeVec {
+  return (ty as IdlTypeVec).vec != null
+}
+
+export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
+  return (ty as IdlTypeDefined).defined != null
+}
+
+// -----------------
 // Packages
 // -----------------
 export const BEET_PACKAGE = '@metaplex-foundation/beet'
 export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
 export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
 export const SOLANA_SPL_TOKEN_PACKAGE = '@solana/spl-token'
+export const LOCAL_TYPES_PACKAGE = '../types'
 export const BEET_EXPORT_NAME = 'beet'
 export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
 export const SOLANA_WEB3_EXPORT_NAME = 'web3'
 export const SOLANA_SPL_TOKEN_EXPORT_NAME = 'splToken'
+export const LOCAL_TYPES_EXPORT_NAME = 'definedTypes'

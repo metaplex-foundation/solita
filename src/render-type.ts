@@ -19,7 +19,10 @@ class TypeRenderer {
   }
 
   private renderTypeField = (field: IdlField) => {
-    const { typescriptType, pack } = this.typeMapper.map(field.type, field.name)
+    const { typescriptType, pack } = this.typeMapper.mapOld(
+      field.type,
+      field.name
+    )
     const typePrefix = serdePackageTypePrefix(pack)
     return `${field.name}: ${typePrefix}${typescriptType}`
   }
@@ -49,4 +52,127 @@ class TypeRenderer {
 export function renderType(ty: IdlDefinedTypeDefinition) {
   const renderer = new TypeRenderer(ty)
   return renderer.render()
+}
+
+if (module === require.main) {
+  const types: IdlDefinedTypeDefinition[] = [
+    {
+      name: 'CandyMachineData',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'uuid',
+            type: 'string',
+          },
+          {
+            name: 'price',
+            type: 'u64',
+          },
+          {
+            name: 'itemsAvailable',
+            type: 'u64',
+          },
+          {
+            name: 'goLiveDate',
+            type: {
+              option: 'i64',
+            },
+          },
+        ],
+      },
+    },
+    {
+      name: 'ConfigData',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'uuid',
+            type: 'string',
+          },
+          {
+            name: 'symbol',
+            type: 'string',
+          },
+          {
+            name: 'sellerFeeBasisPoints',
+            type: 'u16',
+          },
+          {
+            name: 'creators',
+            type: {
+              vec: {
+                defined: 'Creator',
+              },
+            },
+          },
+          {
+            name: 'maxSupply',
+            type: 'u64',
+          },
+          {
+            name: 'isMutable',
+            type: 'bool',
+          },
+          {
+            name: 'retainAuthority',
+            type: 'bool',
+          },
+          {
+            name: 'maxNumberOfLines',
+            type: 'u32',
+          },
+        ],
+      },
+    },
+    {
+      name: 'ConfigLine',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'name',
+            type: 'string',
+          },
+          {
+            name: 'uri',
+            type: 'string',
+          },
+        ],
+      },
+    },
+    {
+      name: 'Creator',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'address',
+            type: 'publicKey',
+          },
+          {
+            name: 'verified',
+            type: 'bool',
+          },
+          {
+            name: 'share',
+            type: 'u8',
+          },
+        ],
+      },
+    },
+  ]
+  async function main() {
+    for (const ty of types) {
+      console.log(renderType(ty))
+    }
+  }
+
+  main()
+    .then(() => process.exit(0))
+    .catch((err: any) => {
+      console.error(err)
+      process.exit(1)
+    })
 }

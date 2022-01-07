@@ -58,7 +58,7 @@ class InstructionRenderer {
   // Instruction Args Type
   // -----------------
   private renderIxArgField = (arg: IdlInstructionArg) => {
-    const { typescriptType, pack } = this.typeMapper.map(arg.type, arg.name)
+    const { typescriptType, pack } = this.typeMapper.mapOld(arg.type, arg.name)
     const typePrefix = serdePackageTypePrefix(pack)
     return `${arg.name}: ${typePrefix}${typescriptType}`
   }
