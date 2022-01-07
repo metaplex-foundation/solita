@@ -19,12 +19,8 @@ class TypeRenderer {
   }
 
   private renderTypeField = (field: IdlField) => {
-    const { typescriptType, pack } = this.typeMapper.mapOld(
-      field.type,
-      field.name
-    )
-    const typePrefix = serdePackageTypePrefix(pack)
-    return `${field.name}: ${typePrefix}${typescriptType}`
+    const typescriptType = this.typeMapper.map(field.type, field.name)
+    return `${field.name}: ${typescriptType}`
   }
 
   private renderTypeScriptType() {
