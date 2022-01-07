@@ -16,6 +16,11 @@ import { SerdePackage } from './serdes'
 // -----------------
 // IDL
 // -----------------
+export type IdlField = {
+  name: string
+  type: IdlType
+}
+
 export type IdlInstructionAccount = {
   name: string
   isMut: boolean
@@ -47,6 +52,16 @@ export type IdlTypeArray = {
   array: [idlType: IdlType, size: number]
 }
 
+export type IdlDefinedType = {
+  kind: 'struct'
+  fields: IdlField[]
+}
+
+export type IdlDefinedTypeDefinition = {
+  name: string
+  type: IdlDefinedType
+}
+
 export type IdlInstructionArg = {
   name: string
   type: IdlType
@@ -58,14 +73,9 @@ export type IdlInstruction = {
   args: IdlInstructionArg[]
 }
 
-export type IdlAccountField = {
-  name: string
-  type: IdlType
-}
-
 export type IdlAccountType = {
   kind: 'struct' | 'enum'
-  fields: IdlAccountField[]
+  fields: IdlField[]
 }
 
 export type IdlAccount = {

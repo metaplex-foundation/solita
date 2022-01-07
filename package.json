@@ -2,8 +2,8 @@
   "name": "@metaplex-foundation/solita",
   "version": "0.0.0",
   "description": "Generates SDK API from solana contract IDL.",
-  "main": "dist/solita.js",
-  "types": "dist/solita.d.ts",
+  "main": "dist/src/solita.js",
+  "types": "dist/src/solita.d.ts",
   "scripts": {
     "check:publish-ready": "yarn build",
     "preversion": "yarn check:publish-ready",

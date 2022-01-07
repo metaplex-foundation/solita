@@ -5,7 +5,7 @@ import {
   BEET_PACKAGE,
   BEET_SOLANA_EXPORT_NAME,
   BEET_SOLANA_PACKAGE,
-  IdlAccountField,
+  IdlField,
   IdlInstructionArg,
   IdlType,
   IdlTypeOption,
@@ -97,7 +97,7 @@ function processField(
 }
 
 export function serdeProcess(
-  fields: (IdlAccountField | IdlInstructionArg)[],
+  fields: (IdlField | IdlInstructionArg)[],
   typeMapper: TypeMapper
 ): { processed: ProcessedSerde[]; needsBeetSolana: boolean } {
   const processed = fields.map((f) => processField(f, typeMapper))
