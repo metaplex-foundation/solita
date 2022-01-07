@@ -30,7 +30,7 @@ export class TypeMapper {
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
 
-  private mapPrimitiveType(name: string, ty: IdlType & string) {
+  private mapPrimitiveType(ty: IdlType & string, name: string) {
     this.assertBeetSupported(ty, 'map primitive type')
     const mapped = this.primaryTypeMap[ty]
     let typescriptType = mapped.ts
@@ -43,12 +43,12 @@ export class TypeMapper {
     return { typescriptType, pack: mapped.pack, sourcePack: mapped.sourcePack }
   }
 
-  map(type: IdlType, name: string) {
+  map(type: IdlType, name: string = '<no name provided>') {
     let typescriptType
     let pack: SerdePackage | undefined
     let sourcePack: SerdePackage
     if (typeof type === 'string') {
-      const mapped = this.mapPrimitiveType(name, type)
+      const mapped = this.mapPrimitiveType(type, name)
       if (mapped.pack != null) {
         assertKnownSerdePackage(mapped.pack)
         pack = mapped.pack
@@ -61,7 +61,7 @@ export class TypeMapper {
         typeof ty.option === 'string',
         'only string options types supported for now'
       )
-      const mapped = this.mapPrimitiveType(name, ty.option)
+      const mapped = this.mapPrimitiveType(ty.option, name)
       const inner = mapped.typescriptType
       sourcePack = mapped.sourcePack
       typescriptType = `${BEET_EXPORT_NAME}.COption<${inner}>`

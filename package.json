@@ -50,7 +50,8 @@
     "debug": "^4.3.3",
     "js-sha256": "^0.9.0",
     "prettier": "^2.5.1",
-    "snake-case": "^3.0.4"
+    "snake-case": "^3.0.4",
+    "spok": "^1.4.3"
   },
   "devDependencies": {
     "@metaplex-foundation/amman": "^0.0.9",
