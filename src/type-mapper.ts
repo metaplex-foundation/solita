@@ -14,7 +14,11 @@ import {
   BeetSolanaTypeMapKey,
   supportedTypeMap as beetSolanaSupportedTypeMap,
 } from '@metaplex-foundation/beet-solana'
-import { assertKnownSerdePackage, SerdePackage } from './serdes'
+import {
+  assertKnownSerdePackage,
+  SerdePackage,
+  serdePackageExportName,
+} from './serdes'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
@@ -64,7 +68,12 @@ export class TypeMapper {
       const mapped = this.mapPrimitiveType(ty.option, name)
       const inner = mapped.typescriptType
       sourcePack = mapped.sourcePack
-      typescriptType = `${BEET_EXPORT_NAME}.COption<${inner}>`
+      let innerPrefix = ''
+      if (mapped.pack != null) {
+        assertKnownSerdePackage(mapped.pack)
+        innerPrefix = `${serdePackageExportName(mapped.pack)}.`
+      }
+      typescriptType = `${BEET_EXPORT_NAME}.COption<${innerPrefix}${inner}>`
     } else {
       throw new Error(
         `Type ${type} needed for name '${name}' is not supported yet`
