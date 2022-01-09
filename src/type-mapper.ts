@@ -25,6 +25,7 @@ import {
   assertKnownSerdePackage,
   SerdePackage,
   serdePackageExportName,
+  serdePackageTypePrefix,
 } from './serdes'
 
 export function resolveSerdeAlias(ty: string) {
@@ -98,6 +99,9 @@ export class TypeMapper {
     return { typescriptType, pack, sourcePack }
   }
 
+  // -----------------
+  // Map TypeScript Type
+  // -----------------
   private mapPrimitiveType(ty: IdlType & string, name: string) {
     this.assertBeetSupported(ty, 'map primitive type')
     const mapped = this.primaryTypeMap[ty]
@@ -116,7 +120,7 @@ export class TypeMapper {
     return typescriptType
   }
 
-  private mapOption(ty: IdlTypeOption, name: string) {
+  private mapOptionType(ty: IdlTypeOption, name: string) {
     const inner = this.map(ty.option, name)
     const optionPackage = BEET_PACKAGE
     this.serdePackagesUsed.add(optionPackage)
@@ -124,12 +128,12 @@ export class TypeMapper {
     return `${exp}.COption<${inner}>`
   }
 
-  private mapVec(ty: IdlTypeVec, name: string) {
+  private mapVecType(ty: IdlTypeVec, name: string) {
     const inner = this.map(ty.vec, name)
     return `${inner}[]`
   }
 
-  private mapDefined(ty: IdlTypeDefined) {
+  private mapDefinedType(ty: IdlTypeDefined) {
     const userDefinedPackage = LOCAL_TYPES_PACKAGE
     this.serdePackagesUsed.add(userDefinedPackage)
     const exp = serdePackageExportName(userDefinedPackage)
@@ -141,15 +145,69 @@ export class TypeMapper {
       return this.mapPrimitiveType(ty, name)
     }
     if (isIdlTypeOption(ty)) {
-      return this.mapOption(ty, name)
+      return this.mapOptionType(ty, name)
     }
     if (isIdlTypeVec(ty)) {
-      return this.mapVec(ty, name)
+      return this.mapVecType(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
-      return this.mapDefined(ty)
+      return this.mapDefinedType(ty)
     }
-    return 'FAIL'
+
+    throw new Error(`Type ${ty} required for ${name} is not yet supported`)
+  }
+
+  // -----------------
+  // Map Serde
+  // -----------------
+  private mapPrimitiveSerde(ty: IdlType & string, name: string) {
+    this.assertBeetSupported(ty, `account field ${name}`)
+    const mapped = this.primaryTypeMap[ty]
+
+    assertKnownSerdePackage(mapped.sourcePack)
+    const packExportName = serdePackageExportName(mapped.sourcePack)
+    this.serdePackagesUsed.add(mapped.sourcePack)
+    return `${packExportName}.${ty}`
+  }
+
+  private mapOptionSerde(ty: IdlTypeOption, name: string) {
+    const inner = this.mapSerde(ty.option, name)
+    const optionPackage = BEET_PACKAGE
+    this.serdePackagesUsed.add(optionPackage)
+    const exp = serdePackageExportName(optionPackage)
+    return `${exp}.coption(${inner})`
+  }
+
+  private mapVecSerde(ty: IdlTypeVec, name: string) {
+    const inner = this.mapSerde(ty.vec, name)
+    const fixedSizeArrayPackage = BEET_PACKAGE
+    this.serdePackagesUsed.add(fixedSizeArrayPackage)
+    const exp = serdePackageExportName(fixedSizeArrayPackage)
+    // TODO(thlorenz): for now hardcoding `1` until we figure out how to handle dynamically sized arrays
+    return `${exp}.fixedSizeArray(${inner}, 1)`
+  }
+
+  private mapDefinedSerde(ty: IdlTypeDefined) {
+    const userDefinedPackage = LOCAL_TYPES_PACKAGE
+    this.serdePackagesUsed.add(userDefinedPackage)
+    const exp = serdePackageExportName(userDefinedPackage)
+    return `${exp}.${ty.defined}.struct`
+  }
+
+  mapSerde(ty: IdlType, name: string = '<no name provided>'): string {
+    if (typeof ty === 'string') {
+      return this.mapPrimitiveSerde(ty, name)
+    }
+    if (isIdlTypeOption(ty)) {
+      return this.mapOptionSerde(ty, name)
+    }
+    if (isIdlTypeVec(ty)) {
+      return this.mapVecSerde(ty, name)
+    }
+    if (isIdlTypeDefined(ty)) {
+      return this.mapDefinedSerde(ty)
+    }
+    throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
 
   assertBeetSupported(
