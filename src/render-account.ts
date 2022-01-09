@@ -1,8 +1,5 @@
-import {
-  renderDataStruct,
-  serdePackageExportName,
-  serdeProcess,
-} from './serdes'
+import { BEET_PACKAGE } from '@metaplex-foundation/beet'
+import { renderDataStruct, serdeProcess } from './serdes'
 import { TypeMapper } from './type-mapper'
 import {
   IdlAccount,
@@ -10,6 +7,7 @@ import {
   BEET_EXPORT_NAME,
   BEET_SOLANA_EXPORT_NAME,
   SOLANA_WEB3_EXPORT_NAME,
+  BEET_SOLANA_PACKAGE,
 } from './types'
 import { accountDiscriminator } from './utils'
 
@@ -64,12 +62,7 @@ class AccountRenderer {
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
       this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-      const { typescriptType, pack } = this.typeMapper.mapOld(f.type, f.name)
-      let tsType = typescriptType
-      if (pack != null) {
-        const packExportName = serdePackageExportName(pack)
-        tsType = `${packExportName}.${typescriptType}`
-      }
+      const tsType = this.typeMapper.map(f.type, f.name)
       return { name: f.name, tsType }
     })
   }
@@ -85,12 +78,18 @@ class AccountRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const beetSolana = this.needsBeetSolana
-      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '@metaplex-foundation/beet-solana';`
-      : ''
+    // TODO: once serde mapper also uses typemapper we can remove the first check
+
+    const beetSolana =
+      this.needsBeetSolana ||
+      this.typeMapper.serdePackagesUsed.has(BEET_SOLANA_PACKAGE)
+        ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '${BEET_SOLANA_PACKAGE}';`
+        : ''
+
+    // TODO: once serde mapper also uses typemapper we can conditinally add those below
 
     return `import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
-import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
+import * as ${BEET_EXPORT_NAME} from '${BEET_PACKAGE}';${beetSolana}`
   }
 
   // -----------------
@@ -236,6 +235,8 @@ export class ${this.accountDataClassName} {
   }
 
   render() {
+    this.typeMapper.clearSerdePackagesUsed()
+
     const typedFields = this.getTypedFields()
     const beetFields = this.serdeProcess()
     const imports = this.renderImports()
