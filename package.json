@@ -61,6 +61,7 @@
     "@types/prettier": "^2.4.2",
     "@types/tape": "^4.13.2",
     "doctoc": "^2.1.0",
+    "esbuild": "^0.14.11",
     "rimraf": "^3.0.2",
     "spok": "^1.4.3",
     "tape": "^5.3.2",
