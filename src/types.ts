@@ -95,6 +95,7 @@ export type Idl = {
   instructions: IdlInstruction[]
   accounts?: IdlAccount[]
   errors?: IdlError[]
+  types?: IdlDefinedTypeDefinition[]
   metadata: {
     address: string
   }
