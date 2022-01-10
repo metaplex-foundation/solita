@@ -1,14 +1,6 @@
-import { BEET_PACKAGE } from '@metaplex-foundation/beet'
-import { renderDataStruct, serdeProcess } from './serdes'
+import { renderDataStruct } from './serdes'
 import { TypeMapper } from './type-mapper'
-import {
-  IdlAccount,
-  ProcessedSerde,
-  BEET_EXPORT_NAME,
-  BEET_SOLANA_EXPORT_NAME,
-  SOLANA_WEB3_EXPORT_NAME,
-  BEET_SOLANA_PACKAGE,
-} from './types'
+import { IdlAccount, TypeMappedSerdeField } from './types'
 import { accountDiscriminator } from './utils'
 
 function colonSeparatedTypedField(
@@ -25,7 +17,6 @@ class AccountRenderer {
   readonly accountDataArgsTypeName: string
   readonly accountDiscriminatorName: string
   readonly dataStructName: string
-  needsBeetSolana: boolean = false
 
   constructor(
     private readonly account: IdlAccount,
@@ -48,12 +39,7 @@ class AccountRenderer {
   }
 
   private serdeProcess() {
-    const { processed, needsBeetSolana } = serdeProcess(
-      this.account.type.fields,
-      this.typeMapper
-    )
-    this.needsBeetSolana = needsBeetSolana
-    return processed
+    return this.typeMapper.mapSerdeFields(this.account.type.fields)
   }
 
   // -----------------
@@ -78,18 +64,8 @@ class AccountRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    // TODO: once serde mapper also uses typemapper we can remove the first check
-
-    const beetSolana =
-      this.needsBeetSolana ||
-      this.typeMapper.serdePackagesUsed.has(BEET_SOLANA_PACKAGE)
-        ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '${BEET_SOLANA_PACKAGE}';`
-        : ''
-
-    // TODO: once serde mapper also uses typemapper we can conditinally add those below
-
-    return `import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
-import * as ${BEET_EXPORT_NAME} from '${BEET_PACKAGE}';${beetSolana}`
+    const imports = this.typeMapper.importsForSerdePackagesUsed()
+    return imports.join('\n')
   }
 
   // -----------------
@@ -224,7 +200,7 @@ export class ${this.accountDataClassName} {
   // -----------------
   // Struct
   // -----------------
-  private renderDataStruct(fields: ProcessedSerde[]) {
+  private renderDataStruct(fields: TypeMappedSerdeField[]) {
     return renderDataStruct({
       fields,
       structVarName: this.dataStructName,
