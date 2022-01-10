@@ -9,6 +9,7 @@ import {
   LOCAL_TYPES_PACKAGE,
   SOLANA_WEB3_PACKAGE,
 } from '../src/types'
+import { SerdePackage } from '../src/serdes'
 
 // -----------------
 // Primitive Types
@@ -412,6 +413,46 @@ test('type-mapper: serde fields', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE, BEET_SOLANA_PACKAGE],
     })
+  }
+  t.end()
+})
+
+// -----------------
+// Imports
+// -----------------
+test('type-mapper: imports for serde packages used ', (t) => {
+  const tm = new TypeMapper()
+
+  {
+    tm.clearSerdePackagesUsed()
+
+    t.comment('+++ imports for three packages')
+    const packsUsed = <SerdePackage[]>[
+      SOLANA_WEB3_PACKAGE,
+      BEET_PACKAGE,
+      BEET_SOLANA_PACKAGE,
+    ]
+    for (const pack of packsUsed) {
+      tm.serdePackagesUsed.add(pack)
+    }
+    const imports = tm.importsForSerdePackagesUsed()
+    spok(t, imports, [
+      "import * as web3 from '@solana/web3.js';",
+      "import * as beet from '@metaplex-foundation/beet';",
+      "import * as beetSolana from '@metaplex-foundation/beet-solana';",
+    ])
+  }
+
+  {
+    tm.clearSerdePackagesUsed()
+
+    t.comment('+++ imports for one package')
+    const packsUsed = <SerdePackage[]>[BEET_PACKAGE]
+    for (const pack of packsUsed) {
+      tm.serdePackagesUsed.add(pack)
+    }
+    const imports = tm.importsForSerdePackagesUsed()
+    spok(t, imports, ["import * as beet from '@metaplex-foundation/beet';"])
   }
   t.end()
 })

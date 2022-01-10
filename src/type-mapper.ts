@@ -222,6 +222,18 @@ export class TypeMapper {
     })
   }
 
+  // -----------------
+  // Imports Generator
+  // -----------------
+  importsForSerdePackagesUsed() {
+    const imports = []
+    for (const pack of this.serdePackagesUsed) {
+      const exp = serdePackageExportName(pack)
+      imports.push(`import * as ${exp} from '${pack}';`)
+    }
+    return imports
+  }
+
   assertBeetSupported(
     serde: IdlType,
     context: string
