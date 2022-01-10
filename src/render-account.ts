@@ -10,6 +10,7 @@ import {
   BEET_EXPORT_NAME,
   BEET_SOLANA_EXPORT_NAME,
   SOLANA_WEB3_EXPORT_NAME,
+  IdlTypeOption,
 } from './types'
 import { accountDiscriminator } from './utils'
 
@@ -63,7 +64,9 @@ class AccountRenderer {
   // -----------------
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
-      this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
+      const type = (f.type as IdlTypeOption).option || f.type
+      this.typeMapper.assertBeetSupported(type, `account field ${f.name}`)
+
       const { typescriptType, pack } = this.typeMapper.map(f.type, f.name)
       let tsType = typescriptType
       if (pack != null) {
@@ -174,7 +177,7 @@ export class ${this.accountDataClassName} {
    * @returns a tuple of the created Buffer and the offset up to which the buffer was written to store it.
    */
   serialize(): [ Buffer, number ] {
-    return ${this.dataStructName}.serialize({ 
+    return ${this.dataStructName}.serialize({
       accountDiscriminator: ${this.accountDiscriminatorName},
       ...this
     })
@@ -189,7 +192,7 @@ export class ${this.accountDataClassName} {
   }
 
   /**
-   * Fetches the minimum balance needed to exempt an account holding 
+   * Fetches the minimum balance needed to exempt an account holding
    * {@link ${this.accountDataClassName}} data from rent
    */
   static async getMinimumBalanceForRentExemption(
