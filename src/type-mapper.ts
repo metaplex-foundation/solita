@@ -1,5 +1,4 @@
 import {
-  BEET_EXPORT_NAME,
   IdlField,
   IdlInstructionArg,
   IdlType,
@@ -28,7 +27,6 @@ import {
   assertKnownSerdePackage,
   SerdePackage,
   serdePackageExportName,
-  serdePackageTypePrefix,
 } from './serdes'
 
 export function resolveSerdeAlias(ty: string) {
@@ -48,58 +46,6 @@ export class TypeMapper {
 
   clearSerdePackagesUsed() {
     this.serdePackagesUsed.clear()
-  }
-
-  private mapPrimitiveTypeOld(ty: IdlType & string, name: string) {
-    this.assertBeetSupported(ty, 'map primitive type')
-    const mapped = this.primaryTypeMap[ty]
-    let typescriptType = mapped.ts
-
-    if (typescriptType == null) {
-      logDebug(`No mapped type found for ${name}: ${ty}, using any`)
-      typescriptType = 'any'
-    }
-    assertKnownSerdePackage(mapped.sourcePack)
-    if (mapped.pack != null) {
-      assertKnownSerdePackage(mapped.pack)
-    }
-    return { typescriptType, pack: mapped.pack, sourcePack: mapped.sourcePack }
-  }
-
-  mapOld(type: IdlType, name: string = '<no name provided>') {
-    let typescriptType
-    let pack: SerdePackage | undefined
-    let sourcePack: SerdePackage
-    if (typeof type === 'string') {
-      const mapped = this.mapPrimitiveTypeOld(type, name)
-      if (mapped.pack != null) {
-        assertKnownSerdePackage(mapped.pack)
-        pack = mapped.pack
-      }
-      typescriptType = mapped.typescriptType
-      sourcePack = mapped.sourcePack
-    } else if ((type as IdlTypeOption).option != null) {
-      const ty: IdlTypeOption = type as IdlTypeOption
-      assert(
-        typeof ty.option === 'string',
-        'only string options types supported for now'
-      )
-      const mapped = this.mapPrimitiveTypeOld(ty.option, name)
-      const inner = mapped.typescriptType
-      sourcePack = mapped.sourcePack
-      let innerPrefix = ''
-      if (mapped.pack != null) {
-        assertKnownSerdePackage(mapped.pack)
-        innerPrefix = `${serdePackageExportName(mapped.pack)}.`
-      }
-      typescriptType = `${BEET_EXPORT_NAME}.COption<${innerPrefix}${inner}>`
-    } else {
-      console.log(type)
-      throw new Error(
-        `Type ${type} needed for name '${name}' is not supported yet`
-      )
-    }
-    return { typescriptType, pack, sourcePack }
   }
 
   // -----------------
@@ -225,9 +171,16 @@ export class TypeMapper {
   // -----------------
   // Imports Generator
   // -----------------
-  importsForSerdePackagesUsed() {
+  importsForSerdePackagesUsed(forcePackages?: Set<SerdePackage>) {
     const imports = []
-    for (const pack of this.serdePackagesUsed) {
+    const packagesToInclude =
+      forcePackages == null
+        ? this.serdePackagesUsed
+        : new Set([
+            ...Array.from(this.serdePackagesUsed),
+            ...Array.from(forcePackages),
+          ])
+    for (const pack of packagesToInclude) {
       const exp = serdePackageExportName(pack)
       imports.push(`import * as ${exp} from '${pack}';`)
     }

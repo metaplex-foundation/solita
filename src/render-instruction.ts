@@ -1,23 +1,22 @@
 import {
   IdlInstruction,
   IdlInstructionArg,
-  ProcessedSerde,
-  BEET_EXPORT_NAME,
-  BEET_SOLANA_EXPORT_NAME,
   SOLANA_WEB3_EXPORT_NAME,
   IdlInstructionAccount,
   SOLANA_SPL_TOKEN_PACKAGE,
-  BEET_SOLANA_PACKAGE,
   SOLANA_SPL_TOKEN_EXPORT_NAME,
+  TypeMappedSerdeField,
+  SOLANA_WEB3_PACKAGE,
 } from './types'
 import { TypeMapper } from './type-mapper'
-import { renderDataStruct, serdeProcess } from './serdes'
+import { renderDataStruct } from './serdes'
 import { instructionDiscriminator } from './utils'
 import {
   renderKnownPubkeyAccess,
   ResolvedKnownPubkey,
   resolveKnownPubkey,
 } from './known-pubkeys'
+import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 
 type ProcessedAccountKey = IdlInstructionAccount & {
   knownPubkey?: ResolvedKnownPubkey
@@ -30,7 +29,6 @@ class InstructionRenderer {
   readonly accountsTypename: string
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
-  needsBeetSolana: boolean = false
 
   constructor(
     readonly ix: IdlInstruction,
@@ -74,12 +72,9 @@ class InstructionRenderer {
   // Imports
   // -----------------
   private renderImports(processedKeys: ProcessedAccountKey[]) {
-    const beetSolana = this.typeMapper.serdePackagesUsed.has(
-      BEET_SOLANA_PACKAGE
+    const typeMapperImports = this.typeMapper.importsForSerdePackagesUsed(
+      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
     )
-      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '${BEET_SOLANA_PACKAGE}';`
-      : ''
-
     const needsSplToken = processedKeys.some(
       (x) => x.knownPubkey?.pack === SOLANA_SPL_TOKEN_PACKAGE
     )
@@ -88,10 +83,8 @@ class InstructionRenderer {
       : ''
 
     return `
-import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
-import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet'
 ${splToken}
-${beetSolana}`.trim()
+${typeMapperImports.join('\n')}`.trim()
   }
 
   // -----------------
@@ -147,15 +140,10 @@ ${beetSolana}`.trim()
   // Data Struct
   // -----------------
   private serdeProcess() {
-    const { processed, needsBeetSolana } = serdeProcess(
-      this.ix.args,
-      this.typeMapper
-    )
-    this.needsBeetSolana = needsBeetSolana
-    return processed
+    return this.typeMapper.mapSerdeFields(this.ix.args)
   }
 
-  private renderDataStruct(args: ProcessedSerde[]) {
+  private renderDataStruct(args: TypeMappedSerdeField[]) {
     return renderDataStruct({
       fields: args,
       structVarName: this.structArgName,

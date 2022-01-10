@@ -5,17 +5,12 @@ import {
   BEET_PACKAGE,
   BEET_SOLANA_EXPORT_NAME,
   BEET_SOLANA_PACKAGE,
-  IdlField,
-  IdlInstructionArg,
-  IdlType,
-  IdlTypeOption,
   LOCAL_TYPES_EXPORT_NAME,
   LOCAL_TYPES_PACKAGE,
-  ProcessedSerde,
   SOLANA_WEB3_EXPORT_NAME,
   SOLANA_WEB3_PACKAGE,
+  TypeMappedSerdeField,
 } from './types'
-import { resolveSerdeAlias, TypeMapper } from './type-mapper'
 
 export type SerdePackage =
   | typeof BEET_PACKAGE
@@ -69,64 +64,8 @@ export function assertKnownSerdePackage(
 }
 
 // -----------------
-// Processing Account fields and Instruction args
-// -----------------
-function processField(
-  field: { name: string; type: IdlType },
-  typeMapper: TypeMapper
-): ProcessedSerde {
-  if (typeof field.type === 'string') {
-    typeMapper.assertBeetSupported(field.type, `account field ${field.name}`)
-    const { pack, sourcePack } = typeMapper.mapOld(field.type, field.name)
-    if (pack != null) {
-      assertKnownSerdePackage(pack)
-    }
-    return { name: field.name, type: field.type, sourcePack }
-  }
-  const optionType: IdlTypeOption = field.type as IdlTypeOption
-  if (optionType.option != null) {
-    const sourcePack = BEET_PACKAGE
-
-    const inner = processField(
-      { name: '<inner>', type: optionType.option },
-      typeMapper
-    )
-    return {
-      name: field.name,
-      type: 'option',
-      sourcePack,
-      inner,
-    }
-  }
-
-  throw new Error('Only option and string field types supported for now')
-}
-
-export function serdeProcess(
-  fields: (IdlField | IdlInstructionArg)[],
-  typeMapper: TypeMapper
-): { processed: ProcessedSerde[]; needsBeetSolana: boolean } {
-  const processed = fields.map((f) => processField(f, typeMapper))
-  const needsBeetSolana = processed.some(
-    (x) => x.sourcePack === BEET_SOLANA_PACKAGE
-  )
-  return { processed, needsBeetSolana }
-}
-
-// -----------------
 // Rendering processed serdes to struct
 // -----------------
-function renderFieldType({ sourcePack, type, inner }: ProcessedSerde) {
-  const typePrefix = serdePackageTypePrefix(sourcePack)
-  const ty = resolveSerdeAlias(type)
-  if (inner == null) {
-    return `${typePrefix}${ty}`
-  }
-
-  const renderedInnerType: string = renderFieldType(inner)
-  return `${typePrefix}${ty}(${renderedInnerType})`
-}
-
 export function renderDataStruct({
   fields,
   structVarName,
@@ -134,7 +73,7 @@ export function renderDataStruct({
   argsTypename,
   discriminatorName,
 }: {
-  fields: ProcessedSerde[]
+  fields: TypeMappedSerdeField[]
   structVarName: string
   className?: string
   argsTypename: string
@@ -145,8 +84,7 @@ export function renderDataStruct({
       ? ''
       : fields
           .map((f) => {
-            const renderedType = renderFieldType(f)
-            return `['${f.name}', ${renderedType}]`
+            return `['${f.name}', ${f.type}]`
           })
           .join(',\n    ')
 
