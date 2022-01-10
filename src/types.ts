@@ -116,6 +116,11 @@ export type ProcessedSerde = {
   inner?: ProcessedSerde
 }
 
+export type TypeMappedSerdeField = {
+  name: string
+  type: string
+}
+
 // -----------------
 // Guards
 // -----------------

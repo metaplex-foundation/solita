@@ -4,6 +4,7 @@ import { TypeMapper } from '../src/type-mapper'
 import {
   BEET_PACKAGE,
   BEET_SOLANA_PACKAGE,
+  IdlField,
   IdlType,
   LOCAL_TYPES_PACKAGE,
   SOLANA_WEB3_PACKAGE,
@@ -318,5 +319,99 @@ test('type-mapper: composite types multilevel - vec<option<ConfigData>>', (t) =>
     ...[LOCAL_TYPES_PACKAGE, BEET_PACKAGE],
   })
 
+  t.end()
+})
+
+// -----------------
+// Map Serde Fields
+// -----------------
+test('type-mapper: serde fields', (t) => {
+  const u16 = <IdlField>{ name: 'u16', type: 'u16' }
+  const configData = <IdlField>{
+    name: 'configData',
+    type: {
+      defined: 'ConfigData',
+    },
+  }
+  const optionPublicKey = <IdlField>{
+    name: 'optionPublicKey',
+    type: {
+      option: 'publicKey',
+    },
+  }
+  const vecOptionConfigData = <IdlField>{
+    name: 'vecOptionConfigData',
+    type: {
+      vec: {
+        option: {
+          defined: 'ConfigData',
+        },
+      },
+    },
+  }
+
+  const tm = new TypeMapper()
+  {
+    t.comment('+++ u16 field only')
+    tm.clearSerdePackagesUsed()
+    const mappedFields = tm.mapSerdeFields([u16])
+    spok(t, mappedFields, [{ name: 'u16', type: 'beet.u16' }])
+
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_PACKAGE],
+    })
+  }
+
+  {
+    t.comment('+++ optionPublicKey field only')
+    tm.clearSerdePackagesUsed()
+    const mappedFields = tm.mapSerdeFields([optionPublicKey])
+    spok(t, mappedFields, [
+      {
+        name: 'optionPublicKey',
+        type: 'beet.coption(beetSolana.publicKey)',
+      },
+    ])
+
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_SOLANA_PACKAGE, BEET_PACKAGE],
+    })
+  }
+
+  {
+    t.comment(
+      '+++ u16, optionPublicKey, configData and vecOptionConfigData fields'
+    )
+    tm.clearSerdePackagesUsed()
+    const mappedFields = tm.mapSerdeFields([
+      u16,
+      optionPublicKey,
+      configData,
+      vecOptionConfigData,
+    ])
+
+    spok(t, mappedFields, [
+      { name: 'u16', type: 'beet.u16' },
+      {
+        name: 'optionPublicKey',
+        type: 'beet.coption(beetSolana.publicKey)',
+      },
+      {
+        name: 'configData',
+        type: 'definedTypes.ConfigData.struct',
+      },
+      {
+        name: 'vecOptionConfigData',
+        type: 'beet.fixedSizeArray(beet.coption(definedTypes.ConfigData.struct), 1)',
+      },
+    ])
+
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_PACKAGE, BEET_SOLANA_PACKAGE],
+    })
+  }
   t.end()
 })

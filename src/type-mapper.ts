@@ -1,5 +1,7 @@
 import {
   BEET_EXPORT_NAME,
+  IdlField,
+  IdlInstructionArg,
   IdlType,
   IdlTypeDefined,
   IdlTypeOption,
@@ -9,6 +11,7 @@ import {
   isIdlTypeVec,
   LOCAL_TYPES_PACKAGE,
   PrimaryTypeMap,
+  TypeMappedSerdeField,
 } from './types'
 import { logDebug } from './utils'
 import { strict as assert } from 'assert'
@@ -208,6 +211,15 @@ export class TypeMapper {
       return this.mapDefinedSerde(ty)
     }
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
+  }
+
+  mapSerdeFields(
+    fields: (IdlField | IdlInstructionArg)[]
+  ): TypeMappedSerdeField[] {
+    return fields.map((f) => {
+      const ty = this.mapSerde(f.type, f.name)
+      return { name: f.name, type: ty }
+    })
   }
 
   assertBeetSupported(
