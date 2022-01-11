@@ -17,6 +17,7 @@ const eslint = new ESLint({
       'plugin:@typescript-eslint/eslint-recommended',
       'plugin:@typescript-eslint/recommended',
     ],
+    globals: { Buffer: true },
   },
 })
 
@@ -28,6 +29,7 @@ function createHash(s: Buffer) {
 
 type AnalyzedCode = {
   js: string
+  ts: string
   errors: BuildResult['errors']
   warnings: BuildResult['warnings']
   imports: Metafile['inputs'][0]['imports']
@@ -54,6 +56,7 @@ export async function analyzeCode(ts: string) {
   const meta = buildResult.metafile
   return {
     js,
+    ts,
     errors: buildResult.errors,
     imports: meta.inputs[filename].imports,
     warnings: buildResult.warnings,
@@ -91,7 +94,7 @@ export function verifyImports(
     t.equal(analyzeCode.warnings.length, 0, 'no warnings')
   }
 
-  const fromCode = importsFromCode(analyzeCode.js)
+  const fromCode = importsFromCode(analyzeCode.ts)
   const actual = Array.from(
     new Set([...analyzeCode.imports.map((x) => x.path), ...fromCode])
   )

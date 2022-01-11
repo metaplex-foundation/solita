@@ -30,6 +30,76 @@ async function checkRenderedAccount(
   verifyImports(t, analyzed, imports, { logImports: opts.logImports })
 }
 
-// TODO(thlorenz): 1. finish these tests first
-// TODO(thlorenz): 2. fix missing imports (yarn test shows them)
-// TODO(thlorenz): 4. make CM1 render without crashing
+// TODO(thlorenz): Still renders args and causes compile issues
+// An accounts without a field is very uncommon and thus this can be fixed later
+test.skip('accounts: no field', async (t) => {
+  const account = <IdlAccount>{
+    name: 'AuctionHouse',
+    type: {
+      kind: 'struct',
+      fields: [],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [
+    "import * as beet from '@metaplex-foundation/beet'",
+    "import * as web3 from '@solana/web3.js'",
+  ])
+  t.end()
+})
+
+test('accounts: one field', async (t) => {
+  const account = <IdlAccount>{
+    name: 'AuctionHouse',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'auctionHouseFeeAccount',
+          type: 'publicKey',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [
+    "import * as beet from '@metaplex-foundation/beet'",
+    "import * as beetSolana from '@metaplex-foundation/beet-solana'",
+    "import * as web3 from '@solana/web3.js'",
+  ])
+  t.end()
+})
+
+test('accounts: four fields', async (t) => {
+  const account = <IdlAccount>{
+    name: 'AuctionHouse',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'auctionHouseFeeAccount',
+          type: 'publicKey',
+        },
+        {
+          name: 'feePayerBump',
+          type: 'u8',
+        },
+        {
+          name: 'sellerFeeBasisPoints',
+          type: 'u16',
+        },
+        {
+          name: 'requiresSignOff',
+          type: 'bool',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [
+    "import * as beet from '@metaplex-foundation/beet'",
+    "import * as beetSolana from '@metaplex-foundation/beet-solana'",
+    "import * as web3 from '@solana/web3.js'",
+  ])
+  t.end()
+})

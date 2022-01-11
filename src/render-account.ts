@@ -1,6 +1,11 @@
 import { renderDataStruct } from './serdes'
 import { TypeMapper } from './type-mapper'
-import { IdlAccount, TypeMappedSerdeField } from './types'
+import {
+  BEET_PACKAGE,
+  IdlAccount,
+  SOLANA_WEB3_PACKAGE,
+  TypeMappedSerdeField,
+} from './types'
 import { accountDiscriminator } from './utils'
 
 function colonSeparatedTypedField(
@@ -64,7 +69,9 @@ class AccountRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const imports = this.typeMapper.importsForSerdePackagesUsed()
+    const imports = this.typeMapper.importsForSerdePackagesUsed(
+      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
+    )
     return imports.join('\n')
   }
 
