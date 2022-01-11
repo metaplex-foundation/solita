@@ -17,6 +17,9 @@ class TypeRenderer {
     this.camelTyName = ty.name.charAt(0).toLowerCase().concat(ty.name.slice(1))
   }
 
+  // -----------------
+  // Rendered Fields
+  // -----------------
   private renderTypeField = (field: IdlField) => {
     const typescriptType = this.typeMapper.map(field.type, field.name)
     return `${field.name}: ${typescriptType}`
@@ -34,13 +37,27 @@ class TypeRenderer {
     return code
   }
 
+  // -----------------
+  // Imports
+  // -----------------
+  private renderImports() {
+    const imports = this.typeMapper.importsForSerdePackagesUsed()
+    return imports.join('\n')
+  }
+
   render() {
+    this.typeMapper.clearSerdePackagesUsed()
     assert.equal(
       this.ty.type.kind,
       'struct',
       `only user defined structs are supported, ${this.ty.name} is of type ${this.ty.type.kind}`
     )
-    return this.renderTypeScriptType()
+    const typeScriptType = this.renderTypeScriptType()
+    const imports = this.renderImports()
+    return `
+${imports}
+${typeScriptType}
+`.trim()
   }
 }
 
