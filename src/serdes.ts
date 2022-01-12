@@ -1,43 +1,64 @@
-import { UnreachableCaseError } from './utils'
 import { strict as assert } from 'assert'
 import {
   BEET_EXPORT_NAME,
   BEET_PACKAGE,
   BEET_SOLANA_EXPORT_NAME,
   BEET_SOLANA_PACKAGE,
-  IdlAccountField,
-  IdlInstructionArg,
-  IdlType,
-  IdlTypeOption,
-  ProcessedSerde,
+  LOCAL_TYPES_EXPORT_NAME,
+  LOCAL_TYPES_PACKAGE,
   SOLANA_WEB3_EXPORT_NAME,
   SOLANA_WEB3_PACKAGE,
+  TypeMappedSerdeField,
 } from './types'
-import { resolveSerdeAlias, TypeMapper } from './type-mapper'
 
 export type SerdePackage =
   | typeof BEET_PACKAGE
   | typeof BEET_SOLANA_PACKAGE
   | typeof SOLANA_WEB3_PACKAGE
+  | typeof LOCAL_TYPES_PACKAGE
 export type SerdePackageExportName =
   | typeof BEET_EXPORT_NAME
   | typeof BEET_SOLANA_EXPORT_NAME
   | typeof SOLANA_WEB3_EXPORT_NAME
+  | typeof LOCAL_TYPES_EXPORT_NAME
+
+export const serdePackages: Map<SerdePackage, SerdePackageExportName> = new Map(
+  [
+    [BEET_PACKAGE, BEET_EXPORT_NAME],
+    [BEET_SOLANA_PACKAGE, BEET_SOLANA_EXPORT_NAME],
+    [SOLANA_WEB3_PACKAGE, SOLANA_WEB3_EXPORT_NAME],
+    [LOCAL_TYPES_PACKAGE, LOCAL_TYPES_EXPORT_NAME],
+  ]
+)
+
+const packsByLengthDesc = Array.from(serdePackages.keys()).sort((a, b) =>
+  a.length > b.length ? -1 : 1
+)
 
 export function serdePackageExportName(
   pack: SerdePackage | undefined
 ): SerdePackageExportName | null {
   if (pack == null) return null
-  switch (pack) {
-    case BEET_PACKAGE:
-      return BEET_EXPORT_NAME
-    case BEET_SOLANA_PACKAGE:
-      return BEET_SOLANA_EXPORT_NAME
-    case SOLANA_WEB3_PACKAGE:
-      return SOLANA_WEB3_EXPORT_NAME
-    default:
-      throw new UnreachableCaseError(pack)
+
+  const exportName = serdePackages.get(pack)
+  assert(exportName != null, `Unkonwn serde package ${pack}`)
+  return exportName
+}
+
+export function extractSerdePackageFromImportStatment(importStatement: string) {
+  // Avoiding matching on 'beet' for 'beet-solana' by checking longer keys first
+  for (const pack of packsByLengthDesc) {
+    const exportName = serdePackages.get(pack)!
+
+    if (importStatement.includes(pack)) {
+      assert(
+        importStatement.includes(`as ${exportName}`),
+        `${importStatement} should import ${pack} as ${exportName}`
+      )
+      return pack
+    }
   }
+  return null
 }
 
 export function serdePackageTypePrefix(pack: SerdePackage | undefined): string {
@@ -63,64 +84,12 @@ export function assertKnownSerdePackage(
 }
 
 // -----------------
-// Processing Account fields and Instruction args
-// -----------------
-function processField(
-  field: { name: string; type: IdlType },
-  typeMapper: TypeMapper
-): ProcessedSerde {
-  if (typeof field.type === 'string') {
-    typeMapper.assertBeetSupported(field.type, `account field ${field.name}`)
-    const { pack, sourcePack } = typeMapper.map(field.type, field.name)
-    if (pack != null) {
-      assertKnownSerdePackage(pack)
-    }
-    return { name: field.name, type: field.type, sourcePack }
-  }
-  const optionType: IdlTypeOption = field.type as IdlTypeOption
-  if (optionType.option != null) {
-    const sourcePack = BEET_PACKAGE
-
-    const inner = processField(
-      { name: '<inner>', type: optionType.option },
-      typeMapper
-    )
-    return {
-      name: field.name,
-      type: 'option',
-      sourcePack,
-      inner,
-    }
-  }
-
-  throw new Error('Only option and string field types supported for now')
-}
-
-export function serdeProcess(
-  fields: (IdlAccountField | IdlInstructionArg)[],
-  typeMapper: TypeMapper
-): { processed: ProcessedSerde[]; needsBeetSolana: boolean } {
-  const processed = fields.map((f) => processField(f, typeMapper))
-  const needsBeetSolana = processed.some(
-    (x) => x.sourcePack === BEET_SOLANA_PACKAGE
-  )
-  return { processed, needsBeetSolana }
-}
-
-// -----------------
 // Rendering processed serdes to struct
 // -----------------
-function renderFieldType({ sourcePack, type, inner }: ProcessedSerde) {
-  const typePrefix = serdePackageTypePrefix(sourcePack)
-  const ty = resolveSerdeAlias(type)
-  if (inner == null) {
-    return `${typePrefix}${ty}`
-  }
 
-  const renderedInnerType: string = renderFieldType(inner)
-  return `${typePrefix}${ty}(${renderedInnerType})`
-}
-
+/**
+ * Renders DataStruct for Instruction Args and Account Args
+ */
 export function renderDataStruct({
   fields,
   structVarName,
@@ -128,23 +97,22 @@ export function renderDataStruct({
   argsTypename,
   discriminatorName,
 }: {
-  fields: ProcessedSerde[]
+  fields: TypeMappedSerdeField[]
   structVarName: string
   className?: string
   argsTypename: string
-  discriminatorName: string
+  discriminatorName?: string
 }) {
   const fieldDecls =
     fields.length === 0
       ? ''
       : fields
           .map((f) => {
-            const renderedType = renderFieldType(f)
-            return `['${f.name}', ${renderedType}]`
+            return `['${f.name}', ${f.type}]`
           })
           .join(',\n    ')
 
-  const structType =
+  let structType =
     fields.length === 0
       ? `{ ${discriminatorName}: number[]; }`
       : `${argsTypename} & {
@@ -179,4 +147,37 @@ export function renderDataStruct({
   '${argsTypename}'
 )`
   }
+}
+
+/**
+ * Renders DataStruct for user defined types
+ */
+export function renderTypeDataStruct({
+  fields,
+  structVarName,
+  typeName,
+}: {
+  fields: TypeMappedSerdeField[]
+  structVarName: string
+  typeName: string
+}) {
+  assert(
+    fields.length > 0,
+    `Rendering struct for ${typeName} should have at least 1 field`
+  )
+  const fieldDecls = fields
+    .map((f) => {
+      return `['${f.name}', ${f.type}]`
+    })
+    .join(',\n    ')
+
+  // -----------------
+  // Beet Args Struct (Instruction)
+  // -----------------
+  return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetArgsStruct<${typeName}>(
+  [
+    ${fieldDecls}
+  ],
+  '${typeName}'
+)`
 }

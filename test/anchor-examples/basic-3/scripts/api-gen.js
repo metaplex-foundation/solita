@@ -3,7 +3,7 @@
 
 const path = require('path')
 const { spawn } = require('child_process')
-const { Solita } = require('../../../../dist/solita')
+const { Solita } = require('../../../../dist/src/solita')
 const { writeFile } = require('fs/promises')
 
 const generatedIdlDir = path.join(__dirname, '..', 'idl')

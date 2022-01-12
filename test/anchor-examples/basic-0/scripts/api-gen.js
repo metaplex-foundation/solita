@@ -8,7 +8,7 @@ const path = require('path')
 const generatedIdlDir = path.join(__dirname, '..', 'idl')
 const generatedSDKDir = path.join(__dirname, '..', 'src', 'generated')
 const { spawn } = require('child_process')
-const { Solita } = require('../../../../dist/solita')
+const { Solita } = require('../../../../dist/src/solita')
 const { writeFile } = require('fs/promises')
 
 const anchor = spawn('anchor', ['build', '--idl', generatedIdlDir])

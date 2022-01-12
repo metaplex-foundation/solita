@@ -1,15 +1,10 @@
-import {
-  renderDataStruct,
-  serdePackageExportName,
-  serdeProcess,
-} from './serdes'
+import { renderDataStruct } from './serdes'
 import { TypeMapper } from './type-mapper'
 import {
+  BEET_PACKAGE,
   IdlAccount,
-  ProcessedSerde,
-  BEET_EXPORT_NAME,
-  BEET_SOLANA_EXPORT_NAME,
-  SOLANA_WEB3_EXPORT_NAME,
+  SOLANA_WEB3_PACKAGE,
+  TypeMappedSerdeField,
 } from './types'
 import { accountDiscriminator } from './utils'
 
@@ -27,7 +22,6 @@ class AccountRenderer {
   readonly accountDataArgsTypeName: string
   readonly accountDiscriminatorName: string
   readonly dataStructName: string
-  needsBeetSolana: boolean = false
 
   constructor(
     private readonly account: IdlAccount,
@@ -50,12 +44,7 @@ class AccountRenderer {
   }
 
   private serdeProcess() {
-    const { processed, needsBeetSolana } = serdeProcess(
-      this.account.type.fields,
-      this.typeMapper
-    )
-    this.needsBeetSolana = needsBeetSolana
-    return processed
+    return this.typeMapper.mapSerdeFields(this.account.type.fields)
   }
 
   // -----------------
@@ -63,13 +52,7 @@ class AccountRenderer {
   // -----------------
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
-      this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
-      const { typescriptType, pack } = this.typeMapper.map(f.type, f.name)
-      let tsType = typescriptType
-      if (pack != null) {
-        const packExportName = serdePackageExportName(pack)
-        tsType = `${packExportName}.${typescriptType}`
-      }
+      const tsType = this.typeMapper.map(f.type, f.name)
       return { name: f.name, tsType }
     })
   }
@@ -85,12 +68,10 @@ class AccountRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const beetSolana = this.needsBeetSolana
-      ? `\nimport * as ${BEET_SOLANA_EXPORT_NAME} from '@metaplex-foundation/beet-solana';`
-      : ''
-
-    return `import * as ${SOLANA_WEB3_EXPORT_NAME} from '@solana/web3.js';
-import * as ${BEET_EXPORT_NAME} from '@metaplex-foundation/beet';${beetSolana}`
+    const imports = this.typeMapper.importsForSerdePackagesUsed(
+      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
+    )
+    return imports.join('\n')
   }
 
   // -----------------
@@ -225,7 +206,7 @@ export class ${this.accountDataClassName} {
   // -----------------
   // Struct
   // -----------------
-  private renderDataStruct(fields: ProcessedSerde[]) {
+  private renderDataStruct(fields: TypeMappedSerdeField[]) {
     return renderDataStruct({
       fields,
       structVarName: this.dataStructName,
@@ -236,6 +217,8 @@ export class ${this.accountDataClassName} {
   }
 
   render() {
+    this.typeMapper.clearSerdePackagesUsed()
+
     const typedFields = this.getTypedFields()
     const beetFields = this.serdeProcess()
     const imports = this.renderImports()
