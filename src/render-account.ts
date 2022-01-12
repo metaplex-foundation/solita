@@ -52,7 +52,6 @@ class AccountRenderer {
   // -----------------
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
-      this.typeMapper.assertBeetSupported(f.type, `account field ${f.name}`)
       const tsType = this.typeMapper.map(f.type, f.name)
       return { name: f.name, tsType }
     })
