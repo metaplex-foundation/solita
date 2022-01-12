@@ -1,10 +1,12 @@
 import { TypeMapper } from './type-mapper'
 import { IdlDefinedTypeDefinition, IdlField } from './types'
 import { strict as assert } from 'assert'
+import { renderTypeDataStruct } from './serdes'
 
 class TypeRenderer {
   readonly upperCamelTyName: string
   readonly camelTyName: string
+  readonly structArgName: string
   constructor(
     readonly ty: IdlDefinedTypeDefinition,
     private readonly typeMapper = new TypeMapper()
@@ -15,6 +17,7 @@ class TypeRenderer {
       .concat(ty.name.slice(1))
 
     this.camelTyName = ty.name.charAt(0).toLowerCase().concat(ty.name.slice(1))
+    this.structArgName = `${this.camelTyName}Struct`
   }
 
   // -----------------
@@ -45,6 +48,18 @@ class TypeRenderer {
     return imports.join('\n')
   }
 
+  // -----------------
+  // Data Struct
+  // -----------------
+  private renderDataStruct() {
+    const mappedFields = this.typeMapper.mapSerdeFields(this.ty.type.fields)
+    return renderTypeDataStruct({
+      fields: mappedFields,
+      structVarName: this.structArgName,
+      typeName: this.upperCamelTyName,
+    })
+  }
+
   render() {
     this.typeMapper.clearSerdePackagesUsed()
     assert.equal(
@@ -53,10 +68,12 @@ class TypeRenderer {
       `only user defined structs are supported, ${this.ty.name} is of type ${this.ty.type.kind}`
     )
     const typeScriptType = this.renderTypeScriptType()
+    const dataStruct = this.renderDataStruct()
     const imports = this.renderImports()
     return `
 ${imports}
 ${typeScriptType}
+export ${dataStruct}
 `.trim()
   }
 }
@@ -65,128 +82,3 @@ export function renderType(ty: IdlDefinedTypeDefinition) {
   const renderer = new TypeRenderer(ty)
   return renderer.render()
 }
-
-/*
-if (module === require.main) {
-  const types: IdlDefinedTypeDefinition[] = [
-    {
-      name: 'CandyMachineData',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'uuid',
-            type: 'string',
-          },
-          {
-            name: 'price',
-            type: 'u64',
-          },
-          {
-            name: 'itemsAvailable',
-            type: 'u64',
-          },
-          {
-            name: 'goLiveDate',
-            type: {
-              option: 'i64',
-            },
-          },
-        ],
-      },
-    },
-    {
-      name: 'ConfigData',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'uuid',
-            type: 'string',
-          },
-          {
-            name: 'symbol',
-            type: 'string',
-          },
-          {
-            name: 'sellerFeeBasisPoints',
-            type: 'u16',
-          },
-          {
-            name: 'creators',
-            type: {
-              vec: {
-                defined: 'Creator',
-              },
-            },
-          },
-          {
-            name: 'maxSupply',
-            type: 'u64',
-          },
-          {
-            name: 'isMutable',
-            type: 'bool',
-          },
-          {
-            name: 'retainAuthority',
-            type: 'bool',
-          },
-          {
-            name: 'maxNumberOfLines',
-            type: 'u32',
-          },
-        ],
-      },
-    },
-    {
-      name: 'ConfigLine',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'name',
-            type: 'string',
-          },
-          {
-            name: 'uri',
-            type: 'string',
-          },
-        ],
-      },
-    },
-    {
-      name: 'Creator',
-      type: {
-        kind: 'struct',
-        fields: [
-          {
-            name: 'address',
-            type: 'publicKey',
-          },
-          {
-            name: 'verified',
-            type: 'bool',
-          },
-          {
-            name: 'share',
-            type: 'u8',
-          },
-        ],
-      },
-    },
-  ]
-  async function main() {
-    for (const ty of types) {
-      console.log(renderType(ty))
-    }
-  }
-
-  main()
-    .then(() => process.exit(0))
-    .catch((err: any) => {
-      console.error(err)
-      process.exit(1)
-    })
-}
-*/

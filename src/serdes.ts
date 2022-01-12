@@ -66,6 +66,10 @@ export function assertKnownSerdePackage(
 // -----------------
 // Rendering processed serdes to struct
 // -----------------
+
+/**
+ * Renders DataStruct for Instruction Args and Account Args
+ */
 export function renderDataStruct({
   fields,
   structVarName,
@@ -77,7 +81,7 @@ export function renderDataStruct({
   structVarName: string
   className?: string
   argsTypename: string
-  discriminatorName: string
+  discriminatorName?: string
 }) {
   const fieldDecls =
     fields.length === 0
@@ -88,7 +92,7 @@ export function renderDataStruct({
           })
           .join(',\n    ')
 
-  const structType =
+  let structType =
     fields.length === 0
       ? `{ ${discriminatorName}: number[]; }`
       : `${argsTypename} & {
@@ -123,4 +127,37 @@ export function renderDataStruct({
   '${argsTypename}'
 )`
   }
+}
+
+/**
+ * Renders DataStruct for user defined types
+ */
+export function renderTypeDataStruct({
+  fields,
+  structVarName,
+  typeName,
+}: {
+  fields: TypeMappedSerdeField[]
+  structVarName: string
+  typeName: string
+}) {
+  assert(
+    fields.length > 0,
+    `Rendering struct for ${typeName} should have at least 1 field`
+  )
+  const fieldDecls = fields
+    .map((f) => {
+      return `['${f.name}', ${f.type}]`
+    })
+    .join(',\n    ')
+
+  // -----------------
+  // Beet Args Struct (Instruction)
+  // -----------------
+  return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetArgsStruct<${typeName}>(
+  [
+    ${fieldDecls}
+  ],
+  '${typeName}'
+)`
 }
