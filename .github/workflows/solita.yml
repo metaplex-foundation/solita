@@ -30,6 +30,6 @@ jobs:
       run: |
         yarn run build
         yarn run lint
-        yarn run test
+        yarn run test:unit
       env:
         CI: true
