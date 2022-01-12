@@ -23,5 +23,5 @@
     "skipLibCheck": true
   },
   "include": ["src", "test"],
-  "exclude": ["test/anchor-examples", "test/output"]
+  "exclude": ["test/anchor-examples", "test/integration/output"]
 }
