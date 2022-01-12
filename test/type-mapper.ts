@@ -60,6 +60,27 @@ test('type-mapper: primitive types - bignums', (t) => {
   t.end()
 })
 
+test('type-mapper: primitive types - string', (t) => {
+  const tm = new TypeMapper()
+
+  const ty = tm.map('string')
+  t.equal(ty, 'string', 'string type')
+  spok(t, Array.from(tm.serdePackagesUsed), {
+    $topic: 'serdePackagesUsed',
+    ...[],
+  })
+
+  tm.clearSerdePackagesUsed()
+  const serde = tm.mapSerde('string')
+  t.equal(serde, 'beet.fixedSizeUtf8String(1)', 'string serde')
+  spok(t, Array.from(tm.serdePackagesUsed), {
+    $topic: 'serdePackagesUsed',
+    ...[BEET_PACKAGE],
+  })
+
+  t.end()
+})
+
 // -----------------
 // Composites Option
 // -----------------

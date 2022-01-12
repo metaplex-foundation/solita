@@ -112,12 +112,25 @@ export class TypeMapper {
   // -----------------
   private mapPrimitiveSerde(ty: IdlType & string, name: string) {
     this.assertBeetSupported(ty, `account field ${name}`)
+
+    if (ty === 'string') return this.mapStringSerde(ty)
+
     const mapped = this.primaryTypeMap[ty]
 
     assertKnownSerdePackage(mapped.sourcePack)
     const packExportName = serdePackageExportName(mapped.sourcePack)
     this.serdePackagesUsed.add(mapped.sourcePack)
     return `${packExportName}.${ty}`
+  }
+
+  private mapStringSerde(ty: 'string') {
+    const mapped = this.primaryTypeMap[ty]
+
+    assertKnownSerdePackage(mapped.sourcePack)
+    const packExportName = serdePackageExportName(mapped.sourcePack)
+    this.serdePackagesUsed.add(mapped.sourcePack)
+    // TODO(thlorenz): for now hardcoding `1` until we figure out how to pass string sizes
+    return `${packExportName}.${mapped.beet}(1)`
   }
 
   private mapOptionSerde(ty: IdlTypeOption, name: string) {
