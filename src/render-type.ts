@@ -3,6 +3,11 @@ import { IdlDefinedTypeDefinition, IdlField } from './types'
 import { strict as assert } from 'assert'
 import { renderTypeDataStruct } from './serdes'
 
+export function structVarNameFromTypeName(ty: string) {
+  const camelTyName = ty.charAt(0).toLowerCase().concat(ty.slice(1))
+  return `${camelTyName}Struct`
+}
+
 class TypeRenderer {
   readonly upperCamelTyName: string
   readonly camelTyName: string
@@ -17,7 +22,7 @@ class TypeRenderer {
       .concat(ty.name.slice(1))
 
     this.camelTyName = ty.name.charAt(0).toLowerCase().concat(ty.name.slice(1))
-    this.structArgName = `${this.camelTyName}Struct`
+    this.structArgName = structVarNameFromTypeName(ty.name)
   }
 
   // -----------------

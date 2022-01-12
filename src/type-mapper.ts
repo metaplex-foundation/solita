@@ -28,6 +28,7 @@ import {
   SerdePackage,
   serdePackageExportName,
 } from './serdes'
+import { structVarNameFromTypeName } from './render-type'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
@@ -140,7 +141,8 @@ export class TypeMapper {
     const userDefinedPackage = LOCAL_TYPES_PACKAGE
     this.serdePackagesUsed.add(userDefinedPackage)
     const exp = serdePackageExportName(userDefinedPackage)
-    return `${exp}.${ty.defined}.struct`
+    const structVarName = structVarNameFromTypeName(ty.defined)
+    return `${exp}.${structVarName}`
   }
 
   mapSerde(ty: IdlType, name: string = '<no name provided>'): string {

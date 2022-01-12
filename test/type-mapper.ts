@@ -182,7 +182,7 @@ test('type-mapper: composite types - user defined', (t) => {
   tm.clearSerdePackagesUsed()
 
   const serde = tm.mapSerde(type)
-  t.equal(serde, 'definedTypes.ConfigData.struct')
+  t.equal(serde, 'definedTypes.configDataStruct')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
     ...[LOCAL_TYPES_PACKAGE],
@@ -313,7 +313,7 @@ test('type-mapper: composite types multilevel - vec<option<ConfigData>>', (t) =>
   const serde = tm.mapSerde(type)
   t.equal(
     serde,
-    'beet.fixedSizeArray(beet.coption(definedTypes.ConfigData.struct), 1)'
+    'beet.fixedSizeArray(beet.coption(definedTypes.configDataStruct), 1)'
   )
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
@@ -401,11 +401,11 @@ test('type-mapper: serde fields', (t) => {
       },
       {
         name: 'configData',
-        type: 'definedTypes.ConfigData.struct',
+        type: 'definedTypes.configDataStruct',
       },
       {
         name: 'vecOptionConfigData',
-        type: 'beet.fixedSizeArray(beet.coption(definedTypes.ConfigData.struct), 1)',
+        type: 'beet.fixedSizeArray(beet.coption(definedTypes.configDataStruct), 1)',
       },
     ])
 
