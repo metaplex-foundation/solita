@@ -1,6 +1,12 @@
+import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import test, { Test } from 'tape'
 import { renderAccount } from '../src/render-account'
-import { IdlAccount } from '../src/types'
+import { SerdePackage } from '../src/serdes'
+import {
+  BEET_SOLANA_PACKAGE,
+  IdlAccount,
+  SOLANA_WEB3_PACKAGE,
+} from '../src/types'
 import {
   analyzeCode,
   verifyImports,
@@ -12,7 +18,7 @@ const DIAGNOSTIC_ON = false
 async function checkRenderedAccount(
   t: Test,
   account: IdlAccount,
-  imports: string[],
+  imports: SerdePackage[],
   opts: {
     logImports: boolean
     logCode: boolean
@@ -41,10 +47,7 @@ test.skip('accounts: no field', async (t) => {
     },
   }
 
-  await checkRenderedAccount(t, account, [
-    "import * as beet from '@metaplex-foundation/beet'",
-    "import * as web3 from '@solana/web3.js'",
-  ])
+  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
   t.end()
 })
 
@@ -63,9 +66,9 @@ test('accounts: one field', async (t) => {
   }
 
   await checkRenderedAccount(t, account, [
-    "import * as beet from '@metaplex-foundation/beet'",
-    "import * as beetSolana from '@metaplex-foundation/beet-solana'",
-    "import * as web3 from '@solana/web3.js'",
+    BEET_PACKAGE,
+    BEET_SOLANA_PACKAGE,
+    SOLANA_WEB3_PACKAGE,
   ])
   t.end()
 })
@@ -97,9 +100,9 @@ test('accounts: four fields', async (t) => {
   }
 
   await checkRenderedAccount(t, account, [
-    "import * as beet from '@metaplex-foundation/beet'",
-    "import * as beetSolana from '@metaplex-foundation/beet-solana'",
-    "import * as web3 from '@solana/web3.js'",
+    BEET_PACKAGE,
+    BEET_SOLANA_PACKAGE,
+    SOLANA_WEB3_PACKAGE,
   ])
   t.end()
 })

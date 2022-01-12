@@ -2,11 +2,15 @@ import fs from 'fs/promises'
 import os from 'os'
 import crypto from 'crypto'
 import path from 'path'
-import { build, BuildResult, Metafile } from 'esbuild'
+import { build, BuildResult } from 'esbuild'
 import { Test } from 'tape'
 import spok from 'spok'
 import { inspect } from 'util'
 import { ESLint } from 'eslint'
+import {
+  extractSerdePackageFromImportStatment,
+  SerdePackage,
+} from '../../src/serdes'
 
 const eslint = new ESLint({
   overrideConfig: {
@@ -32,7 +36,6 @@ type AnalyzedCode = {
   ts: string
   errors: BuildResult['errors']
   warnings: BuildResult['warnings']
-  imports: Metafile['inputs'][0]['imports']
 }
 
 export function deepLog(obj: any) {
@@ -46,19 +49,16 @@ export async function analyzeCode(ts: string) {
   await fs.writeFile(filePath, ts, 'utf8')
 
   const outfilePath = `${filePath}.js`
-  const buildResult: BuildResult & { metafile: Metafile } = await build({
+  const buildResult: BuildResult = await build({
     absWorkingDir: tmpdir,
     entryPoints: [filePath],
     outfile: outfilePath,
-    metafile: true,
   })
   const js = await fs.readFile(outfilePath, 'utf8')
-  const meta = buildResult.metafile
   return {
     js,
     ts,
     errors: buildResult.errors,
-    imports: meta.inputs[filename].imports,
     warnings: buildResult.warnings,
   }
 }
@@ -69,17 +69,18 @@ export const DEFAULT_VERIFY_IMPORTS_OPTS = {
   logImports: false,
 }
 
-function importsFromCode(code: string) {
-  return code
+function importsFromCode(code: string): SerdePackage[] {
+  return <SerdePackage[]>code
     .split('\n')
     .filter((x) => /^import .+ from/.test(x))
-    .map((x) => x.replace(/;$/, ''))
+    .map(extractSerdePackageFromImportStatment)
+    .filter((x) => x != null)
 }
 
 export function verifyImports(
   t: Test,
   analyzeCode: AnalyzedCode,
-  imports: string[],
+  imports: SerdePackage[],
   opts: Partial<{
     expectNoErrors: boolean
     expectNoWarnings: boolean
@@ -94,10 +95,7 @@ export function verifyImports(
     t.equal(analyzeCode.warnings.length, 0, 'no warnings')
   }
 
-  const fromCode = importsFromCode(analyzeCode.ts)
-  const actual = Array.from(
-    new Set([...analyzeCode.imports.map((x) => x.path), ...fromCode])
-  )
+  const actual = importsFromCode(analyzeCode.ts)
 
   actual.sort()
   imports.sort()

@@ -1,6 +1,11 @@
 import test, { Test } from 'tape'
 import { renderType } from '../src/render-type'
-import { IdlDefinedTypeDefinition } from '../src/types'
+import { SerdePackage } from '../src/serdes'
+import {
+  BEET_PACKAGE,
+  IdlDefinedTypeDefinition,
+  LOCAL_TYPES_PACKAGE,
+} from '../src/types'
 import {
   analyzeCode,
   verifyImports,
@@ -12,7 +17,7 @@ const DIAGNOSTIC_ON = false
 async function checkRenderedType(
   t: Test,
   ty: IdlDefinedTypeDefinition,
-  imports: string[],
+  imports: SerdePackage[],
   opts: {
     logImports: boolean
     logCode: boolean
@@ -44,7 +49,7 @@ test('types: with one field not using lib types', async (t) => {
     },
   }
 
-  await checkRenderedType(t, ty, [])
+  await checkRenderedType(t, ty, [BEET_PACKAGE])
   t.end()
 })
 
@@ -72,9 +77,7 @@ test('types: with three, two lib types', async (t) => {
     },
   }
 
-  await checkRenderedType(t, ty, [
-    "import * as beet from '@metaplex-foundation/beet'",
-  ])
+  await checkRenderedType(t, ty, [BEET_PACKAGE])
   t.end()
 })
 
@@ -108,9 +111,6 @@ test('types: with four fields, one referring to other defined type', async (t) =
     },
   }
 
-  await checkRenderedType(t, ty, [
-    "import * as beet from '@metaplex-foundation/beet'",
-    "import * as definedTypes from '../types'",
-  ])
+  await checkRenderedType(t, ty, [BEET_PACKAGE, LOCAL_TYPES_PACKAGE])
   t.end()
 })

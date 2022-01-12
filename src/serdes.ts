@@ -1,4 +1,3 @@
-import { UnreachableCaseError } from './utils'
 import { strict as assert } from 'assert'
 import {
   BEET_EXPORT_NAME,
@@ -23,22 +22,43 @@ export type SerdePackageExportName =
   | typeof SOLANA_WEB3_EXPORT_NAME
   | typeof LOCAL_TYPES_EXPORT_NAME
 
+export const serdePackages: Map<SerdePackage, SerdePackageExportName> = new Map(
+  [
+    [BEET_PACKAGE, BEET_EXPORT_NAME],
+    [BEET_SOLANA_PACKAGE, BEET_SOLANA_EXPORT_NAME],
+    [SOLANA_WEB3_PACKAGE, SOLANA_WEB3_EXPORT_NAME],
+    [LOCAL_TYPES_PACKAGE, LOCAL_TYPES_EXPORT_NAME],
+  ]
+)
+
+const packsByLengthDesc = Array.from(serdePackages.keys()).sort((a, b) =>
+  a.length > b.length ? -1 : 1
+)
+
 export function serdePackageExportName(
   pack: SerdePackage | undefined
 ): SerdePackageExportName | null {
   if (pack == null) return null
-  switch (pack) {
-    case BEET_PACKAGE:
-      return BEET_EXPORT_NAME
-    case BEET_SOLANA_PACKAGE:
-      return BEET_SOLANA_EXPORT_NAME
-    case SOLANA_WEB3_PACKAGE:
-      return SOLANA_WEB3_EXPORT_NAME
-    case LOCAL_TYPES_PACKAGE:
-      return LOCAL_TYPES_EXPORT_NAME
-    default:
-      throw new UnreachableCaseError(pack)
+
+  const exportName = serdePackages.get(pack)
+  assert(exportName != null, `Unkonwn serde package ${pack}`)
+  return exportName
+}
+
+export function extractSerdePackageFromImportStatment(importStatement: string) {
+  // Avoiding matching on 'beet' for 'beet-solana' by checking longer keys first
+  for (const pack of packsByLengthDesc) {
+    const exportName = serdePackages.get(pack)!
+
+    if (importStatement.includes(pack)) {
+      assert(
+        importStatement.includes(`as ${exportName}`),
+        `${importStatement} should import ${pack} as ${exportName}`
+      )
+      return pack
+    }
   }
+  return null
 }
 
 export function serdePackageTypePrefix(pack: SerdePackage | undefined): string {

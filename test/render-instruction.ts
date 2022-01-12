@@ -1,6 +1,12 @@
 import test, { Test } from 'tape'
 import { renderInstruction } from '../src/render-instruction'
-import { IdlInstruction } from '../src/types'
+import { SerdePackage } from '../src/serdes'
+import {
+  BEET_PACKAGE,
+  BEET_SOLANA_PACKAGE,
+  IdlInstruction,
+  SOLANA_WEB3_PACKAGE,
+} from '../src/types'
 import {
   analyzeCode,
   verifyImports,
@@ -13,7 +19,7 @@ const DIAGNOSTIC_ON = false
 async function checkRenderedIx(
   t: Test,
   ix: IdlInstruction,
-  imports: string[],
+  imports: SerdePackage[],
   opts: {
     logImports: boolean
     logCode: boolean
@@ -43,10 +49,7 @@ test('ix: empty args', async (t) => {
     ],
     args: [],
   }
-  await checkRenderedIx(t, ix, [
-    'import * as beet from "@metaplex-foundation/beet"',
-    'import * as web3 from "@solana/web3.js"',
-  ])
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
   t.end()
 })
 
@@ -79,10 +82,7 @@ test('ix: one arg', async (t) => {
       },
     ],
   }
-  await checkRenderedIx(t, ix, [
-    'import * as beet from "@metaplex-foundation/beet"',
-    'import * as web3 from "@solana/web3.js"',
-  ])
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
   t.end()
 })
 
@@ -108,9 +108,9 @@ test('ix: two args', async (t) => {
     ],
   }
   await checkRenderedIx(t, ix, [
-    'import * as beet from "@metaplex-foundation/beet"',
-    'import * as beetSolana from "@metaplex-foundation/beet-solana"',
-    'import * as web3 from "@solana/web3.js"',
+    BEET_PACKAGE,
+    BEET_SOLANA_PACKAGE,
+    SOLANA_WEB3_PACKAGE,
   ])
   t.end()
 })
@@ -142,9 +142,9 @@ test('ix: two accounts and two args', async (t) => {
     ],
   }
   await checkRenderedIx(t, ix, [
-    'import * as beet from "@metaplex-foundation/beet"',
-    'import * as beetSolana from "@metaplex-foundation/beet-solana"',
-    'import * as web3 from "@solana/web3.js"',
+    BEET_PACKAGE,
+    BEET_SOLANA_PACKAGE,
+    SOLANA_WEB3_PACKAGE,
   ])
   t.end()
 })
