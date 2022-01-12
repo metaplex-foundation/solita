@@ -2,7 +2,7 @@ name: Build Lint and Test Solita
 
 on:
   push:
-    branches: [ master, 'thlorenz/chore/handling-types' ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
