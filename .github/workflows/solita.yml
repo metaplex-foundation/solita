@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-lint-and-test-beet:
+  build-lint-and-test-solita:
 
     runs-on: ubuntu-latest
 
