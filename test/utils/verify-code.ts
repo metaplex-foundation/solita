@@ -11,6 +11,7 @@ import {
   extractSerdePackageFromImportStatment,
   SerdePackage,
 } from '../../src/serdes'
+import recursiveReaddir from 'recursive-readdir'
 
 const eslint = new ESLint({
   overrideConfig: {
@@ -122,5 +123,17 @@ export async function verifySyntacticCorrectness(t: Test, ts: string) {
     }
   } catch (err) {
     t.error(err)
+  }
+}
+
+export async function verifySyntacticCorrectnessForGeneratedDir(
+  t: Test,
+  fullDirPath: string
+) {
+  const files = await recursiveReaddir(fullDirPath)
+  for (const file of files) {
+    t.comment(`+++ Syntactically checking ${path.relative(fullDirPath, file)}`)
+    const ts = await fs.readFile(file, 'utf8')
+    await verifySyntacticCorrectness(t, ts)
   }
 }
