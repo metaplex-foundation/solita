@@ -217,7 +217,7 @@ export class ${this.accountDataClassName} {
   }
 
   render() {
-    this.typeMapper.clearSerdePackagesUsed()
+    this.typeMapper.clearUsages()
 
     const typedFields = this.getTypedFields()
     const beetFields = this.serdeProcess()

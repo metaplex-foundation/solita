@@ -17,6 +17,7 @@ import { strict as assert } from 'assert'
 import {
   BeetTypeMapKey,
   BEET_PACKAGE,
+  SupportedTypeDefinition,
   supportedTypeMap as beetSupportedTypeMap,
 } from '@metaplex-foundation/beet'
 import {
@@ -41,12 +42,18 @@ export function resolveSerdeAlias(ty: string) {
 
 export class TypeMapper {
   readonly serdePackagesUsed: Set<SerdePackage> = new Set()
+  usedFixableSerde: boolean = false
   constructor(
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
 
-  clearSerdePackagesUsed() {
+  clearUsages() {
     this.serdePackagesUsed.clear()
+    this.usedFixableSerde = false
+  }
+
+  private updateUsedFixableSerde(ty: SupportedTypeDefinition) {
+    this.usedFixableSerde = this.usedFixableSerde || ty.isFixable
   }
 
   // -----------------
@@ -119,7 +126,10 @@ export class TypeMapper {
 
     assertKnownSerdePackage(mapped.sourcePack)
     const packExportName = serdePackageExportName(mapped.sourcePack)
+
     this.serdePackagesUsed.add(mapped.sourcePack)
+    this.updateUsedFixableSerde(mapped)
+
     return `${packExportName}.${ty}`
   }
 
@@ -128,26 +138,33 @@ export class TypeMapper {
 
     assertKnownSerdePackage(mapped.sourcePack)
     const packExportName = serdePackageExportName(mapped.sourcePack)
+
     this.serdePackagesUsed.add(mapped.sourcePack)
-    // TODO(thlorenz): for now hardcoding `1` until we figure out how to pass string sizes
-    return `${packExportName}.${mapped.beet}(1)`
+    this.updateUsedFixableSerde(mapped)
+
+    return `${packExportName}.${mapped.beet}`
   }
 
   private mapOptionSerde(ty: IdlTypeOption, name: string) {
     const inner = this.mapSerde(ty.option, name)
     const optionPackage = BEET_PACKAGE
+
     this.serdePackagesUsed.add(optionPackage)
+    this.usedFixableSerde = true
+
     const exp = serdePackageExportName(optionPackage)
     return `${exp}.coption(${inner})`
   }
 
   private mapVecSerde(ty: IdlTypeVec, name: string) {
     const inner = this.mapSerde(ty.vec, name)
-    const fixedSizeArrayPackage = BEET_PACKAGE
-    this.serdePackagesUsed.add(fixedSizeArrayPackage)
-    const exp = serdePackageExportName(fixedSizeArrayPackage)
-    // TODO(thlorenz): for now hardcoding `1` until we figure out how to handle dynamically sized arrays
-    return `${exp}.fixedSizeArray(${inner}, 1)`
+    const arrayPackage = BEET_PACKAGE
+
+    this.serdePackagesUsed.add(arrayPackage)
+    this.usedFixableSerde = true
+
+    const exp = serdePackageExportName(arrayPackage)
+    return `${exp}.array(${inner})`
   }
 
   private mapDefinedSerde(ty: IdlTypeDefined) {

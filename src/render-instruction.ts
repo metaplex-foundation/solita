@@ -153,7 +153,7 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   render() {
-    this.typeMapper.clearSerdePackagesUsed()
+    this.typeMapper.clearUsages()
 
     const ixArgType = this.renderIxArgsType()
     const processedKeys = this.processIxAccounts()

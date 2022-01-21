@@ -66,7 +66,7 @@ class TypeRenderer {
   }
 
   render() {
-    this.typeMapper.clearSerdePackagesUsed()
+    this.typeMapper.clearUsages()
     assert.equal(
       this.ty.type.kind,
       'struct',
