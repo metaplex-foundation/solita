@@ -132,6 +132,10 @@ export function isIdlTypeVec(ty: IdlType): ty is IdlTypeVec {
   return (ty as IdlTypeVec).vec != null
 }
 
+export function isIdlTypeArray(ty: IdlType): ty is IdlTypeArray {
+  return (ty as IdlTypeArray).array != null
+}
+
 export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
   return (ty as IdlTypeDefined).defined != null
 }

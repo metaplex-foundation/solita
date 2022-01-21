@@ -2,9 +2,11 @@ import {
   IdlField,
   IdlInstructionArg,
   IdlType,
+  IdlTypeArray,
   IdlTypeDefined,
   IdlTypeOption,
   IdlTypeVec,
+  isIdlTypeArray,
   isIdlTypeDefined,
   isIdlTypeOption,
   isIdlTypeVec,
@@ -94,6 +96,12 @@ export class TypeMapper {
     return `${inner}[]`
   }
 
+  private mapArrayType(ty: IdlTypeArray, name: string) {
+    const inner = this.map(ty.array[0], name)
+    const size = ty.array[1]
+    return `${inner}[] /* size: ${size} */`
+  }
+
   private mapDefinedType(ty: IdlTypeDefined) {
     const userDefinedPackage = LOCAL_TYPES_PACKAGE
     this.serdePackagesUsed.add(userDefinedPackage)
@@ -110,6 +118,9 @@ export class TypeMapper {
     }
     if (isIdlTypeVec(ty)) {
       return this.mapVecType(ty, name)
+    }
+    if (isIdlTypeArray(ty)) {
+      return this.mapArrayType(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
       return this.mapDefinedType(ty)
@@ -171,6 +182,18 @@ export class TypeMapper {
     return `${exp}.array(${inner})`
   }
 
+  private mapArraySerde(ty: IdlTypeArray, name: string) {
+    const inner = this.mapSerde(ty.array[0], name)
+    const size = ty.array[1]
+    const arrayPackage = BEET_PACKAGE
+
+    this.serdePackagesUsed.add(arrayPackage)
+    this.usedFixableSerde = true
+
+    const exp = serdePackageExportName(arrayPackage)
+    return `${exp}.uniformFixedSizeArray(${inner}, ${size})`
+  }
+
   private mapDefinedSerde(ty: IdlTypeDefined) {
     const userDefinedPackage = LOCAL_TYPES_PACKAGE
     this.serdePackagesUsed.add(userDefinedPackage)
@@ -192,6 +215,9 @@ export class TypeMapper {
     }
     if (isIdlTypeVec(ty)) {
       return this.mapVecSerde(ty, name)
+    }
+    if (isIdlTypeArray(ty)) {
+      return this.mapArraySerde(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
       return this.mapDefinedSerde(ty)

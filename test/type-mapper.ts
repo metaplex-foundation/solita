@@ -195,6 +195,39 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
 })
 
 // -----------------
+// Composites Sized Array
+// -----------------
+test('type-mapper: composite types - array<number>', (t) => {
+  {
+    const tm = new TypeMapper()
+    const type = <IdlType>{
+      array: ['u16', 4],
+    }
+    const ty = tm.map(type)
+
+    t.equal(ty, 'number[] /* size: 4 */', 'array<u16>(4)')
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[],
+    })
+
+    tm.clearUsages()
+    const serde = tm.mapSerde(type)
+    t.equal(
+      serde,
+      'beet.uniformFixedSizeArray(beet.u16, 4)',
+      'array<u16>(4) serde'
+    )
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_PACKAGE],
+    })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
+  }
+  t.end()
+})
+
+// -----------------
 // Composites User Defined
 // -----------------
 test('type-mapper: composite types - user defined', (t) => {
