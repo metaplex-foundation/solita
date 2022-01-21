@@ -1,5 +1,5 @@
 import { renderDataStruct } from './serdes'
-import { TypeMapper } from './type-mapper'
+import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
   IdlAccount,
@@ -213,6 +213,7 @@ export class ${this.accountDataClassName} {
       className: this.accountDataClassName,
       argsTypename: this.accountDataArgsTypeName,
       discriminatorName: 'accountDiscriminator',
+      isFixable: this.typeMapper.usedFixableSerde,
     })
   }
 
@@ -235,8 +236,8 @@ ${dataStruct}`
   }
 }
 
-export function renderAccount(account: IdlAccount) {
-  const typeMapper = new TypeMapper()
+export function renderAccount(account: IdlAccount, forceFixable: ForceFixable) {
+  const typeMapper = new TypeMapper(forceFixable)
   const renderer = new AccountRenderer(account, typeMapper)
   return renderer.render()
 }

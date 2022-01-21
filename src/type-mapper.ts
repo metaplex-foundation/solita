@@ -40,10 +40,14 @@ export function resolveSerdeAlias(ty: string) {
   }
 }
 
+export type ForceFixable = (ty: IdlType) => boolean
+export const FORCE_FIXABLE_NEVER: ForceFixable = () => false
+
 export class TypeMapper {
   readonly serdePackagesUsed: Set<SerdePackage> = new Set()
   usedFixableSerde: boolean = false
   constructor(
+    private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
 
@@ -176,6 +180,10 @@ export class TypeMapper {
   }
 
   mapSerde(ty: IdlType, name: string = '<no name provided>'): string {
+    if (this.forceFixable(ty)) {
+      this.usedFixableSerde = true
+    }
+
     if (typeof ty === 'string') {
       return this.mapPrimitiveSerde(ty, name)
     }

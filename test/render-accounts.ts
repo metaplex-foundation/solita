@@ -2,6 +2,7 @@ import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import test, { Test } from 'tape'
 import { renderAccount } from '../src/render-account'
 import { SerdePackage } from '../src/serdes'
+import { FORCE_FIXABLE_NEVER } from '../src/type-mapper'
 import {
   BEET_SOLANA_PACKAGE,
   IdlAccount,
@@ -24,7 +25,7 @@ async function checkRenderedAccount(
     logCode: boolean
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderAccount(account)
+  const ts = renderAccount(account, FORCE_FIXABLE_NEVER)
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)

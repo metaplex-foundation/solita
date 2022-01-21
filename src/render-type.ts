@@ -14,7 +14,7 @@ class TypeRenderer {
   readonly structArgName: string
   constructor(
     readonly ty: IdlDefinedTypeDefinition,
-    private readonly typeMapper = new TypeMapper()
+    readonly typeMapper = new TypeMapper()
   ) {
     this.upperCamelTyName = ty.name
       .charAt(0)
@@ -62,6 +62,7 @@ class TypeRenderer {
       fields: mappedFields,
       structVarName: this.structArgName,
       typeName: this.upperCamelTyName,
+      isFixable: this.typeMapper.usedFixableSerde,
     })
   }
 
@@ -85,5 +86,7 @@ export ${dataStruct}
 
 export function renderType(ty: IdlDefinedTypeDefinition) {
   const renderer = new TypeRenderer(ty)
-  return renderer.render()
+  const code = renderer.render()
+  const isFixable = renderer.typeMapper.usedFixableSerde
+  return { code, isFixable }
 }
