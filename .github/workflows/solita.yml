@@ -31,5 +31,6 @@ jobs:
         yarn run build
         yarn run lint
         yarn run test:unit
+        yarn run test:integration
       env:
         CI: true
