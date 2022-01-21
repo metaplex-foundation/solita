@@ -24,9 +24,9 @@ async function checkRenderedType(
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
   const ts = renderType(ty)
-  verifySyntacticCorrectness(t, ts)
+  verifySyntacticCorrectness(t, ts.code)
 
-  const analyzed = await analyzeCode(ts)
+  const analyzed = await analyzeCode(ts.code)
   if (opts.logCode) {
     console.log(
       `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`

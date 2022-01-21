@@ -8,7 +8,7 @@ import {
   TypeMappedSerdeField,
   SOLANA_WEB3_PACKAGE,
 } from './types'
-import { TypeMapper } from './type-mapper'
+import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
 import { instructionDiscriminator } from './utils'
 import {
@@ -33,7 +33,7 @@ class InstructionRenderer {
   constructor(
     readonly ix: IdlInstruction,
     readonly programId: string,
-    private readonly typeMapper = new TypeMapper()
+    private readonly typeMapper: TypeMapper
   ) {
     this.upperCamelIxName = ix.name
       .charAt(0)
@@ -149,11 +149,12 @@ ${typeMapperImports.join('\n')}`.trim()
       structVarName: this.structArgName,
       argsTypename: this.argsTypename,
       discriminatorName: 'instructionDiscriminator',
+      isFixable: this.typeMapper.usedFixableSerde,
     })
   }
 
   render() {
-    this.typeMapper.clearSerdePackagesUsed()
+    this.typeMapper.clearUsages()
 
     const ixArgType = this.renderIxArgsType()
     const processedKeys = this.processIxAccounts()
@@ -216,7 +217,12 @@ export function create${this.upperCamelIxName}Instruction(
   }
 }
 
-export function renderInstruction(ix: IdlInstruction, programId: string) {
-  const renderer = new InstructionRenderer(ix, programId)
+export function renderInstruction(
+  ix: IdlInstruction,
+  programId: string,
+  forceFixable: ForceFixable
+) {
+  const typeMapper = new TypeMapper(forceFixable)
+  const renderer = new InstructionRenderer(ix, programId, typeMapper)
   return renderer.render()
 }

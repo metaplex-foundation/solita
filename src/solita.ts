@@ -3,7 +3,7 @@ import path from 'path'
 // import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
-import { Idl } from './types'
+import { Idl, IdlType, isIdlTypeDefined } from './types'
 import { logDebug, logInfo, logTrace, prepareTargetDir } from './utils'
 import { format, Options } from 'prettier'
 import { renderType } from './render-type'
@@ -42,12 +42,47 @@ export class Solita {
 
   renderCode() {
     const programId = this.idl.metadata.address
+    const fixableTypes: Set<string> = new Set()
+
+    function forceFixable(ty: IdlType) {
+      if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
+        return true
+      }
+      return false
+    }
+
+    // NOTE: we render types first in order to know which ones are 'fixable' by
+    // the time we render accounts and instructions
+
+    const types: Record<string, string> = {}
+    logDebug('Rendering %d types', this.idl.types?.length ?? 0)
+    if (this.idl.types != null) {
+      for (const ty of this.idl.types) {
+        logDebug(`Rendering type ${ty.name}`)
+        logTrace('kind: %s', ty.type.kind)
+        logTrace('fields: %O', ty.type.fields)
+        let { code, isFixable } = renderType(ty)
+        if (isFixable) {
+          fixableTypes.add(ty.name)
+        }
+        if (this.formatCode) {
+          try {
+            code = format(code, this.formatOpts)
+          } catch (err) {
+            console.error(`Failed to format ${ty.name} instruction`)
+            console.error(err)
+          }
+        }
+        types[ty.name] = code
+      }
+    }
+
     const instructions: Record<string, string> = {}
     for (const ix of this.idl.instructions) {
       logDebug(`Rendering instruction ${ix.name}`)
       logTrace('args: %O', ix.args)
       logTrace('accounts: %O', ix.accounts)
-      let code = renderInstruction(ix, programId)
+      let code = renderInstruction(ix, programId, forceFixable)
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -63,7 +98,7 @@ export class Solita {
     for (const account of this.idl.accounts ?? []) {
       logDebug(`Rendering account ${account.name}`)
       logTrace('type: %O', account.type)
-      let code = renderAccount(account)
+      let code = renderAccount(account, forceFixable)
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -73,26 +108,6 @@ export class Solita {
         }
       }
       accounts[account.name] = code
-    }
-
-    const types: Record<string, string> = {}
-    logDebug('Rendering %d types', this.idl.types?.length ?? 0)
-    if (this.idl.types != null) {
-      for (const ty of this.idl.types) {
-        logDebug(`Rendering instruction ${ty.name}`)
-        logTrace('kind: %s', ty.type.kind)
-        logTrace('fields: %O', ty.type.fields)
-        let code = renderType(ty)
-        if (this.formatCode) {
-          try {
-            code = format(code, this.formatOpts)
-          } catch (err) {
-            console.error(`Failed to format ${ty.name} instruction`)
-            console.error(err)
-          }
-        }
-        types[ty.name] = code
-      }
     }
 
     logDebug('Rendering %d errors', this.idl.errors?.length ?? 0)

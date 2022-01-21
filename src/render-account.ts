@@ -1,5 +1,5 @@
 import { renderDataStruct } from './serdes'
-import { TypeMapper } from './type-mapper'
+import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
   IdlAccount,
@@ -92,6 +92,80 @@ export type ${this.accountDataArgsTypeName} = {
 }`
   }
 
+  private renderByteSizeMethods() {
+    if (this.typeMapper.usedFixableSerde) {
+      return `
+  /**
+   * Returns the byteSize of a {@link Buffer} holding the serialized data of
+   * {@link ${this.accountDataClassName}} for the provided args.
+   *
+   * @param args need to be provided since the byte size for this account
+   * depends on them
+   */
+  static byteSize(args: ${this.accountDataArgsTypeName}) {
+    const instance = ${this.accountDataClassName}.fromArgs(args)
+    return ${this.dataStructName}.toFixedFromValue({
+      accountDiscriminator: ${this.accountDiscriminatorName},
+      ...instance,
+    }).byteSize
+  }
+
+  /**
+   * Fetches the minimum balance needed to exempt an account holding 
+   * {@link ${this.accountDataClassName}} data from rent
+   *
+   * @param args need to be provided since the byte size for this account
+   * depends on them
+   * @param connection used to retrieve the rent exemption information
+   */
+  static async getMinimumBalanceForRentExemption(
+    args: ${this.accountDataArgsTypeName},
+    connection: web3.Connection,
+    commitment?: web3.Commitment
+  ): Promise<number> {
+    return connection.getMinimumBalanceForRentExemption(
+      ${this.accountDataClassName}.byteSize(args),
+      commitment
+    )
+  }
+  `.trim()
+    } else {
+      return `
+  /**
+   * Returns the byteSize of a {@link Buffer} holding the serialized data of
+   * {@link ${this.accountDataClassName}}
+   */
+  static get byteSize() {
+    return ${this.dataStructName}.byteSize;
+  }
+
+  /**
+   * Fetches the minimum balance needed to exempt an account holding 
+   * {@link ${this.accountDataClassName}} data from rent
+   *
+   * @param connection used to retrieve the rent exemption information
+   */
+  static async getMinimumBalanceForRentExemption(
+    connection: web3.Connection,
+    commitment?: web3.Commitment,
+  ): Promise<number> {
+    return connection.getMinimumBalanceForRentExemption(
+      ${this.accountDataClassName}.byteSize,
+      commitment,
+    );
+  }
+
+  /**
+   * Determines if the provided {@link Buffer} has the correct byte size to
+   * hold {@link ${this.accountDataClassName}} data.
+   */
+  static hasCorrectByteSize(buf: Buffer, offset = 0) {
+    return buf.byteLength - offset === ${this.accountDataClassName}.byteSize;
+  }
+      `.trim()
+    }
+  }
+
   // -----------------
   // AccountData class
   // -----------------
@@ -109,12 +183,14 @@ export type ${this.accountDataArgsTypeName} = {
       Array.from(accountDiscriminator(this.account.name))
     )
 
+    const byteSizeMethods = this.renderByteSizeMethods()
+
     return `const ${this.accountDiscriminatorName} = ${accountDisc};
 /**
  * Holds the data for the {@link ${this.upperCamelAccountName}Account} and provides de/serialization
  * functionality for that data
  */
-export class ${this.accountDataClassName} {
+export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeName} {
   private constructor(
     ${constructorArgs}
   ) {}
@@ -161,35 +237,7 @@ export class ${this.accountDataClassName} {
     })
   }
 
-  /**
-   * Returns the byteSize of a {@link Buffer} holding the serialized data of
-   * {@link ${this.accountDataClassName}}
-   */
-  static get byteSize() {
-    return ${this.dataStructName}.byteSize;
-  }
-
-  /**
-   * Fetches the minimum balance needed to exempt an account holding 
-   * {@link ${this.accountDataClassName}} data from rent
-   */
-  static async getMinimumBalanceForRentExemption(
-    connection: web3.Connection,
-    commitment?: web3.Commitment,
-  ): Promise<number> {
-    return connection.getMinimumBalanceForRentExemption(
-      ${this.accountDataClassName}.byteSize,
-      commitment,
-    );
-  }
-
-  /**
-   * Determines if the provided {@link Buffer} has the correct byte size to
-   * hold {@link ${this.accountDataClassName}} data.
-   */
-  static hasCorrectByteSize(buf: Buffer, offset = 0) {
-    return buf.byteLength - offset === ${this.accountDataClassName}.byteSize;
-  }
+  ${byteSizeMethods}
 
   /**
    * Returns a readable version of {@link ${this.accountDataClassName}} properties
@@ -213,11 +261,12 @@ export class ${this.accountDataClassName} {
       className: this.accountDataClassName,
       argsTypename: this.accountDataArgsTypeName,
       discriminatorName: 'accountDiscriminator',
+      isFixable: this.typeMapper.usedFixableSerde,
     })
   }
 
   render() {
-    this.typeMapper.clearSerdePackagesUsed()
+    this.typeMapper.clearUsages()
 
     const typedFields = this.getTypedFields()
     const beetFields = this.serdeProcess()
@@ -235,8 +284,8 @@ ${dataStruct}`
   }
 }
 
-export function renderAccount(account: IdlAccount) {
-  const typeMapper = new TypeMapper()
+export function renderAccount(account: IdlAccount, forceFixable: ForceFixable) {
+  const typeMapper = new TypeMapper(forceFixable)
   const renderer = new AccountRenderer(account, typeMapper)
   return renderer.render()
 }

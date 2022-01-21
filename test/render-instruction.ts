@@ -1,6 +1,7 @@
 import test, { Test } from 'tape'
 import { renderInstruction } from '../src/render-instruction'
 import { SerdePackage } from '../src/serdes'
+import { FORCE_FIXABLE_NEVER } from '../src/type-mapper'
 import {
   BEET_PACKAGE,
   BEET_SOLANA_PACKAGE,
@@ -25,7 +26,7 @@ async function checkRenderedIx(
     logCode: boolean
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderInstruction(ix, PROGRAM_ID)
+  const ts = renderInstruction(ix, PROGRAM_ID, FORCE_FIXABLE_NEVER)
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)

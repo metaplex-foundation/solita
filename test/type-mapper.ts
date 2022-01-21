@@ -22,8 +22,9 @@ test('type-mapper: primitive types - numbers', (t) => {
     const ty = tm.map(n)
     t.equal(ty, 'number', `'${n}' maps to '${ty}' TypeScript type`)
   }
+  t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   for (const n of types) {
     const serde = tm.mapSerde(n)
     t.equal(serde, `beet.${n}`, `'${n}' maps to '${serde}' serde`)
@@ -32,6 +33,7 @@ test('type-mapper: primitive types - numbers', (t) => {
     $topic: 'serdePackagesUsed',
     ...[BEET_PACKAGE],
   })
+  t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
   t.end()
 })
 
@@ -47,8 +49,9 @@ test('type-mapper: primitive types - bignums', (t) => {
     $topic: 'serdePackagesUsed',
     ...[BEET_PACKAGE],
   })
+  t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   for (const n of types) {
     const serde = tm.mapSerde(n)
     t.equal(serde, `beet.${n}`, `'${n}' maps to '${serde}' serde`)
@@ -57,6 +60,7 @@ test('type-mapper: primitive types - bignums', (t) => {
     $topic: 'serdePackagesUsed',
     ...[BEET_PACKAGE],
   })
+  t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
   t.end()
 })
 
@@ -70,13 +74,14 @@ test('type-mapper: primitive types - string', (t) => {
     ...[],
   })
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   const serde = tm.mapSerde('string')
-  t.equal(serde, 'beet.fixedSizeUtf8String(1)', 'string serde')
+  t.equal(serde, 'beet.utf8String', 'string serde')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
     ...[BEET_PACKAGE],
   })
+  t.ok(tm.usedFixableSerde, 'used fixable serde')
 
   t.end()
 })
@@ -99,7 +104,7 @@ test('type-mapper: composite types - option<number | bignum>', (t) => {
       ...[BEET_PACKAGE],
     })
 
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const serde = tm.mapSerde(type)
     t.equal(serde, 'beet.coption(beet.u16)', 'option<u16> serde')
 
@@ -107,10 +112,11 @@ test('type-mapper: composite types - option<number | bignum>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
   {
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const type = <IdlType>{
       option: 'u64',
     }
@@ -122,7 +128,7 @@ test('type-mapper: composite types - option<number | bignum>', (t) => {
       ...[BEET_PACKAGE],
     })
 
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const serde = tm.mapSerde(type)
     t.equal(serde, 'beet.coption(beet.u64)', 'option<u64> serde')
 
@@ -130,6 +136,7 @@ test('type-mapper: composite types - option<number | bignum>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
   t.end()
@@ -152,13 +159,14 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
       ...[],
     })
 
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const serde = tm.mapSerde(type)
-    t.equal(serde, 'beet.fixedSizeArray(beet.u16, 1)', 'vec<u16> serde')
+    t.equal(serde, 'beet.array(beet.u16)', 'vec<u16> serde')
     spok(t, Array.from(tm.serdePackagesUsed), {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
   {
@@ -174,13 +182,47 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
       ...[],
     })
 
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const serde = tm.mapSerde(type)
-    t.equal(serde, 'beet.fixedSizeArray(beet.u64, 1)', 'vec<u64> serde')
+    t.equal(serde, 'beet.array(beet.u64)', 'vec<u64> serde')
     spok(t, Array.from(tm.serdePackagesUsed), {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
+  }
+  t.end()
+})
+
+// -----------------
+// Composites Sized Array
+// -----------------
+test('type-mapper: composite types - array<number>', (t) => {
+  {
+    const tm = new TypeMapper()
+    const type = <IdlType>{
+      array: ['u16', 4],
+    }
+    const ty = tm.map(type)
+
+    t.equal(ty, 'number[] /* size: 4 */', 'array<u16>(4)')
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[],
+    })
+
+    tm.clearUsages()
+    const serde = tm.mapSerde(type)
+    t.equal(
+      serde,
+      'beet.uniformFixedSizeArray(beet.u16, 4)',
+      'array<u16>(4) serde'
+    )
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_PACKAGE],
+    })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
   t.end()
 })
@@ -200,7 +242,7 @@ test('type-mapper: composite types - user defined', (t) => {
     $topic: 'serdePackagesUsed',
     ...[LOCAL_TYPES_PACKAGE],
   })
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
 
   const serde = tm.mapSerde(type)
   t.equal(serde, 'definedTypes.configDataStruct')
@@ -208,6 +250,7 @@ test('type-mapper: composite types - user defined', (t) => {
     $topic: 'serdePackagesUsed',
     ...[LOCAL_TYPES_PACKAGE],
   })
+  t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
 
   t.end()
 })
@@ -225,13 +268,15 @@ test('type-mapper: type extensions - publicKey', (t) => {
     ...[SOLANA_WEB3_PACKAGE],
   })
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   const serde = tm.mapSerde('publicKey')
   t.equal(serde, 'beetSolana.publicKey', 'publicKey serde')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
     ...[BEET_SOLANA_PACKAGE],
   })
+  t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
+
   t.end()
 })
 
@@ -252,7 +297,7 @@ test('type-mapper: composite with type extensions - publicKey', (t) => {
     ...[SOLANA_WEB3_PACKAGE, BEET_PACKAGE],
   })
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   const serde = tm.mapSerde(type)
   t.equal(
     serde,
@@ -263,6 +308,8 @@ test('type-mapper: composite with type extensions - publicKey', (t) => {
     $topic: 'serdePackagesUsed',
     ...[BEET_SOLANA_PACKAGE, BEET_PACKAGE],
   })
+  t.ok(tm.usedFixableSerde, 'used fixable serde')
+
   t.end()
 })
 
@@ -280,13 +327,14 @@ test('type-mapper: composite types multilevel - option<option<number>>', (t) => 
     ...[BEET_PACKAGE],
   })
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   const serde = tm.mapSerde(type)
   t.equal(serde, 'beet.coption(beet.coption(beet.u64))')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
     ...[BEET_PACKAGE],
   })
+  t.ok(tm.usedFixableSerde, 'used fixable serde')
   t.end()
 })
 
@@ -304,13 +352,15 @@ test('type-mapper: composite types multilevel - option<option<publicKey>>', (t) 
     ...[SOLANA_WEB3_PACKAGE, BEET_PACKAGE],
   })
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   const serde = tm.mapSerde(type)
   t.equal(serde, 'beet.coption(beet.coption(beetSolana.publicKey))')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
     ...[BEET_SOLANA_PACKAGE, BEET_PACKAGE],
   })
+  t.ok(tm.usedFixableSerde, 'used fixable serde')
+
   t.end()
 })
 
@@ -330,16 +380,14 @@ test('type-mapper: composite types multilevel - vec<option<ConfigData>>', (t) =>
     ...[LOCAL_TYPES_PACKAGE, BEET_PACKAGE],
   })
 
-  tm.clearSerdePackagesUsed()
+  tm.clearUsages()
   const serde = tm.mapSerde(type)
-  t.equal(
-    serde,
-    'beet.fixedSizeArray(beet.coption(definedTypes.configDataStruct), 1)'
-  )
+  t.equal(serde, 'beet.array(beet.coption(definedTypes.configDataStruct))')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
     ...[LOCAL_TYPES_PACKAGE, BEET_PACKAGE],
   })
+  t.ok(tm.usedFixableSerde, 'used fixable serde')
 
   t.end()
 })
@@ -375,7 +423,7 @@ test('type-mapper: serde fields', (t) => {
   const tm = new TypeMapper()
   {
     t.comment('+++ u16 field only')
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const mappedFields = tm.mapSerdeFields([u16])
     spok(t, mappedFields, [{ name: 'u16', type: 'beet.u16' }])
 
@@ -383,11 +431,12 @@ test('type-mapper: serde fields', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
   }
 
   {
     t.comment('+++ optionPublicKey field only')
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const mappedFields = tm.mapSerdeFields([optionPublicKey])
     spok(t, mappedFields, [
       {
@@ -400,13 +449,14 @@ test('type-mapper: serde fields', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_SOLANA_PACKAGE, BEET_PACKAGE],
     })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
   {
     t.comment(
       '+++ u16, optionPublicKey, configData and vecOptionConfigData fields'
     )
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
     const mappedFields = tm.mapSerdeFields([
       u16,
       optionPublicKey,
@@ -426,7 +476,7 @@ test('type-mapper: serde fields', (t) => {
       },
       {
         name: 'vecOptionConfigData',
-        type: 'beet.fixedSizeArray(beet.coption(definedTypes.configDataStruct), 1)',
+        type: 'beet.array(beet.coption(definedTypes.configDataStruct))',
       },
     ])
 
@@ -434,6 +484,7 @@ test('type-mapper: serde fields', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE, BEET_SOLANA_PACKAGE],
     })
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
   t.end()
 })
@@ -445,7 +496,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
   const tm = new TypeMapper()
 
   {
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
 
     t.comment('+++ imports for three packages')
     const packsUsed = <SerdePackage[]>[
@@ -465,7 +516,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
   }
 
   {
-    tm.clearSerdePackagesUsed()
+    tm.clearUsages()
 
     t.comment('+++ imports for one package')
     const packsUsed = <SerdePackage[]>[BEET_PACKAGE]

@@ -96,12 +96,14 @@ export function renderDataStruct({
   className,
   argsTypename,
   discriminatorName,
+  isFixable,
 }: {
   fields: TypeMappedSerdeField[]
   structVarName: string
   className?: string
   argsTypename: string
   discriminatorName?: string
+  isFixable: boolean
 }) {
   const fieldDecls =
     fields.length === 0
@@ -124,24 +126,28 @@ export function renderDataStruct({
   // Beet Struct (Account)
   // -----------------
   if (className != null) {
-    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetStruct<
+    const beetStructType = isFixable ? 'FixableBeetStruct' : 'BeetStruct'
+    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetStructType}<
     ${className},
     ${structType}
 >(
   [
-    ['${discriminatorName}', ${BEET_EXPORT_NAME}.fixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
+    ['${discriminatorName}', ${BEET_EXPORT_NAME}.uniformFixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
     ${fieldDecls}
   ],
   ${className}.fromArgs,
   '${className}'
 )`
   } else {
+    const beetArgsStructType = isFixable
+      ? 'FixableBeetArgsStruct'
+      : 'BeetArgsStruct'
     // -----------------
     // Beet Args Struct (Instruction)
     // -----------------
-    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetArgsStruct<${structType}>(
+    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${structType}>(
   [
-    ['${discriminatorName}', ${BEET_EXPORT_NAME}.fixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
+    ['${discriminatorName}', ${BEET_EXPORT_NAME}.uniformFixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
     ${fieldDecls}
   ],
   '${argsTypename}'
@@ -156,10 +162,12 @@ export function renderTypeDataStruct({
   fields,
   structVarName,
   typeName,
+  isFixable,
 }: {
   fields: TypeMappedSerdeField[]
   structVarName: string
   typeName: string
+  isFixable: boolean
 }) {
   assert(
     fields.length > 0,
@@ -171,10 +179,14 @@ export function renderTypeDataStruct({
     })
     .join(',\n    ')
 
+  const beetArgsStructType = isFixable
+    ? 'FixableBeetArgsStruct'
+    : 'BeetArgsStruct'
+
   // -----------------
   // Beet Args Struct (Instruction)
   // -----------------
-  return `const ${structVarName} = new ${BEET_EXPORT_NAME}.BeetArgsStruct<${typeName}>(
+  return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>(
   [
     ${fieldDecls}
   ],
