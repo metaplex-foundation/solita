@@ -6,6 +6,7 @@ import {
   BEET_SOLANA_PACKAGE,
   IdlField,
   IdlType,
+  IdlTypeEnum,
   LOCAL_TYPES_PACKAGE,
   SOLANA_WEB3_PACKAGE,
 } from '../src/types'
@@ -83,6 +84,70 @@ test('type-mapper: primitive types - string', (t) => {
   })
   t.ok(tm.usedFixableSerde, 'used fixable serde')
 
+  t.end()
+})
+
+// -----------------
+// Enums Scalar
+// -----------------
+test('type-mapper: enums scalar', (t) => {
+  const tm = new TypeMapper()
+
+  const enumType = <IdlTypeEnum>{
+    kind: 'enum',
+    variants: [
+      {
+        name: 'Wallet',
+      },
+      {
+        name: 'Token',
+      },
+      {
+        name: 'NFT',
+      },
+    ],
+  }
+  {
+    t.comment('+++ not providing name when mapping type and serde')
+    tm.clearUsages()
+    try {
+      tm.map(enumType)
+      t.fail('should fail due to missing name')
+    } catch (err: any) {
+      t.match(err.message, /provide name for enum types/i)
+    }
+    try {
+      tm.mapSerde(enumType)
+      t.fail('should fail due to missing name')
+    } catch (err: any) {
+      t.match(err.message, /provide name for enum types/i)
+    }
+  }
+
+  {
+    t.comment('+++ providing name when mapping type and serde')
+    tm.clearUsages()
+    const ty = tm.map(enumType, 'MembershipModel')
+
+    t.equal(ty, 'MembershipModel', 'name as type')
+    t.equal(tm.serdePackagesUsed.size, 0, 'no serdePackagesUsed')
+    spok(t, Array.from(tm.scalarEnumsUsed), {
+      $topic: 'scalarEnumsUsed',
+      ...[['MembershipModel', ['Wallet', 'Token', 'NFT']]],
+    })
+
+    tm.clearUsages()
+    const serde = tm.mapSerde(enumType, 'MembershipModel')
+    t.equal(serde, 'beet.fixedScalarEnum(MembershipModel)', 'serde')
+    spok(t, Array.from(tm.serdePackagesUsed), {
+      $topic: 'serdePackagesUsed',
+      ...[BEET_PACKAGE],
+    })
+    spok(t, Array.from(tm.scalarEnumsUsed), {
+      $topic: 'scalarEnumsUsed',
+      ...[['MembershipModel', ['Wallet', 'Token', 'NFT']]],
+    })
+  }
   t.end()
 })
 

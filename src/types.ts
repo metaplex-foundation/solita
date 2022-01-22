@@ -34,6 +34,7 @@ export type IdlType =
   | IdlTypeOption
   | IdlTypeVec
   | IdlTypeArray
+  | IdlTypeEnum
 
 // User defined type.
 export type IdlTypeDefined = {
@@ -50,6 +51,15 @@ export type IdlTypeVec = {
 
 export type IdlTypeArray = {
   array: [idlType: IdlType, size: number]
+}
+
+export type IdlEnumVariant = {
+  name: string
+}
+
+export type IdlTypeEnum = {
+  kind: 'enum'
+  variants: IdlEnumVariant[]
 }
 
 export type IdlDefinedType = {
@@ -138,6 +148,10 @@ export function isIdlTypeArray(ty: IdlType): ty is IdlTypeArray {
 
 export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
   return (ty as IdlTypeDefined).defined != null
+}
+
+export function isIdlTypeEnum(ty: IdlType): ty is IdlTypeEnum {
+  return (ty as IdlTypeEnum).variants != null
 }
 
 // -----------------
