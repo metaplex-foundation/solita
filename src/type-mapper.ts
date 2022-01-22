@@ -222,13 +222,15 @@ export class TypeMapper {
   private mapArraySerde(ty: IdlTypeArray, name: string) {
     const inner = this.mapSerde(ty.array[0], name)
     const size = ty.array[1]
-    const arrayPackage = BEET_PACKAGE
+    const mapped = this.primaryTypeMap['UniformFixedSizeArray']
+    const arrayPackage = mapped.sourcePack
+    assertKnownSerdePackage(arrayPackage)
 
     this.serdePackagesUsed.add(arrayPackage)
-    this.usedFixableSerde = true
+    this.updateUsedFixableSerde(mapped)
 
     const exp = serdePackageExportName(arrayPackage)
-    return `${exp}.uniformFixedSizeArray(${inner}, ${size})`
+    return `${exp}.${mapped.beet}(${inner}, ${size})`
   }
 
   private mapDefinedSerde(ty: IdlTypeDefined) {
