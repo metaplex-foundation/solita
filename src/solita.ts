@@ -3,7 +3,13 @@ import path from 'path'
 // import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
-import { Idl, IdlType, isIdlTypeDefined } from './types'
+import {
+  Idl,
+  IdlType,
+  isIdlDefinedType,
+  isIdlTypeDefined,
+  isIdlTypeEnum,
+} from './types'
 import { logDebug, logInfo, logTrace, prepareTargetDir } from './utils'
 import { format, Options } from 'prettier'
 import { renderType } from './render-type'
@@ -43,6 +49,7 @@ export class Solita {
   renderCode() {
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
+    let userDefinedEnums: Set<string> = new Set()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -60,8 +67,16 @@ export class Solita {
       for (const ty of this.idl.types) {
         logDebug(`Rendering type ${ty.name}`)
         logTrace('kind: %s', ty.type.kind)
-        logTrace('fields: %O', ty.type.fields)
-        let { code, isFixable } = renderType(ty)
+        if (isIdlDefinedType(ty.type)) {
+          logTrace('fields: %O', ty.type.fields)
+        } else {
+          if (isIdlTypeEnum(ty.type)) {
+            logTrace('variants: %O', ty.type.variants)
+          }
+        }
+        let { code, isFixable, userDefinedEnums: enums } = renderType(ty)
+        userDefinedEnums = enums
+
         if (isFixable) {
           fixableTypes.add(ty.name)
         }
@@ -82,7 +97,12 @@ export class Solita {
       logDebug(`Rendering instruction ${ix.name}`)
       logTrace('args: %O', ix.args)
       logTrace('accounts: %O', ix.accounts)
-      let code = renderInstruction(ix, programId, forceFixable)
+      let code = renderInstruction(
+        ix,
+        programId,
+        forceFixable,
+        userDefinedEnums
+      )
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -98,7 +118,7 @@ export class Solita {
     for (const account of this.idl.accounts ?? []) {
       logDebug(`Rendering account ${account.name}`)
       logTrace('type: %O', account.type)
-      let code = renderAccount(account, forceFixable)
+      let code = renderAccount(account, forceFixable, userDefinedEnums)
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)

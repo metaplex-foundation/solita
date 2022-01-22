@@ -156,6 +156,12 @@ export function isIdlTypeEnum(
   return (ty as IdlTypeEnum).variants != null
 }
 
+export function isIdlDefinedType(
+  ty: IdlType | IdlDefinedType
+): ty is IdlDefinedType {
+  return (ty as IdlDefinedType).fields != null
+}
+
 // -----------------
 // Packages
 // -----------------

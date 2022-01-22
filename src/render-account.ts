@@ -288,8 +288,12 @@ ${dataStruct}`
   }
 }
 
-export function renderAccount(account: IdlAccount, forceFixable: ForceFixable) {
-  const typeMapper = new TypeMapper(forceFixable)
+export function renderAccount(
+  account: IdlAccount,
+  forceFixable: ForceFixable,
+  userDefinedEnums: Set<string>
+) {
+  const typeMapper = new TypeMapper(forceFixable, userDefinedEnums)
   const renderer = new AccountRenderer(account, typeMapper)
   return renderer.render()
 }
