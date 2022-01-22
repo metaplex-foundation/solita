@@ -96,7 +96,7 @@ export type IdlAccount = {
 export type IdlError = {
   code: number
   name: string
-  msg: string
+  msg?: string
 }
 
 export type Idl = {
