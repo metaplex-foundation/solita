@@ -5,7 +5,7 @@ function asHex(code: number) {
 }
 
 function renderError(error: IdlError) {
-  const { code: codeNum, name, msg } = error
+  const { code: codeNum, name, msg = '' } = error
   const code = asHex(codeNum)
   const className = name
     .charAt(0)

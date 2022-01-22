@@ -1,13 +1,16 @@
 import {
+  IdlEnumVariant,
   IdlField,
   IdlInstructionArg,
   IdlType,
   IdlTypeArray,
   IdlTypeDefined,
+  IdlTypeEnum,
   IdlTypeOption,
   IdlTypeVec,
   isIdlTypeArray,
   isIdlTypeDefined,
+  isIdlTypeEnum,
   isIdlTypeOption,
   isIdlTypeVec,
   LOCAL_TYPES_PACKAGE,
@@ -31,7 +34,10 @@ import {
   SerdePackage,
   serdePackageExportName,
 } from './serdes'
-import { structVarNameFromTypeName } from './render-type'
+import {
+  enumVarNameFromTypeName,
+  structVarNameFromTypeName,
+} from './render-type'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
@@ -45,21 +51,39 @@ export function resolveSerdeAlias(ty: string) {
 export type ForceFixable = (ty: IdlType) => boolean
 export const FORCE_FIXABLE_NEVER: ForceFixable = () => false
 
+const NO_NAME_PROVIDED = '<no name provided>'
 export class TypeMapper {
   readonly serdePackagesUsed: Set<SerdePackage> = new Set()
+  readonly scalarEnumsUsed: Map<string, string[]> = new Map()
   usedFixableSerde: boolean = false
   constructor(
     private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
+    private readonly userDefinedEnums: Set<string> = new Set(),
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
 
   clearUsages() {
     this.serdePackagesUsed.clear()
     this.usedFixableSerde = false
+    this.scalarEnumsUsed.clear()
   }
 
   private updateUsedFixableSerde(ty: SupportedTypeDefinition) {
     this.usedFixableSerde = this.usedFixableSerde || ty.isFixable
+  }
+
+  private updateScalarEnumsUsed(name: string, ty: IdlTypeEnum) {
+    const variants = ty.variants.map((x: IdlEnumVariant) => x.name)
+    const currentUsed = this.scalarEnumsUsed.get(name)
+    if (currentUsed != null) {
+      assert.deepStrictEqual(
+        variants,
+        currentUsed,
+        `Found two enum variant specs for ${name}, ${variants} and ${currentUsed}`
+      )
+    } else {
+      this.scalarEnumsUsed.set(name, variants)
+    }
   }
 
   // -----------------
@@ -109,7 +133,17 @@ export class TypeMapper {
     return `${exp}.${ty.defined}`
   }
 
-  map(ty: IdlType, name: string = '<no name provided>'): string {
+  private mapEnumType(ty: IdlTypeEnum, name: string) {
+    assert.notEqual(
+      name,
+      NO_NAME_PROVIDED,
+      'Need to provide name for enum types'
+    )
+    this.updateScalarEnumsUsed(name, ty)
+    return name
+  }
+
+  map(ty: IdlType, name: string = NO_NAME_PROVIDED): string {
     if (typeof ty === 'string') {
       return this.mapPrimitiveType(ty, name)
     }
@@ -124,6 +158,9 @@ export class TypeMapper {
     }
     if (isIdlTypeDefined(ty)) {
       return this.mapDefinedType(ty)
+    }
+    if (isIdlTypeEnum(ty)) {
+      return this.mapEnumType(ty, name)
     }
 
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
@@ -198,11 +235,27 @@ export class TypeMapper {
     const userDefinedPackage = LOCAL_TYPES_PACKAGE
     this.serdePackagesUsed.add(userDefinedPackage)
     const exp = serdePackageExportName(userDefinedPackage)
-    const structVarName = structVarNameFromTypeName(ty.defined)
-    return `${exp}.${structVarName}`
+    const varName = this.userDefinedEnums.has(ty.defined)
+      ? enumVarNameFromTypeName(ty.defined)
+      : structVarNameFromTypeName(ty.defined)
+    return `${exp}.${varName}`
   }
 
-  mapSerde(ty: IdlType, name: string = '<no name provided>'): string {
+  private mapEnumSerde(ty: IdlTypeEnum, name: string) {
+    assert.notEqual(
+      name,
+      NO_NAME_PROVIDED,
+      'Need to provide name for enum types'
+    )
+    const scalarEnumPackage = BEET_PACKAGE
+    const exp = serdePackageExportName(BEET_PACKAGE)
+    this.serdePackagesUsed.add(scalarEnumPackage)
+
+    this.updateScalarEnumsUsed(name, ty)
+    return `${exp}.fixedScalarEnum(${name})`
+  }
+
+  mapSerde(ty: IdlType, name: string = NO_NAME_PROVIDED): string {
     if (this.forceFixable(ty)) {
       this.usedFixableSerde = true
     }
@@ -218,6 +271,9 @@ export class TypeMapper {
     }
     if (isIdlTypeArray(ty)) {
       return this.mapArraySerde(ty, name)
+    }
+    if (isIdlTypeEnum(ty)) {
+      return this.mapEnumSerde(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
       return this.mapDefinedSerde(ty)

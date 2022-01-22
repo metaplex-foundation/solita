@@ -23,9 +23,11 @@ async function checkRenderedAccount(
   opts: {
     logImports: boolean
     logCode: boolean
+    userDefinedEnums?: Set<string>
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderAccount(account, FORCE_FIXABLE_NEVER)
+  const { userDefinedEnums = new Set() } = opts
+  const ts = renderAccount(account, FORCE_FIXABLE_NEVER, userDefinedEnums)
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)
