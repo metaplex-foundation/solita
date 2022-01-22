@@ -70,10 +70,7 @@ test('type-mapper: primitive types - string', (t) => {
 
   const ty = tm.map('string')
   t.equal(ty, 'string', 'string type')
-  spok(t, Array.from(tm.serdePackagesUsed), {
-    $topic: 'serdePackagesUsed',
-    ...[],
-  })
+  t.equal(tm.serdePackagesUsed.size, 0, 'no serdePackagesUsed')
 
   tm.clearUsages()
   const serde = tm.mapSerde('string')
@@ -219,10 +216,7 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
     const ty = tm.map(type)
 
     t.equal(ty, 'number[]', 'vec<u16>')
-    spok(t, Array.from(tm.serdePackagesUsed), {
-      $topic: 'serdePackagesUsed',
-      ...[],
-    })
+    t.equal(tm.serdePackagesUsed.size, 0, 'no serdePackagesUsed')
 
     tm.clearUsages()
     const serde = tm.mapSerde(type)
@@ -244,7 +238,7 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
     t.equal(ty, 'beet.bignum[]', 'vec<u64>')
     spok(t, Array.from(tm.serdePackagesUsed), {
       $topic: 'serdePackagesUsed',
-      ...[],
+      ...[BEET_PACKAGE],
     })
 
     tm.clearUsages()
@@ -271,10 +265,7 @@ test('type-mapper: composite types - array<number>', (t) => {
     const ty = tm.map(type)
 
     t.equal(ty, 'number[] /* size: 4 */', 'array<u16>(4)')
-    spok(t, Array.from(tm.serdePackagesUsed), {
-      $topic: 'serdePackagesUsed',
-      ...[],
-    })
+    t.equal(tm.serdePackagesUsed.size, 0, 'no serdePackagesUsed')
 
     tm.clearUsages()
     const serde = tm.mapSerde(type)
