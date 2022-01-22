@@ -1,4 +1,4 @@
-function renderScalarEnum(
+export function renderScalarEnum(
   name: string,
   variants: string[],
   includeExport: boolean

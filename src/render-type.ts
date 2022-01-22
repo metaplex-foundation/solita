@@ -2,7 +2,7 @@ import { TypeMapper } from './type-mapper'
 import { IdlDefinedTypeDefinition, IdlField, isIdlTypeEnum } from './types'
 import { strict as assert } from 'assert'
 import { renderTypeDataStruct } from './serdes'
-import { renderScalarEnums } from './render-enums'
+import { renderScalarEnum } from './render-enums'
 
 export function structVarNameFromTypeName(ty: string) {
   const camelTyName = ty.charAt(0).toLowerCase().concat(ty.slice(1))
@@ -36,7 +36,11 @@ class TypeRenderer {
 
   private renderTypeScriptType() {
     if (isIdlTypeEnum(this.ty.type)) {
-      return ''
+      return renderScalarEnum(
+        this.ty.name,
+        this.ty.type.variants.map((x) => x.name),
+        true
+      )
     }
     if (this.ty.type.fields.length === 0) return ''
     const fields = this.ty.type.fields
@@ -62,7 +66,8 @@ class TypeRenderer {
   // -----------------
   private renderDataStruct() {
     if (isIdlTypeEnum(this.ty.type)) {
-      return ''
+      const serde = this.typeMapper.mapSerde(this.ty.type, this.ty.name)
+      return `const ${this.structArgName} = ${serde}`
     }
     const mappedFields = this.typeMapper.mapSerdeFields(this.ty.type.fields)
     return renderTypeDataStruct({
@@ -82,13 +87,9 @@ class TypeRenderer {
     )
     const typeScriptType = this.renderTypeScriptType()
     const dataStruct = this.renderDataStruct()
-    const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed, true).join(
-      '\n'
-    )
     const imports = this.renderImports()
     return `
 ${imports}
-${enums}
 ${typeScriptType}
 export ${dataStruct}
 `.trim()
