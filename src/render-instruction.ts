@@ -17,6 +17,7 @@ import {
   resolveKnownPubkey,
 } from './known-pubkeys'
 import { BEET_PACKAGE } from '@metaplex-foundation/beet'
+import { renderScalarEnums } from './render-enums'
 
 type ProcessedAccountKey = IdlInstructionAccount & {
   knownPubkey?: ResolvedKnownPubkey
@@ -169,6 +170,8 @@ ${typeMapperImports.join('\n')}`.trim()
       Array.from(instructionDiscriminator(this.ix.name))
     )
 
+    const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
+
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const imports = this.renderImports(processedKeys)
 
@@ -186,6 +189,7 @@ ${typeMapperImports.join('\n')}`.trim()
           ]
     return `${imports}
 
+${enums}
 ${ixArgType}
 ${argsStructType}
 ${accountsType}

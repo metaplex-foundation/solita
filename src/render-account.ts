@@ -1,3 +1,4 @@
+import { renderScalarEnums } from './render-enums'
 import { renderDataStruct } from './serdes'
 import { ForceFixable, TypeMapper } from './type-mapper'
 import {
@@ -270,11 +271,14 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
 
     const typedFields = this.getTypedFields()
     const beetFields = this.serdeProcess()
+    const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
     const imports = this.renderImports()
     const accountDataArgsType = this.renderAccountDataArgsType(typedFields)
     const accountDataClass = this.renderAccountDataClass(typedFields)
     const dataStruct = this.renderDataStruct(beetFields)
     return `${imports}
+
+${enums}
 
 ${accountDataArgsType}
 
