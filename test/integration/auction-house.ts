@@ -4,7 +4,7 @@ import path from 'path'
 import { verifySyntacticCorrectnessForGeneratedDir } from '../utils/verify-code'
 import json from './fixtures/auction_house.json'
 
-const outputDir = path.join(__dirname, 'output', 'ncm')
+const outputDir = path.join(__dirname, 'output', 'ah')
 const generatedSDKDir = path.join(outputDir, 'generated')
 
 test('renders type correct SDK for auction house', async (t) => {
