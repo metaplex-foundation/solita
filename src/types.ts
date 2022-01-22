@@ -69,7 +69,7 @@ export type IdlDefinedType = {
 
 export type IdlDefinedTypeDefinition = {
   name: string
-  type: IdlDefinedType
+  type: IdlDefinedType | IdlTypeEnum
 }
 
 export type IdlInstructionArg = {
@@ -150,7 +150,9 @@ export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
   return (ty as IdlTypeDefined).defined != null
 }
 
-export function isIdlTypeEnum(ty: IdlType): ty is IdlTypeEnum {
+export function isIdlTypeEnum(
+  ty: IdlType | IdlDefinedType | IdlTypeEnum
+): ty is IdlTypeEnum {
   return (ty as IdlTypeEnum).variants != null
 }
 

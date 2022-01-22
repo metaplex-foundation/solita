@@ -1,7 +1,8 @@
 import { TypeMapper } from './type-mapper'
-import { IdlDefinedTypeDefinition, IdlField } from './types'
+import { IdlDefinedTypeDefinition, IdlField, isIdlTypeEnum } from './types'
 import { strict as assert } from 'assert'
 import { renderTypeDataStruct } from './serdes'
+import { renderScalarEnums } from './render-enums'
 
 export function structVarNameFromTypeName(ty: string) {
   const camelTyName = ty.charAt(0).toLowerCase().concat(ty.slice(1))
@@ -34,6 +35,9 @@ class TypeRenderer {
   }
 
   private renderTypeScriptType() {
+    if (isIdlTypeEnum(this.ty.type)) {
+      return ''
+    }
     if (this.ty.type.fields.length === 0) return ''
     const fields = this.ty.type.fields
       .map((field) => this.renderTypeField(field))
@@ -57,6 +61,9 @@ class TypeRenderer {
   // Data Struct
   // -----------------
   private renderDataStruct() {
+    if (isIdlTypeEnum(this.ty.type)) {
+      return ''
+    }
     const mappedFields = this.typeMapper.mapSerdeFields(this.ty.type.fields)
     return renderTypeDataStruct({
       fields: mappedFields,
@@ -68,16 +75,20 @@ class TypeRenderer {
 
   render() {
     this.typeMapper.clearUsages()
-    assert.equal(
-      this.ty.type.kind,
-      'struct',
-      `only user defined structs are supported, ${this.ty.name} is of type ${this.ty.type.kind}`
+    const kind = this.ty.type.kind
+    assert(
+      kind === 'struct' || kind === 'enum',
+      `only user defined structs or enums are supported, ${this.ty.name} is of type ${this.ty.type.kind}`
     )
     const typeScriptType = this.renderTypeScriptType()
     const dataStruct = this.renderDataStruct()
+    const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed, true).join(
+      '\n'
+    )
     const imports = this.renderImports()
     return `
 ${imports}
+${enums}
 ${typeScriptType}
 export ${dataStruct}
 `.trim()

@@ -1,14 +1,22 @@
-function renderScalarEnum(name: string, variants: string[]) {
+function renderScalarEnum(
+  name: string,
+  variants: string[],
+  includeExport: boolean
+) {
+  const exp = includeExport ? 'export ' : ''
   return `
-enum ${name} {
+${exp}enum ${name} {
   ${variants.join(',\n  ')}    
 }`.trim()
 }
 
-export function renderScalarEnums(map: Map<string, string[]>) {
+export function renderScalarEnums(
+  map: Map<string, string[]>,
+  includeExport = false
+) {
   const codes = []
   for (const [name, variants] of map) {
-    codes.push(renderScalarEnum(name, variants))
+    codes.push(renderScalarEnum(name, variants, includeExport))
   }
   return codes
 }
