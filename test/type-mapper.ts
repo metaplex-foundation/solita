@@ -278,7 +278,7 @@ test('type-mapper: composite types - array<number>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
-    t.ok(tm.usedFixableSerde, 'used fixable serde')
+    t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
   }
   t.end()
 })
