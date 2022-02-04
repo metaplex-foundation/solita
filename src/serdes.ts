@@ -126,7 +126,11 @@ export function renderDataStruct({
 
   let structType =
     fields.length === 0
-      ? `{ ${discriminatorName}: ${discriminatorType}; }`
+      ? discriminatorName == null
+        ? ''
+        : `{ ${discriminatorName}: ${discriminatorType}; }`
+      : discriminatorName == null
+      ? argsTypename
       : `${argsTypename} & {
     ${discriminatorName}: ${discriminatorType};
   }
@@ -142,7 +146,7 @@ export function renderDataStruct({
     ${structType}
 >(
   [
-    ['${discriminatorName}', ${BEET_EXPORT_NAME}.uniformFixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
+    ${discriminatorDecl}
     ${fieldDecls}
   ],
   ${className}.fromArgs,

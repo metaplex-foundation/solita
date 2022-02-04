@@ -2,10 +2,13 @@ import { TypeMapper } from './type-mapper'
 import {
   IdlInstruction,
   IdlInstructionArg,
-  IdlTypeArray,
   isShankIdlInstruction,
 } from './types'
-import { instructionDiscriminator } from './utils'
+import {
+  anchorDiscriminatorField,
+  anchorDiscriminatorType,
+  instructionDiscriminator,
+} from './utils'
 
 export class InstructionDiscriminator {
   constructor(
@@ -20,9 +23,6 @@ export class InstructionDiscriminator {
       : JSON.stringify(Array.from(instructionDiscriminator(this.ix.name)))
   }
 
-  // -----------------
-  // Field
-  // -----------------
   getField(): IdlInstructionArg {
     if (isShankIdlInstruction(this.ix)) {
       const ty = this.ix.discriminant.type
@@ -33,7 +33,7 @@ export class InstructionDiscriminator {
       return { name: this.fieldName, type: ty }
     }
 
-    return this.anchorDiscriminatorField()
+    return anchorDiscriminatorField(this.fieldName)
   }
 
   renderType(): string {
@@ -42,19 +42,9 @@ export class InstructionDiscriminator {
           this.ix.discriminant.type,
           `instruction ${this.ix.name} discriminant type`
         )
-      : this.anchorDiscriminatorType()
-  }
-
-  anchorDiscriminatorField() {
-    const ty: IdlTypeArray = { array: ['u8', 4] }
-    return { name: this.fieldName, type: ty }
-  }
-
-  anchorDiscriminatorType() {
-    const ty: IdlTypeArray = { array: ['u8', 4] }
-    return this.typeMapper.mapSerde(
-      ty,
-      `instruction ${this.ix.name} discriminant type`
-    )
+      : anchorDiscriminatorType(
+          this.typeMapper,
+          `instruction ${this.ix.name} discriminant type`
+        )
   }
 }

@@ -4,6 +4,8 @@ import path from 'path'
 import { sha256 } from 'js-sha256'
 import camelcase from 'camelcase'
 import { snakeCase } from 'snake-case'
+import { IdlTypeArray } from './types'
+import { TypeMapper } from './type-mapper'
 
 export const logError = debug('solita:error')
 export const logInfo = debug('solita:info')
@@ -98,4 +100,17 @@ function sighash(nameSpace: string, ixName: string): Buffer {
   let name = snakeCase(ixName)
   let preimage = `${nameSpace}:${name}`
   return Buffer.from(sha256.digest(preimage)).slice(0, 8)
+}
+
+export function anchorDiscriminatorField(name: string) {
+  const ty: IdlTypeArray = { array: ['u8', 4] }
+  return { name, type: ty }
+}
+
+export function anchorDiscriminatorType(
+  typeMapper: TypeMapper,
+  context: string
+) {
+  const ty: IdlTypeArray = { array: ['u8', 4] }
+  return typeMapper.map(ty, context)
 }
