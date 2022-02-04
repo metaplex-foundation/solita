@@ -103,7 +103,7 @@ function sighash(nameSpace: string, ixName: string): Buffer {
 }
 
 export function anchorDiscriminatorField(name: string) {
-  const ty: IdlTypeArray = { array: ['u8', 4] }
+  const ty: IdlTypeArray = { array: ['u8', 8] }
   return { name, type: ty }
 }
 
@@ -111,6 +111,6 @@ export function anchorDiscriminatorType(
   typeMapper: TypeMapper,
   context: string
 ) {
-  const ty: IdlTypeArray = { array: ['u8', 4] }
+  const ty: IdlTypeArray = { array: ['u8', 8] }
   return typeMapper.map(ty, context)
 }

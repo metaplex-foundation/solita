@@ -284,7 +284,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
     if (this.hasImplicitDiscriminator) {
       discriminatorName = 'accountDiscriminator'
       discriminatorField = this.typeMapper.mapSerdeField(
-        anchorDiscriminatorField(this.accountDiscriminatorName)
+        anchorDiscriminatorField('accountDiscriminator')
       )
       discriminatorType = anchorDiscriminatorType(
         this.typeMapper,
