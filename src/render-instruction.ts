@@ -7,6 +7,7 @@ import {
   SOLANA_SPL_TOKEN_EXPORT_NAME,
   TypeMappedSerdeField,
   SOLANA_WEB3_PACKAGE,
+  isIdlInstructionAccountWithDesc,
 } from './types'
 import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
@@ -124,7 +125,11 @@ ${typeMapperImports.join('\n')}`.trim()
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = processedKeys
       .filter((x) => x.knownPubkey == null)
-      .map((x) => `${x.name}: ${web3}.PublicKey`)
+      .map((x) =>
+        isIdlInstructionAccountWithDesc(x)
+          ? `/** ${x.desc} */\n  ${x.name}: ${web3}.PublicKey`
+          : `${x.name}: ${web3}.PublicKey`
+      )
       .join('\n  ')
 
     return `export type ${this.accountsTypename} = {

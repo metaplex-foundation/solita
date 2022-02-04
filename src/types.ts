@@ -119,13 +119,13 @@ export type ShankIdl = Idl & {
   metadata: ShankMetadata
 }
 export type ShankIdlInstruction = IdlInstruction & {
-  accounts: ShankIdlInstructionAccount[]
+  accounts: IdlInstructionAccountWithDesc[]
   discriminant: {
     type: IdlType
     value: number
   }
 }
-export type ShankIdlInstructionAccount = IdlInstructionAccount & {
+export type IdlInstructionAccountWithDesc = IdlInstructionAccount & {
   desc: string
 }
 export type ShankMetadata = Idl['metadata'] & { origin: 'shank' }
@@ -189,6 +189,12 @@ export function isShankIdlInstruction(
   ty: IdlInstruction
 ): ty is ShankIdlInstruction {
   return typeof (ty as ShankIdlInstruction).discriminant === 'object'
+}
+
+export function isIdlInstructionAccountWithDesc(
+  ty: IdlInstructionAccount
+): ty is IdlInstructionAccountWithDesc {
+  return typeof (ty as IdlInstructionAccountWithDesc).desc === 'string'
 }
 
 // -----------------

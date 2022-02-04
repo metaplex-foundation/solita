@@ -88,7 +88,7 @@ export function assertKnownSerdePackage(
 // -----------------
 
 function renderField(field?: TypeMappedSerdeField, addSeparator = false) {
-  const sep = addSeparator ? ',\n' : ''
+  const sep = addSeparator ? ',' : ''
   return field == null ? '' : `['${field.name}', ${field.type}]${sep}`
 }
 
