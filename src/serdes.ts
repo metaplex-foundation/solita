@@ -87,6 +87,17 @@ export function assertKnownSerdePackage(
 // Rendering processed serdes to struct
 // -----------------
 
+function renderField(field?: TypeMappedSerdeField, addSeparator = false) {
+  const sep = addSeparator ? ',\n' : ''
+  return field == null ? '' : `['${field.name}', ${field.type}]${sep}`
+}
+
+function renderFields(fields?: TypeMappedSerdeField[]) {
+  return fields == null || fields.length === 0
+    ? ''
+    : fields.map((x) => renderField(x)).join(',\n    ')
+}
+
 /**
  * Renders DataStruct for Instruction Args and Account Args
  */
@@ -95,30 +106,29 @@ export function renderDataStruct({
   structVarName,
   className,
   argsTypename,
+  discriminatorField,
   discriminatorName,
+  discriminatorType,
   isFixable,
 }: {
+  discriminatorName?: string
+  discriminatorField?: TypeMappedSerdeField
+  discriminatorType?: string
   fields: TypeMappedSerdeField[]
   structVarName: string
   className?: string
   argsTypename: string
-  discriminatorName?: string
   isFixable: boolean
 }) {
-  const fieldDecls =
-    fields.length === 0
-      ? ''
-      : fields
-          .map((f) => {
-            return `['${f.name}', ${f.type}]`
-          })
-          .join(',\n    ')
+  const fieldDecls = renderFields(fields)
+  const discriminatorDecl = renderField(discriminatorField, true)
+  discriminatorType = discriminatorType ?? 'number[]'
 
   let structType =
     fields.length === 0
-      ? `{ ${discriminatorName}: number[]; }`
+      ? `{ ${discriminatorName}: ${discriminatorType}; }`
       : `${argsTypename} & {
-    ${discriminatorName}: number[];
+    ${discriminatorName}: ${discriminatorType};
   }
 `
 
@@ -147,7 +157,7 @@ export function renderDataStruct({
     // -----------------
     return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${structType}>(
   [
-    ['${discriminatorName}', ${BEET_EXPORT_NAME}.uniformFixedSizeArray(${BEET_EXPORT_NAME}.u8, 8)],
+    ${discriminatorDecl}
     ${fieldDecls}
   ],
   '${argsTypename}'

@@ -10,7 +10,6 @@ import {
 } from './types'
 import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
-import { instructionDiscriminator } from './utils'
 import {
   renderKnownPubkeyAccess,
   ResolvedKnownPubkey,
@@ -18,6 +17,7 @@ import {
 } from './known-pubkeys'
 import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import { renderScalarEnums } from './render-enums'
+import { InstructionDiscriminator } from './instruction-discriminator'
 
 type ProcessedAccountKey = IdlInstructionAccount & {
   knownPubkey?: ResolvedKnownPubkey
@@ -30,6 +30,7 @@ class InstructionRenderer {
   readonly accountsTypename: string
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
+  private readonly instructionDiscriminator: InstructionDiscriminator
 
   constructor(
     readonly ix: IdlInstruction,
@@ -47,6 +48,12 @@ class InstructionRenderer {
     this.accountsTypename = `${this.upperCamelIxName}InstructionAccounts`
     this.instructionDiscriminatorName = `${this.camelIxName}InstructionDiscriminator`
     this.structArgName = `${ix.name}Struct`
+
+    this.instructionDiscriminator = new InstructionDiscriminator(
+      ix,
+      'instructionDiscriminator',
+      typeMapper
+    )
   }
 
   // -----------------
@@ -145,11 +152,17 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   private renderDataStruct(args: TypeMappedSerdeField[]) {
+    const discriminatorField = this.typeMapper.mapSerdeField(
+      this.instructionDiscriminator.getField()
+    )
+    const discriminatorType = this.instructionDiscriminator.renderType()
     return renderDataStruct({
       fields: args,
+      discriminatorName: 'instructionDiscriminator',
+      discriminatorField,
+      discriminatorType,
       structVarName: this.structArgName,
       argsTypename: this.argsTypename,
-      discriminatorName: 'instructionDiscriminator',
       isFixable: this.typeMapper.usedFixableSerde,
     })
   }
@@ -166,10 +179,7 @@ ${typeMapperImports.join('\n')}`.trim()
 
     const keys = this.renderIxAccountKeys(processedKeys)
     const accountsDestructure = this.renderAccountsDestructure(processedKeys)
-    const instructionDisc = JSON.stringify(
-      Array.from(instructionDiscriminator(this.ix.name))
-    )
-
+    const instructionDisc = this.instructionDiscriminator.renderValue()
     const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
 
     const web3 = SOLANA_WEB3_EXPORT_NAME

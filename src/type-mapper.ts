@@ -283,13 +283,17 @@ export class TypeMapper {
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
 
+  mapSerdeField = (
+    field: IdlField | IdlInstructionArg
+  ): TypeMappedSerdeField => {
+    const ty = this.mapSerde(field.type, field.name)
+    return { name: field.name, type: ty }
+  }
+
   mapSerdeFields(
     fields: (IdlField | IdlInstructionArg)[]
   ): TypeMappedSerdeField[] {
-    return fields.map((f) => {
-      const ty = this.mapSerde(f.type, f.name)
-      return { name: f.name, type: ty }
-    })
+    return fields.map(this.mapSerdeField)
   }
 
   // -----------------
