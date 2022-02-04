@@ -7,7 +7,11 @@ import {
   SOLANA_WEB3_PACKAGE,
   TypeMappedSerdeField,
 } from './types'
-import { accountDiscriminator } from './utils'
+import {
+  accountDiscriminator,
+  anchorDiscriminatorField,
+  anchorDiscriminatorType,
+} from './utils'
 
 function colonSeparatedTypedField(
   field: { name: string; tsType: string },
@@ -26,6 +30,7 @@ class AccountRenderer {
 
   constructor(
     private readonly account: IdlAccount,
+    private readonly hasImplicitDiscriminator: boolean,
     private readonly typeMapper: TypeMapper
   ) {
     this.upperCamelAccountName = account.name
@@ -95,6 +100,13 @@ export type ${this.accountDataArgsTypeName} = {
 
   private renderByteSizeMethods() {
     if (this.typeMapper.usedFixableSerde) {
+      const byteSizeValue = this.hasImplicitDiscriminator
+        ? `{
+      accountDiscriminator: ${this.accountDiscriminatorName},
+      ...instance,
+    }`
+        : `instance`
+
       return `
   /**
    * Returns the byteSize of a {@link Buffer} holding the serialized data of
@@ -105,10 +117,7 @@ export type ${this.accountDataArgsTypeName} = {
    */
   static byteSize(args: ${this.accountDataArgsTypeName}) {
     const instance = ${this.accountDataClassName}.fromArgs(args)
-    return ${this.dataStructName}.toFixedFromValue({
-      accountDiscriminator: ${this.accountDiscriminatorName},
-      ...instance,
-    }).byteSize
+    return ${this.dataStructName}.toFixedFromValue(${byteSizeValue}).byteSize
   }
 
   /**
@@ -170,6 +179,16 @@ export type ${this.accountDataArgsTypeName} = {
   // -----------------
   // AccountData class
   // -----------------
+  private renderAccountDiscriminatorVar() {
+    if (!this.hasImplicitDiscriminator) return ''
+
+    const accountDisc = JSON.stringify(
+      Array.from(accountDiscriminator(this.account.name))
+    )
+
+    return `const ${this.accountDiscriminatorName} = ${accountDisc}`
+  }
+
   private renderAccountDataClass(fields: { name: string; tsType: string }[]) {
     const constructorArgs = fields
       .map((f) => colonSeparatedTypedField(f, 'readonly '))
@@ -180,13 +199,18 @@ export type ${this.accountDataArgsTypeName} = {
       .join(',\n      ')
 
     const prettyFields = this.getPrettyFields().join(',\n      ')
-    const accountDisc = JSON.stringify(
-      Array.from(accountDiscriminator(this.account.name))
-    )
-
     const byteSizeMethods = this.renderByteSizeMethods()
+    const accountDiscriminatorVar = this.renderAccountDiscriminatorVar()
 
-    return `const ${this.accountDiscriminatorName} = ${accountDisc};
+    const serializeValue = this.hasImplicitDiscriminator
+      ? `{ 
+      accountDiscriminator: ${this.accountDiscriminatorName},
+      ...this
+    }`
+      : 'this'
+
+    return `
+${accountDiscriminatorVar};
 /**
  * Holds the data for the {@link ${this.upperCamelAccountName}Account} and provides de/serialization
  * functionality for that data
@@ -232,10 +256,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
    * @returns a tuple of the created Buffer and the offset up to which the buffer was written to store it.
    */
   serialize(): [ Buffer, number ] {
-    return ${this.dataStructName}.serialize({ 
-      accountDiscriminator: ${this.accountDiscriminatorName},
-      ...this
-    })
+    return ${this.dataStructName}.serialize(${serializeValue})
   }
 
   ${byteSizeMethods}
@@ -249,19 +270,36 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       ${prettyFields}
     };
   }
-}`
+}`.trim()
   }
 
   // -----------------
   // Struct
   // -----------------
   private renderDataStruct(fields: TypeMappedSerdeField[]) {
+    let discriminatorName: string | undefined
+    let discriminatorField: TypeMappedSerdeField | undefined
+    let discriminatorType: string | undefined
+
+    if (this.hasImplicitDiscriminator) {
+      discriminatorName = 'accountDiscriminator'
+      discriminatorField = this.typeMapper.mapSerdeField(
+        anchorDiscriminatorField('accountDiscriminator')
+      )
+      discriminatorType = anchorDiscriminatorType(
+        this.typeMapper,
+        `account ${this.account.name} discriminant type`
+      )
+    }
+
     return renderDataStruct({
       fields,
       structVarName: this.dataStructName,
       className: this.accountDataClassName,
       argsTypename: this.accountDataArgsTypeName,
-      discriminatorName: 'accountDiscriminator',
+      discriminatorName,
+      discriminatorField,
+      discriminatorType,
       isFixable: this.typeMapper.usedFixableSerde,
     })
   }
@@ -291,9 +329,14 @@ ${dataStruct}`
 export function renderAccount(
   account: IdlAccount,
   forceFixable: ForceFixable,
-  userDefinedEnums: Set<string>
+  userDefinedEnums: Set<string>,
+  hasImplicitDiscriminator: boolean
 ) {
   const typeMapper = new TypeMapper(forceFixable, userDefinedEnums)
-  const renderer = new AccountRenderer(account, typeMapper)
+  const renderer = new AccountRenderer(
+    account,
+    hasImplicitDiscriminator,
+    typeMapper
+  )
   return renderer.render()
 }

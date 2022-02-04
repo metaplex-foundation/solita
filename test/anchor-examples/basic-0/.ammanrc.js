@@ -9,4 +9,4 @@ const validator = {
     },
   ],
 }
-module.exports = { validator }
+module.exports = { validator, commitment: 'singleGossip' }

@@ -112,6 +112,25 @@ export type Idl = {
 }
 
 // -----------------
+// Shank Idl Extensions
+// -----------------
+export type ShankIdl = Idl & {
+  instructions: ShankIdlInstruction[]
+  metadata: ShankMetadata
+}
+export type ShankIdlInstruction = IdlInstruction & {
+  accounts: IdlInstructionAccountWithDesc[]
+  discriminant: {
+    type: IdlType
+    value: number
+  }
+}
+export type IdlInstructionAccountWithDesc = IdlInstructionAccount & {
+  desc: string
+}
+export type ShankMetadata = Idl['metadata'] & { origin: 'shank' }
+
+// -----------------
 // De/Serializers + Extensions
 // -----------------
 export type PrimaryTypeMap = Record<
@@ -160,6 +179,22 @@ export function isIdlDefinedType(
   ty: IdlType | IdlDefinedType
 ): ty is IdlDefinedType {
   return (ty as IdlDefinedType).fields != null
+}
+
+export function isShankIdl(ty: Idl): ty is ShankIdl {
+  return (ty as ShankIdl).metadata?.origin === 'shank'
+}
+
+export function isShankIdlInstruction(
+  ty: IdlInstruction
+): ty is ShankIdlInstruction {
+  return typeof (ty as ShankIdlInstruction).discriminant === 'object'
+}
+
+export function isIdlInstructionAccountWithDesc(
+  ty: IdlInstructionAccount
+): ty is IdlInstructionAccountWithDesc {
+  return typeof (ty as IdlInstructionAccountWithDesc).desc === 'string'
 }
 
 // -----------------

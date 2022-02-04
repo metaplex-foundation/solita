@@ -27,15 +27,17 @@ async function checkRenderedAccount(
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
   const { userDefinedEnums = new Set() } = opts
-  const ts = renderAccount(account, FORCE_FIXABLE_NEVER, userDefinedEnums)
-  verifySyntacticCorrectness(t, ts)
+  const ts = renderAccount(account, FORCE_FIXABLE_NEVER, userDefinedEnums, true)
 
-  const analyzed = await analyzeCode(ts)
   if (opts.logCode) {
     console.log(
       `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`
     )
   }
+
+  verifySyntacticCorrectness(t, ts)
+
+  const analyzed = await analyzeCode(ts)
   verifyImports(t, analyzed, imports, { logImports: opts.logImports })
 }
 

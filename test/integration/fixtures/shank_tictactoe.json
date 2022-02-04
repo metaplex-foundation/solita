@@ -1,0 +1,176 @@
+{
+  "version": "0.1.0",
+  "name": "tictactoe",
+  "instructions": [
+    {
+      "name": "InitializeDashboard",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "desc": "Authority initializing the dashboard"
+        },
+        {
+          "name": "dashboard",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The account to store dashboard data"
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u32",
+        "value": 0
+      }
+    },
+    {
+      "name": "InitializeGame",
+      "accounts": [
+        {
+          "name": "playerX",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "dashboard",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "game",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u32",
+        "value": 1
+      }
+    },
+    {
+      "name": "PlayerJoin",
+      "accounts": [
+        {
+          "name": "playerO",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "game",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u32",
+        "value": 2
+      }
+    },
+    {
+      "name": "PlayerMove",
+      "accounts": [
+        {
+          "name": "player",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "game",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "playerMove",
+          "type": {
+            "defined": "PlayerMove"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u32",
+        "value": 3
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Dashboard",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "gameCount",
+            "type": "u64"
+          },
+          {
+            "name": "latestGame",
+            "type": "publicKey"
+          },
+          {
+            "name": "address",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Game",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "keepAlive",
+            "type": {
+              "array": ["u64", 2]
+            }
+          },
+          {
+            "name": "playerX",
+            "type": "publicKey"
+          },
+          {
+            "name": "playerO",
+            "type": "publicKey"
+          },
+          {
+            "name": "gameState",
+            "type": "u8"
+          },
+          {
+            "name": "board",
+            "type": {
+              "array": ["u8", 9]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "PlayerMove",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "xOrO",
+            "type": "u8"
+          },
+          {
+            "name": "field",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+  }
+}

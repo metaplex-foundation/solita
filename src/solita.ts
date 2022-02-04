@@ -9,6 +9,7 @@ import {
   isIdlDefinedType,
   isIdlTypeDefined,
   isIdlTypeEnum,
+  isShankIdl,
 } from './types'
 import { logDebug, logInfo, logTrace, prepareTargetDir } from './utils'
 import { format, Options } from 'prettier'
@@ -35,6 +36,7 @@ const DEFAULT_FORMAT_OPTS: Options = {
 export class Solita {
   private readonly formatCode: boolean
   private readonly formatOpts: Options
+  private readonly accountsHaveImplicitDiscriminator: boolean
   constructor(
     private readonly idl: Idl,
     {
@@ -44,6 +46,7 @@ export class Solita {
   ) {
     this.formatCode = formatCode
     this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
+    this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
   }
 
   renderCode() {
@@ -118,7 +121,12 @@ export class Solita {
     for (const account of this.idl.accounts ?? []) {
       logDebug(`Rendering account ${account.name}`)
       logTrace('type: %O', account.type)
-      let code = renderAccount(account, forceFixable, userDefinedEnums)
+      let code = renderAccount(
+        account,
+        forceFixable,
+        userDefinedEnums,
+        this.accountsHaveImplicitDiscriminator
+      )
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
