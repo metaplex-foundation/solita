@@ -125,14 +125,25 @@ ${typeMapperImports.join('\n')}`.trim()
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = processedKeys
       .filter((x) => x.knownPubkey == null)
-      .map((x) =>
-        isIdlInstructionAccountWithDesc(x)
-          ? `/** ${x.desc} */\n  ${x.name}: ${web3}.PublicKey`
-          : `${x.name}: ${web3}.PublicKey`
-      )
+      .map((x) => `${x.name}: ${web3}.PublicKey`)
       .join('\n  ')
 
-    return `export type ${this.accountsTypename} = {
+    const propertyComments = processedKeys
+      .filter(isIdlInstructionAccountWithDesc)
+      .map((x) => ` * @property ${x.name} ${x.desc}`)
+
+    const properties =
+      propertyComments.length > 0
+        ? `\n *\n  ${propertyComments.join('\n')}`
+        : ''
+
+    const docs = `
+/**
+  * Accounts required by the _${this.ix.name}_ instruction${properties}
+  */
+`.trim()
+    return `${docs}
+export type ${this.accountsTypename} = {
   ${fields}
 }
 `
