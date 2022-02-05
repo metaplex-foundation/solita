@@ -130,7 +130,13 @@ ${typeMapperImports.join('\n')}`.trim()
 
     const propertyComments = processedKeys
       .filter(isIdlInstructionAccountWithDesc)
-      .map((x) => ` * @property ${x.name} ${x.desc}`)
+      .map((x) => {
+        const attrs = []
+        if (x.isMut) attrs.push('writable')
+        if (x.isSigner) attrs.push('signer')
+
+        return ` * @property [${attrs.join(', ')}] ${x.name} ${x.desc}`
+      })
 
     const properties =
       propertyComments.length > 0
