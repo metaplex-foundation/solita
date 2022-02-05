@@ -24,16 +24,9 @@ async function checkRenderedIx(
   opts: {
     logImports: boolean
     logCode: boolean
-    userDefinedEnums?: Set<string>
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const { userDefinedEnums = new Set() } = opts
-  const ts = renderInstruction(
-    ix,
-    PROGRAM_ID,
-    FORCE_FIXABLE_NEVER,
-    userDefinedEnums
-  )
+  const ts = renderInstruction(ix, PROGRAM_ID, FORCE_FIXABLE_NEVER)
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)

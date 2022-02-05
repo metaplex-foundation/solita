@@ -52,7 +52,6 @@ export class Solita {
   renderCode() {
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
-    let userDefinedEnums: Set<string> = new Set()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -77,8 +76,7 @@ export class Solita {
             logTrace('variants: %O', ty.type.variants)
           }
         }
-        let { code, isFixable, userDefinedEnums: enums } = renderType(ty)
-        userDefinedEnums = enums
+        let { code, isFixable } = renderType(ty)
 
         if (isFixable) {
           fixableTypes.add(ty.name)
@@ -100,12 +98,7 @@ export class Solita {
       logDebug(`Rendering instruction ${ix.name}`)
       logTrace('args: %O', ix.args)
       logTrace('accounts: %O', ix.accounts)
-      let code = renderInstruction(
-        ix,
-        programId,
-        forceFixable,
-        userDefinedEnums
-      )
+      let code = renderInstruction(ix, programId, forceFixable)
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -124,7 +117,6 @@ export class Solita {
       let code = renderAccount(
         account,
         forceFixable,
-        userDefinedEnums,
         this.accountsHaveImplicitDiscriminator
       )
       if (this.formatCode) {

@@ -23,11 +23,9 @@ async function checkRenderedAccount(
   opts: {
     logImports: boolean
     logCode: boolean
-    userDefinedEnums?: Set<string>
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const { userDefinedEnums = new Set() } = opts
-  const ts = renderAccount(account, FORCE_FIXABLE_NEVER, userDefinedEnums, true)
+  const ts = renderAccount(account, FORCE_FIXABLE_NEVER, true)
 
   if (opts.logCode) {
     console.log(

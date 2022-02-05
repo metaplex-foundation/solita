@@ -250,10 +250,9 @@ export function create${this.upperCamelIxName}Instruction(
 export function renderInstruction(
   ix: IdlInstruction,
   programId: string,
-  forceFixable: ForceFixable,
-  userDefinedEnums: Set<string>
+  forceFixable: ForceFixable
 ) {
-  const typeMapper = new TypeMapper(forceFixable, userDefinedEnums)
+  const typeMapper = new TypeMapper(forceFixable)
   const renderer = new InstructionRenderer(ix, programId, typeMapper)
   return renderer.render()
 }

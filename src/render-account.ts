@@ -329,10 +329,9 @@ ${dataStruct}`
 export function renderAccount(
   account: IdlAccount,
   forceFixable: ForceFixable,
-  userDefinedEnums: Set<string>,
   hasImplicitDiscriminator: boolean
 ) {
-  const typeMapper = new TypeMapper(forceFixable, userDefinedEnums)
+  const typeMapper = new TypeMapper(forceFixable)
   const renderer = new AccountRenderer(
     account,
     hasImplicitDiscriminator,

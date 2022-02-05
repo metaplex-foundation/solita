@@ -34,10 +34,7 @@ import {
   SerdePackage,
   serdePackageExportName,
 } from './serdes'
-import {
-  enumVarNameFromTypeName,
-  structVarNameFromTypeName,
-} from './render-type'
+import { beetVarNameFromTypeName } from './render-type'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
@@ -58,7 +55,6 @@ export class TypeMapper {
   usedFixableSerde: boolean = false
   constructor(
     private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
-    private readonly userDefinedEnums: Set<string> = new Set(),
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
 
@@ -237,9 +233,7 @@ export class TypeMapper {
     const userDefinedPackage = LOCAL_TYPES_PACKAGE
     this.serdePackagesUsed.add(userDefinedPackage)
     const exp = serdePackageExportName(userDefinedPackage)
-    const varName = this.userDefinedEnums.has(ty.defined)
-      ? enumVarNameFromTypeName(ty.defined)
-      : structVarNameFromTypeName(ty.defined)
+    const varName = beetVarNameFromTypeName(ty.defined)
     return `${exp}.${varName}`
   }
 
