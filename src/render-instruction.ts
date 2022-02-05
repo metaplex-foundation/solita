@@ -12,6 +12,7 @@ import {
 import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
 import {
+  isKnownPubkey,
   renderKnownPubkeyAccess,
   ResolvedKnownPubkey,
   resolveKnownPubkey,
@@ -130,6 +131,8 @@ ${typeMapperImports.join('\n')}`.trim()
 
     const propertyComments = processedKeys
       .filter(isIdlInstructionAccountWithDesc)
+      // known pubkeys are not provided by the user and thus aren't part of the type
+      .filter((x) => !isKnownPubkey(x.name))
       .map((x) => {
         const attrs = []
         if (x.isMut) attrs.push('writable')
