@@ -141,7 +141,7 @@ export function renderDataStruct({
   // -----------------
   if (className != null) {
     const beetStructType = isFixable ? 'FixableBeetStruct' : 'BeetStruct'
-    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetStructType}<
+    return `export const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetStructType}<
     ${className},
     ${structType}
 >(

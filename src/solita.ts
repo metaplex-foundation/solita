@@ -155,7 +155,7 @@ export class Solita {
     }
     if (Object.keys(types).length !== 0) {
       reexports.push('types')
-      await this.writeTypes(outputDir, types)
+      await this.writeTypes(outputDir, types, Object.keys(accounts).length > 0)
     }
     if (errors != null) {
       reexports.push('errors')
@@ -210,7 +210,11 @@ export class Solita {
   // -----------------
   // Types
   // -----------------
-  private async writeTypes(outputDir: PathLike, types: Record<string, string>) {
+  private async writeTypes(
+    outputDir: PathLike,
+    types: Record<string, string>,
+    accountsPresent: boolean
+  ) {
     const typesDir = path.join(outputDir.toString(), 'types')
     await prepareTargetDir(typesDir)
     logInfo('Writing types to directory: %s', typesDir)
@@ -219,7 +223,12 @@ export class Solita {
       await fs.writeFile(path.join(typesDir, `${name}.ts`), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all types')
-    const indexCode = renderImportIndex(Object.keys(types).sort())
+    const reexports = Object.keys(types)
+    // NOTE: this allows account types to be referenced via `defined.<AccountName>`, however
+    // it would break if we have an account used that way, but no types
+    // If that occurs we need to generate the `types/index.ts` just reexporting accounts
+    if (accountsPresent) reexports.push('../accounts')
+    const indexCode = renderImportIndex(reexports.sort())
     await fs.writeFile(path.join(typesDir, `index.ts`), indexCode, 'utf8')
   }
 

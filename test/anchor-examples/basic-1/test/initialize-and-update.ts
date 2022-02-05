@@ -3,7 +3,7 @@ import { Connection, Transaction } from '@solana/web3.js'
 import {
   createInitializeInstruction,
   createUpdateInstruction,
-  MyAccountAccountData,
+  MyAccount,
 } from '../src/'
 import {
   AddressLabels,
@@ -68,7 +68,7 @@ test('initialize', async (t) => {
   })
 
   const accountInfo = await connection.getAccountInfo(myAccount)
-  const [account] = MyAccountAccountData.fromAccountInfo(accountInfo!)
+  const [account] = MyAccount.fromAccountInfo(accountInfo!)
 
   t.equal(
     account.data.toString(),
@@ -90,7 +90,7 @@ test('update', async (t) => {
   })
 
   const accountInfo = await connection.getAccountInfo(myAccount)
-  const [account] = MyAccountAccountData.fromAccountInfo(accountInfo!)
+  const [account] = MyAccount.fromAccountInfo(accountInfo!)
 
   t.equal(account.data.toString(), '2', 'updates account with provided data')
 })

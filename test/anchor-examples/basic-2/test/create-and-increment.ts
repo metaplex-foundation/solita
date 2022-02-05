@@ -1,7 +1,7 @@
 import test from 'tape'
 import { Connection, Transaction } from '@solana/web3.js'
 import {
-  CounterAccountData,
+  Counter,
   createCreateInstruction,
   createIncrementInstruction,
 } from '../src/'
@@ -72,7 +72,7 @@ test('create', async (t) => {
   })
 
   const accountInfo = await connection.getAccountInfo(counter)
-  const [account] = CounterAccountData.fromAccountInfo(accountInfo!)
+  const [account] = Counter.fromAccountInfo(accountInfo!)
 
   t.ok(account.authority.equals(payer), 'payer is authority')
   t.equal(account.count.toString(), '0', 'initializes count to 0')
@@ -90,7 +90,7 @@ test('increment', async (t) => {
   })
 
   const accountInfo = await connection.getAccountInfo(counter)
-  const [account] = CounterAccountData.fromAccountInfo(accountInfo!)
+  const [account] = Counter.fromAccountInfo(accountInfo!)
 
   t.ok(account.authority.equals(payer), 'payer is authority')
   t.equal(account.count.toString(), '1', 'increments count to 1')

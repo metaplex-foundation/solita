@@ -1,7 +1,7 @@
 import test from 'tape'
 import { Connection, Transaction } from '@solana/web3.js'
 import {
-  CounterAccountData,
+  Counter,
   createCreateInstruction,
   createDecrementInstruction,
   createIncrementInstruction,
@@ -94,7 +94,7 @@ test('increment two times', async (t) => {
     })
 
     const accountInfo = await connection.getAccountInfo(counter)
-    const [account] = CounterAccountData.fromAccountInfo(accountInfo!)
+    const [account] = Counter.fromAccountInfo(accountInfo!)
 
     t.ok(account.authority.equals(payer), 'payer is authority')
     t.equal(account.count.toString(), '1', 'increments count to 1')
@@ -118,7 +118,7 @@ test('increment two times', async (t) => {
       t.match(resolvedError.message, /cannot increment more/i, 'err message')
     }
     const accountInfo = await connection.getAccountInfo(counter)
-    const [account] = CounterAccountData.fromAccountInfo(accountInfo!)
+    const [account] = Counter.fromAccountInfo(accountInfo!)
 
     t.ok(account.authority.equals(payer), 'payer is still authority')
     t.equal(account.count.toString(), '1', 'keeps count at 1')

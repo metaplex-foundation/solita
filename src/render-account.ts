@@ -26,7 +26,7 @@ class AccountRenderer {
   readonly accountDataClassName: string
   readonly accountDataArgsTypeName: string
   readonly accountDiscriminatorName: string
-  readonly dataStructName: string
+  readonly beetName: string
 
   constructor(
     private readonly account: IdlAccount,
@@ -43,10 +43,10 @@ class AccountRenderer {
       .toLowerCase()
       .concat(account.name.slice(1))
 
-    this.accountDataClassName = `${this.upperCamelAccountName}AccountData`
+    this.accountDataClassName = this.upperCamelAccountName
     this.accountDataArgsTypeName = `${this.accountDataClassName}Args`
-    this.dataStructName = `${this.camelAccountName}AccountDataStruct`
-    this.accountDiscriminatorName = `${this.camelAccountName}AccountDiscriminator`
+    this.beetName = `${this.camelAccountName}Beet`
+    this.accountDiscriminatorName = `${this.camelAccountName}Discriminator`
   }
 
   private serdeProcess() {
@@ -117,7 +117,7 @@ export type ${this.accountDataArgsTypeName} = {
    */
   static byteSize(args: ${this.accountDataArgsTypeName}) {
     const instance = ${this.accountDataClassName}.fromArgs(args)
-    return ${this.dataStructName}.toFixedFromValue(${byteSizeValue}).byteSize
+    return ${this.beetName}.toFixedFromValue(${byteSizeValue}).byteSize
   }
 
   /**
@@ -146,7 +146,7 @@ export type ${this.accountDataArgsTypeName} = {
    * {@link ${this.accountDataClassName}}
    */
   static get byteSize() {
-    return ${this.dataStructName}.byteSize;
+    return ${this.beetName}.byteSize;
   }
 
   /**
@@ -212,7 +212,7 @@ export type ${this.accountDataArgsTypeName} = {
     return `
 ${accountDiscriminatorVar};
 /**
- * Holds the data for the {@link ${this.upperCamelAccountName}Account} and provides de/serialization
+ * Holds the data for the {@link ${this.upperCamelAccountName}} Account and provides de/serialization
  * functionality for that data
  */
 export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeName} {
@@ -248,7 +248,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
     buf: Buffer,
     offset = 0
   ): [ ${this.accountDataClassName}, number ]{
-    return ${this.dataStructName}.deserialize(buf, offset);
+    return ${this.beetName}.deserialize(buf, offset);
   }
 
   /**
@@ -256,7 +256,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
    * @returns a tuple of the created Buffer and the offset up to which the buffer was written to store it.
    */
   serialize(): [ Buffer, number ] {
-    return ${this.dataStructName}.serialize(${serializeValue})
+    return ${this.beetName}.serialize(${serializeValue})
   }
 
   ${byteSizeMethods}
@@ -276,7 +276,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
   // -----------------
   // Struct
   // -----------------
-  private renderDataStruct(fields: TypeMappedSerdeField[]) {
+  private renderBeet(fields: TypeMappedSerdeField[]) {
     let discriminatorName: string | undefined
     let discriminatorField: TypeMappedSerdeField | undefined
     let discriminatorType: string | undefined
@@ -294,7 +294,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
 
     return renderDataStruct({
       fields,
-      structVarName: this.dataStructName,
+      structVarName: this.beetName,
       className: this.accountDataClassName,
       argsTypename: this.accountDataArgsTypeName,
       discriminatorName,
@@ -313,7 +313,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
     const imports = this.renderImports()
     const accountDataArgsType = this.renderAccountDataArgsType(typedFields)
     const accountDataClass = this.renderAccountDataClass(typedFields)
-    const dataStruct = this.renderDataStruct(beetFields)
+    const beetDecl = this.renderBeet(beetFields)
     return `${imports}
 
 ${enums}
@@ -322,7 +322,7 @@ ${accountDataArgsType}
 
 ${accountDataClass}
 
-${dataStruct}`
+${beetDecl}`
   }
 }
 
