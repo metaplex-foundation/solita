@@ -12,6 +12,7 @@ import {
 import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
 import {
+  isKnownPubkey,
   renderKnownPubkeyAccess,
   ResolvedKnownPubkey,
   resolveKnownPubkey,
@@ -130,7 +131,15 @@ ${typeMapperImports.join('\n')}`.trim()
 
     const propertyComments = processedKeys
       .filter(isIdlInstructionAccountWithDesc)
-      .map((x) => ` * @property ${x.name} ${x.desc}`)
+      // known pubkeys are not provided by the user and thus aren't part of the type
+      .filter((x) => !isKnownPubkey(x.name))
+      .map((x) => {
+        const attrs = []
+        if (x.isMut) attrs.push('writable')
+        if (x.isSigner) attrs.push('signer')
+
+        return ` * @property [${attrs.join(', ')}] ${x.name} ${x.desc}`
+      })
 
     const properties =
       propertyComments.length > 0
@@ -250,10 +259,9 @@ export function create${this.upperCamelIxName}Instruction(
 export function renderInstruction(
   ix: IdlInstruction,
   programId: string,
-  forceFixable: ForceFixable,
-  userDefinedEnums: Set<string>
+  forceFixable: ForceFixable
 ) {
-  const typeMapper = new TypeMapper(forceFixable, userDefinedEnums)
+  const typeMapper = new TypeMapper(forceFixable)
   const renderer = new InstructionRenderer(ix, programId, typeMapper)
   return renderer.render()
 }

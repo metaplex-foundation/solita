@@ -11,7 +11,7 @@ import {
 import {
   createInitializeInstruction,
   createPullStringsInstruction,
-  DataAccountData,
+  Data,
 } from '../src/'
 
 const puppetIdl = require('../idl/puppet.json')
@@ -71,7 +71,7 @@ test('create', async (t) => {
   })
 
   const accountInfo = await connection.getAccountInfo(puppet)
-  const [account] = DataAccountData.fromAccountInfo(accountInfo!)
+  const [account] = Data.fromAccountInfo(accountInfo!)
 
   t.equal(account.data.toString(), '0', 'initializes data to 0')
 })
@@ -91,7 +91,7 @@ test('pull strings', async (t) => {
   })
 
   const accountInfo = await connection.getAccountInfo(puppet)
-  const [account] = DataAccountData.fromAccountInfo(accountInfo!)
+  const [account] = Data.fromAccountInfo(accountInfo!)
 
   t.equal(account.data.toString(), '111', 'updates puppet account data')
 })

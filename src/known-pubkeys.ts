@@ -51,6 +51,10 @@ export type ResolvedKnownPubkey = {
   packExportName: PubkeysPackageExportName
 }
 
+export function isKnownPubkey(id: string) {
+  return knownPubkeysMap.has(id)
+}
+
 export function resolveKnownPubkey(id: string): ResolvedKnownPubkey | null {
   const item = knownPubkeysMap.get(id)
   if (item == null) return null

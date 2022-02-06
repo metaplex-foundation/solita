@@ -18,7 +18,7 @@ import { renderAccount } from './render-account'
 
 export * from './types'
 
-function renderIndex(modules: string[]) {
+function renderImportIndex(modules: string[]) {
   return modules.map((x) => `export * from './${x}';`).join('\n')
 }
 
@@ -52,7 +52,6 @@ export class Solita {
   renderCode() {
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
-    let userDefinedEnums: Set<string> = new Set()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -77,8 +76,7 @@ export class Solita {
             logTrace('variants: %O', ty.type.variants)
           }
         }
-        let { code, isFixable, userDefinedEnums: enums } = renderType(ty)
-        userDefinedEnums = enums
+        let { code, isFixable } = renderType(ty)
 
         if (isFixable) {
           fixableTypes.add(ty.name)
@@ -100,12 +98,7 @@ export class Solita {
       logDebug(`Rendering instruction ${ix.name}`)
       logTrace('args: %O', ix.args)
       logTrace('accounts: %O', ix.accounts)
-      let code = renderInstruction(
-        ix,
-        programId,
-        forceFixable,
-        userDefinedEnums
-      )
+      let code = renderInstruction(ix, programId, forceFixable)
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -124,7 +117,6 @@ export class Solita {
       let code = renderAccount(
         account,
         forceFixable,
-        userDefinedEnums,
         this.accountsHaveImplicitDiscriminator
       )
       if (this.formatCode) {
@@ -154,17 +146,23 @@ export class Solita {
 
   async renderAndWriteTo(outputDir: PathLike) {
     const { instructions, accounts, types, errors } = this.renderCode()
+    const reexports = ['instructions']
     await this.writeInstructions(outputDir, instructions)
 
     if (Object.keys(accounts).length !== 0) {
+      reexports.push('accounts')
       await this.writeAccounts(outputDir, accounts)
     }
     if (Object.keys(types).length !== 0) {
-      await this.writeTypes(outputDir, types)
+      reexports.push('types')
+      await this.writeTypes(outputDir, types, Object.keys(accounts).length > 0)
     }
     if (errors != null) {
+      reexports.push('errors')
       await this.writeErrors(outputDir, errors)
     }
+
+    await writeReexports(outputDir, reexports)
   }
 
   // -----------------
@@ -182,7 +180,7 @@ export class Solita {
       await fs.writeFile(path.join(instructionsDir, `${name}.ts`), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all instructions')
-    const indexCode = renderIndex(Object.keys(instructions).sort())
+    const indexCode = renderImportIndex(Object.keys(instructions).sort())
     await fs.writeFile(
       path.join(instructionsDir, `index.ts`),
       indexCode,
@@ -205,14 +203,18 @@ export class Solita {
       await fs.writeFile(path.join(accountsDir, `${name}.ts`), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all accounts')
-    const indexCode = renderIndex(Object.keys(accounts).sort())
+    const indexCode = renderImportIndex(Object.keys(accounts).sort())
     await fs.writeFile(path.join(accountsDir, `index.ts`), indexCode, 'utf8')
   }
 
   // -----------------
   // Types
   // -----------------
-  private async writeTypes(outputDir: PathLike, types: Record<string, string>) {
+  private async writeTypes(
+    outputDir: PathLike,
+    types: Record<string, string>,
+    accountsPresent: boolean
+  ) {
     const typesDir = path.join(outputDir.toString(), 'types')
     await prepareTargetDir(typesDir)
     logInfo('Writing types to directory: %s', typesDir)
@@ -221,7 +223,12 @@ export class Solita {
       await fs.writeFile(path.join(typesDir, `${name}.ts`), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all types')
-    const indexCode = renderIndex(Object.keys(types).sort())
+    const reexports = Object.keys(types)
+    // NOTE: this allows account types to be referenced via `defined.<AccountName>`, however
+    // it would break if we have an account used that way, but no types
+    // If that occurs we need to generate the `types/index.ts` just reexporting accounts
+    if (accountsPresent) reexports.push('../accounts')
+    const indexCode = renderImportIndex(reexports.sort())
     await fs.writeFile(path.join(typesDir, `index.ts`), indexCode, 'utf8')
   }
 
@@ -235,4 +242,17 @@ export class Solita {
     logDebug('Writing index.ts containing all errors')
     await fs.writeFile(path.join(errorsDir, `index.ts`), errorsCode, 'utf8')
   }
+}
+
+// -----------------
+// Main Index File
+// -----------------
+
+async function writeReexports(outputDir: PathLike, reexports: string[]) {
+  const indexCode = renderImportIndex(reexports.sort())
+  await fs.writeFile(
+    path.join(outputDir.toString(), `index.ts`),
+    indexCode,
+    'utf8'
+  )
 }

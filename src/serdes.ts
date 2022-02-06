@@ -141,7 +141,7 @@ export function renderDataStruct({
   // -----------------
   if (className != null) {
     const beetStructType = isFixable ? 'FixableBeetStruct' : 'BeetStruct'
-    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetStructType}<
+    return `export const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetStructType}<
     ${className},
     ${structType}
 >(
@@ -174,12 +174,12 @@ export function renderDataStruct({
  */
 export function renderTypeDataStruct({
   fields,
-  structVarName,
+  beetVarName,
   typeName,
   isFixable,
 }: {
   fields: TypeMappedSerdeField[]
-  structVarName: string
+  beetVarName: string
   typeName: string
   isFixable: boolean
 }) {
@@ -200,7 +200,7 @@ export function renderTypeDataStruct({
   // -----------------
   // Beet Args Struct (Instruction)
   // -----------------
-  return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>(
+  return `const ${beetVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>(
   [
     ${fieldDecls}
   ],
