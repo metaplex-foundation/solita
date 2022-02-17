@@ -49,9 +49,25 @@ export class Solita {
     this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
   }
 
+  // -----------------
+  // Extract
+  // -----------------
+  accountTypes() {
+    return new Set(this.idl.accounts?.map((x) => x.name) ?? [])
+  }
+
+  customTypes() {
+    return new Set(this.idl.types?.map((x) => x.name) ?? [])
+  }
+
+  // -----------------
+  // Render
+  // -----------------
   renderCode() {
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
+    const accountTypes = this.accountTypes()
+    const customTypes = this.customTypes()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -63,6 +79,9 @@ export class Solita {
     // NOTE: we render types first in order to know which ones are 'fixable' by
     // the time we render accounts and instructions
 
+    // -----------------
+    // Types
+    // -----------------
     const types: Record<string, string> = {}
     logDebug('Rendering %d types', this.idl.types?.length ?? 0)
     if (this.idl.types != null) {
@@ -76,7 +95,7 @@ export class Solita {
             logTrace('variants: %O', ty.type.variants)
           }
         }
-        let { code, isFixable } = renderType(ty)
+        let { code, isFixable } = renderType(ty, accountTypes, customTypes)
 
         if (isFixable) {
           fixableTypes.add(ty.name)
@@ -93,12 +112,21 @@ export class Solita {
       }
     }
 
+    // -----------------
+    // Instructions
+    // -----------------
     const instructions: Record<string, string> = {}
     for (const ix of this.idl.instructions) {
       logDebug(`Rendering instruction ${ix.name}`)
       logTrace('args: %O', ix.args)
       logTrace('accounts: %O', ix.accounts)
-      let code = renderInstruction(ix, programId, forceFixable)
+      let code = renderInstruction(
+        ix,
+        programId,
+        accountTypes,
+        customTypes,
+        forceFixable
+      )
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -110,12 +138,17 @@ export class Solita {
       instructions[ix.name] = code
     }
 
+    // -----------------
+    // Accounts
+    // -----------------
     const accounts: Record<string, string> = {}
     for (const account of this.idl.accounts ?? []) {
       logDebug(`Rendering account ${account.name}`)
       logTrace('type: %O', account.type)
       let code = renderAccount(
         account,
+        accountTypes,
+        customTypes,
         forceFixable,
         this.accountsHaveImplicitDiscriminator
       )
@@ -130,6 +163,9 @@ export class Solita {
       accounts[account.name] = code
     }
 
+    // -----------------
+    // Errors
+    // -----------------
     logDebug('Rendering %d errors', this.idl.errors?.length ?? 0)
     let errors = renderErrors(this.idl.errors ?? [])
     if (errors != null && this.formatCode) {
@@ -155,7 +191,7 @@ export class Solita {
     }
     if (Object.keys(types).length !== 0) {
       reexports.push('types')
-      await this.writeTypes(outputDir, types, Object.keys(accounts).length > 0)
+      await this.writeTypes(outputDir, types)
     }
     if (errors != null) {
       reexports.push('errors')
@@ -210,11 +246,7 @@ export class Solita {
   // -----------------
   // Types
   // -----------------
-  private async writeTypes(
-    outputDir: PathLike,
-    types: Record<string, string>,
-    accountsPresent: boolean
-  ) {
+  private async writeTypes(outputDir: PathLike, types: Record<string, string>) {
     const typesDir = path.join(outputDir.toString(), 'types')
     await prepareTargetDir(typesDir)
     logInfo('Writing types to directory: %s', typesDir)
@@ -227,7 +259,6 @@ export class Solita {
     // NOTE: this allows account types to be referenced via `defined.<AccountName>`, however
     // it would break if we have an account used that way, but no types
     // If that occurs we need to generate the `types/index.ts` just reexporting accounts
-    if (accountsPresent) reexports.push('../accounts')
     const indexCode = renderImportIndex(reexports.sort())
     await fs.writeFile(path.join(typesDir, `index.ts`), indexCode, 'utf8')
   }

@@ -287,7 +287,7 @@ test('type-mapper: composite types - array<number>', (t) => {
 // Composites User Defined
 // -----------------
 test('type-mapper: composite types - user defined', (t) => {
-  const tm = new TypeMapper()
+  const tm = new TypeMapper(new Set(), new Set(['ConfigData']))
   const type = <IdlType>{
     defined: 'ConfigData',
   }
@@ -421,7 +421,7 @@ test('type-mapper: composite types multilevel - option<option<publicKey>>', (t) 
 })
 
 test('type-mapper: composite types multilevel - vec<option<ConfigData>>', (t) => {
-  const tm = new TypeMapper()
+  const tm = new TypeMapper(new Set(), new Set(['ConfigData']))
   const type = <IdlType>{
     vec: {
       option: {
@@ -476,7 +476,7 @@ test('type-mapper: serde fields', (t) => {
     },
   }
 
-  const tm = new TypeMapper()
+  const tm = new TypeMapper(new Set(), new Set(['ConfigData']))
   {
     t.comment('+++ u16 field only')
     tm.clearUsages()

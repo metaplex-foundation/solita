@@ -328,10 +328,12 @@ ${beetDecl}`
 
 export function renderAccount(
   account: IdlAccount,
+  accountTypes: Set<string>,
+  customTypes: Set<string>,
   forceFixable: ForceFixable,
   hasImplicitDiscriminator: boolean
 ) {
-  const typeMapper = new TypeMapper(forceFixable)
+  const typeMapper = new TypeMapper(accountTypes, customTypes, forceFixable)
   const renderer = new AccountRenderer(
     account,
     hasImplicitDiscriminator,

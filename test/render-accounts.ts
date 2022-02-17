@@ -25,7 +25,13 @@ async function checkRenderedAccount(
     logCode: boolean
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderAccount(account, FORCE_FIXABLE_NEVER, true)
+  const ts = renderAccount(
+    account,
+    new Set(),
+    new Set(),
+    FORCE_FIXABLE_NEVER,
+    true
+  )
 
   if (opts.logCode) {
     console.log(

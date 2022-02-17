@@ -23,7 +23,7 @@ async function checkRenderedType(
     logCode: boolean
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderType(ty)
+  const ts = renderType(ty, new Set(), new Set(['Creator']))
   verifySyntacticCorrectness(t, ts.code)
 
   const analyzed = await analyzeCode(ts.code)

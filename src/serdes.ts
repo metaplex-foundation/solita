@@ -4,6 +4,8 @@ import {
   BEET_PACKAGE,
   BEET_SOLANA_EXPORT_NAME,
   BEET_SOLANA_PACKAGE,
+  LOCAL_ACCOUNTS_EXPORT_NAME,
+  LOCAL_ACCOUNTS_PACKAGE,
   LOCAL_TYPES_EXPORT_NAME,
   LOCAL_TYPES_PACKAGE,
   SOLANA_WEB3_EXPORT_NAME,
@@ -16,11 +18,14 @@ export type SerdePackage =
   | typeof BEET_SOLANA_PACKAGE
   | typeof SOLANA_WEB3_PACKAGE
   | typeof LOCAL_TYPES_PACKAGE
+  | typeof LOCAL_ACCOUNTS_PACKAGE
+
 export type SerdePackageExportName =
   | typeof BEET_EXPORT_NAME
   | typeof BEET_SOLANA_EXPORT_NAME
   | typeof SOLANA_WEB3_EXPORT_NAME
   | typeof LOCAL_TYPES_EXPORT_NAME
+  | typeof LOCAL_ACCOUNTS_EXPORT_NAME
 
 export const serdePackages: Map<SerdePackage, SerdePackageExportName> = new Map(
   [
@@ -28,6 +33,7 @@ export const serdePackages: Map<SerdePackage, SerdePackageExportName> = new Map(
     [BEET_SOLANA_PACKAGE, BEET_SOLANA_EXPORT_NAME],
     [SOLANA_WEB3_PACKAGE, SOLANA_WEB3_EXPORT_NAME],
     [LOCAL_TYPES_PACKAGE, LOCAL_TYPES_EXPORT_NAME],
+    [LOCAL_ACCOUNTS_PACKAGE, LOCAL_ACCOUNTS_EXPORT_NAME],
   ]
 )
 
@@ -41,7 +47,7 @@ export function serdePackageExportName(
   if (pack == null) return null
 
   const exportName = serdePackages.get(pack)
-  assert(exportName != null, `Unkonwn serde package ${pack}`)
+  assert(exportName != null, `Unknown serde package ${pack}`)
   return exportName
 }
 
