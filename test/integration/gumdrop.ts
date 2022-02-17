@@ -12,7 +12,10 @@ const generatedSDKDir = path.join(outputDir, 'generated')
 
 test('renders type correct SDK for gumdrop', async (t) => {
   const idl = json as Idl
-  idl.metadata = { ...idl.metadata, address: 'gumdrop program id' }
+  idl.metadata = {
+    ...idl.metadata,
+    address: 'gdrpGjVffourzkdDRrQmySw4aTHr8a3xmQzzxSwFD1a',
+  }
   const gen = new Solita(idl, { formatCode: true })
   await gen.renderAndWriteTo(generatedSDKDir)
   await verifySyntacticCorrectnessForGeneratedDir(t, generatedSDKDir)

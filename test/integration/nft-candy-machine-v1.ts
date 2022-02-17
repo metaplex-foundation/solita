@@ -12,7 +12,10 @@ const generatedSDKDir = path.join(outputDir, 'generated')
 
 test('renders type correct SDK for nft-candy-machine v1', async (t) => {
   const idl = json as Idl
-  idl.metadata = { ...idl.metadata, address: 'candymachine program id' }
+  idl.metadata = {
+    ...idl.metadata,
+    address: 'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ',
+  }
   const gen = new Solita(idl, { formatCode: true })
   await gen.renderAndWriteTo(generatedSDKDir)
   await verifySyntacticCorrectnessForGeneratedDir(t, generatedSDKDir)

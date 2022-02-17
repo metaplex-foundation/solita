@@ -10,6 +10,7 @@ import {
   isIdlTypeDefined,
   isIdlTypeEnum,
   isShankIdl,
+  SOLANA_WEB3_PACKAGE,
 } from './types'
 import {
   logDebug,
@@ -224,7 +225,7 @@ export class Solita {
       await this.writeErrors(outputDir, errors)
     }
 
-    await writeReexports(outputDir, reexports)
+    await this.writeMainIndex(outputDir, reexports)
   }
 
   // -----------------
@@ -299,17 +300,38 @@ export class Solita {
     logDebug('Writing index.ts containing all errors')
     await fs.writeFile(path.join(errorsDir, `index.ts`), errorsCode, 'utf8')
   }
-}
 
-// -----------------
-// Main Index File
-// -----------------
+  // -----------------
+  // Main Index File
+  // -----------------
 
-async function writeReexports(outputDir: PathLike, reexports: string[]) {
-  const indexCode = renderImportIndex(reexports.sort())
-  await fs.writeFile(
-    path.join(outputDir.toString(), `index.ts`),
-    indexCode,
-    'utf8'
-  )
+  async writeMainIndex(outputDir: PathLike, reexports: string[]) {
+    const programAddress = this.idl.metadata.address
+    const reexportCode = renderImportIndex(reexports.sort())
+    const imports = `import { PublicKey } from '${SOLANA_WEB3_PACKAGE}'`
+    const programIdConsts = `
+export const PROGRAM_ADDRESS = '${programAddress}'
+export const PROGRAM_ID = new PublicKey(PROGRAM_ADDRESS)
+`
+    let code = `
+${imports}
+${reexportCode}
+${programIdConsts}
+`.trim()
+
+    if (this.formatCode) {
+      try {
+        code = format(code, this.formatOpts)
+      } catch (err) {
+        console.error(`Failed to format mainIndex`)
+        console.error(err)
+      }
+    }
+
+    await fs.writeFile(
+      path.join(outputDir.toString(), `index.ts`),
+      code,
+      'utf8'
+    )
+  }
 }
