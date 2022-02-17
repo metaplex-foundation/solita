@@ -13,6 +13,17 @@ import {
 } from '../../src/serdes'
 import recursiveReaddir from 'recursive-readdir'
 
+import { exec as execCb } from 'child_process'
+import { promisify } from 'util'
+const exec = promisify(execCb)
+const esr = path.join(
+  require.resolve('esbuild-runner'),
+  '..',
+  '..',
+  'bin',
+  'esr.js'
+)
+
 const eslint = new ESLint({
   overrideConfig: {
     plugins: ['@typescript-eslint'],
@@ -135,5 +146,33 @@ export async function verifySyntacticCorrectnessForGeneratedDir(
     t.comment(`+++ Syntactically checking ${path.relative(fullDirPath, file)}`)
     const ts = await fs.readFile(file, 'utf8')
     await verifySyntacticCorrectness(t, ts)
+  }
+}
+export async function verifyTopLevelScriptF(
+  t: Test,
+  file: string,
+  relFile: string
+) {
+  const cmd = `${esr} --cache ${file}`
+  try {
+    await exec(cmd)
+  } catch (err) {
+    t.error(err, `running ${relFile}`)
+  }
+}
+
+export async function verifyTopLevelScriptForGeneratedDir(
+  t: Test,
+  fullDirPath: string,
+  indexFilesOnly = true
+) {
+  let files = await recursiveReaddir(fullDirPath)
+  if (indexFilesOnly) {
+    files = files.filter((x) => x.endsWith('index.ts'))
+  }
+  for (const file of files) {
+    const relFile = path.relative(fullDirPath, file)
+    t.comment(`+++ Running ${relFile}`)
+    await verifyTopLevelScriptF(t, file, relFile)
   }
 }

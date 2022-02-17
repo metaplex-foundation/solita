@@ -68,6 +68,7 @@
     "@typescript-eslint/parser": "^5.9.1",
     "doctoc": "^2.1.0",
     "esbuild": "^0.14.11",
+    "esbuild-runner": "^2.2.1",
     "eslint": "^8.6.0",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^3.0.2",
