@@ -102,6 +102,11 @@ class TypeRenderer {
     return `
 ${imports}
 ${typeScriptType}
+
+/**
+ * @category userTypes
+ * @category generated
+ */
 export ${dataStruct}
 `.trim()
   }

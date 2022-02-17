@@ -92,6 +92,8 @@ class AccountRenderer {
 
     return `/**
  * Arguments used to create {@link ${this.accountDataClassName}}
+ * @category Accounts
+ * @category generated
  */
 export type ${this.accountDataArgsTypeName} = {
   ${renderedFields}
@@ -214,6 +216,9 @@ ${accountDiscriminatorVar};
 /**
  * Holds the data for the {@link ${this.upperCamelAccountName}} Account and provides de/serialization
  * functionality for that data
+ *
+ * @category Accounts
+ * @category generated
  */
 export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeName} {
   private constructor(
@@ -292,7 +297,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       )
     }
 
-    return renderDataStruct({
+    const struct = renderDataStruct({
       fields,
       structVarName: this.beetName,
       className: this.accountDataClassName,
@@ -302,6 +307,12 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       discriminatorType,
       isFixable: this.typeMapper.usedFixableSerde,
     })
+    return `
+/**
+ * @category Accounts
+ * @category generated
+ */
+${struct}`.trim()
   }
 
   render() {

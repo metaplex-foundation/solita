@@ -16,6 +16,9 @@ function renderError(error: IdlError) {
 
 /**
  * ${name}: '${msg}'
+ *
+ * @category Errors
+ * @category generated
  */
 export class ${className} extends Error {
   readonly code: number = ${code};
@@ -47,6 +50,8 @@ ${errorsCode}
 
 /**
  * Attempts to resolve a custom program error from the provided error code.
+ * @category Errors
+ * @category generated
  */
 export function errorFromCode(code: number): MaybeErrorWithCode {
   const createError = createErrorFromCodeLookup.get(code)
@@ -55,6 +60,8 @@ export function errorFromCode(code: number): MaybeErrorWithCode {
 
 /**
  * Attempts to resolve a custom program error from the provided error name, i.e. 'Unauthorized'.
+ * @category Errors
+ * @category generated
  */
 export function errorFromName(name: string): MaybeErrorWithCode {
   const createError = createErrorFromNameLookup.get(name)

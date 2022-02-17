@@ -310,7 +310,20 @@ export class Solita {
     const reexportCode = renderImportIndex(reexports.sort())
     const imports = `import { PublicKey } from '${SOLANA_WEB3_PACKAGE}'`
     const programIdConsts = `
+/**
+ * Program address
+ *
+ * @category constants
+ * @category generated
+ */
 export const PROGRAM_ADDRESS = '${programAddress}'
+
+/**
+ * Program publick key
+ *
+ * @category constants
+ * @category generated
+ */
 export const PROGRAM_ID = new PublicKey(PROGRAM_ADDRESS)
 `
     let code = `
