@@ -141,8 +141,8 @@ ${typeMapperImports.join('\n')}`.trim()
       .filter((x) => !isKnownPubkey(x.name))
       .map((x) => {
         const attrs = []
-        if (x.isMut) attrs.push('writable')
-        if (x.isSigner) attrs.push('signer')
+        if (x.isMut) attrs.push('_writable_')
+        if (x.isSigner) attrs.push('**signer**')
 
         return ` * @property [${attrs.join(', ')}] ${x.name} ${x.desc}`
       })
