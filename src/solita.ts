@@ -11,7 +11,13 @@ import {
   isIdlTypeEnum,
   isShankIdl,
 } from './types'
-import { logDebug, logInfo, logTrace, prepareTargetDir } from './utils'
+import {
+  logDebug,
+  logInfo,
+  logTrace,
+  prepareTargetDir,
+  prependGeneratedWarning,
+} from './utils'
 import { format, Options } from 'prettier'
 import { renderType } from './render-type'
 import { renderAccount } from './render-account'
@@ -37,15 +43,22 @@ export class Solita {
   private readonly formatCode: boolean
   private readonly formatOpts: Options
   private readonly accountsHaveImplicitDiscriminator: boolean
+  private readonly prependGeneratedWarning: boolean
   constructor(
     private readonly idl: Idl,
     {
       formatCode = false,
       formatOpts = {},
-    }: { formatCode?: boolean; formatOpts?: Options } = {}
+      prependGeneratedWarning = true,
+    }: {
+      formatCode?: boolean
+      formatOpts?: Options
+      prependGeneratedWarning?: boolean
+    } = {}
   ) {
     this.formatCode = formatCode
     this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
+    this.prependGeneratedWarning = prependGeneratedWarning
     this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
   }
 
@@ -100,6 +113,9 @@ export class Solita {
         if (isFixable) {
           fixableTypes.add(ty.name)
         }
+        if (this.prependGeneratedWarning) {
+          code = prependGeneratedWarning(code)
+        }
         if (this.formatCode) {
           try {
             code = format(code, this.formatOpts)
@@ -127,6 +143,9 @@ export class Solita {
         customTypes,
         forceFixable
       )
+      if (this.prependGeneratedWarning) {
+        code = prependGeneratedWarning(code)
+      }
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -152,6 +171,9 @@ export class Solita {
         forceFixable,
         this.accountsHaveImplicitDiscriminator
       )
+      if (this.prependGeneratedWarning) {
+        code = prependGeneratedWarning(code)
+      }
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -168,6 +190,10 @@ export class Solita {
     // -----------------
     logDebug('Rendering %d errors', this.idl.errors?.length ?? 0)
     let errors = renderErrors(this.idl.errors ?? [])
+
+    if (errors != null && this.prependGeneratedWarning) {
+      errors = prependGeneratedWarning(errors)
+    }
     if (errors != null && this.formatCode) {
       try {
         errors = format(errors, this.formatOpts)
