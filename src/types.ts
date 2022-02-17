@@ -63,7 +63,7 @@ export type IdlTypeEnum = {
 }
 
 export type IdlDefinedType = {
-  kind: 'struct'
+  kind: 'struct' | 'enum'
   fields: IdlField[]
 }
 
@@ -151,6 +151,12 @@ export type TypeMappedSerdeField = {
   type: string
 }
 
+// -----------------
+// Resolvers
+// -----------------
+export type ResolveFieldType = (
+  typeName: string
+) => IdlAccountType | IdlTypeEnum | null
 // -----------------
 // Guards
 // -----------------

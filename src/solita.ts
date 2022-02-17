@@ -1,8 +1,9 @@
 import { PathLike, promises as fs } from 'fs'
 import path from 'path'
-// import { renderAccount } from './render-account'
+import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
+import { renderType } from './render-type'
 import {
   Idl,
   IdlType,
@@ -20,8 +21,6 @@ import {
   prependGeneratedWarning,
 } from './utils'
 import { format, Options } from 'prettier'
-import { renderType } from './render-type'
-import { renderAccount } from './render-account'
 
 export * from './types'
 
@@ -74,6 +73,15 @@ export class Solita {
     return new Set(this.idl.types?.map((x) => x.name) ?? [])
   }
 
+  resolveFieldType = (typeName: string) => {
+    for (const acc of this.idl.accounts ?? []) {
+      if (acc.name === typeName) return acc.type
+    }
+    for (const def of this.idl.types ?? []) {
+      if (def.name === typeName) return def.type
+    }
+    return null
+  }
   // -----------------
   // Render
   // -----------------
@@ -170,6 +178,7 @@ export class Solita {
         accountTypes,
         customTypes,
         forceFixable,
+        this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator
       )
       if (this.prependGeneratedWarning) {

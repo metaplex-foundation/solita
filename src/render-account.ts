@@ -4,6 +4,8 @@ import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
   IdlAccount,
+  isIdlTypeDefined,
+  ResolveFieldType,
   SOLANA_WEB3_PACKAGE,
   TypeMappedSerdeField,
 } from './types'
@@ -31,6 +33,7 @@ class AccountRenderer {
   constructor(
     private readonly account: IdlAccount,
     private readonly hasImplicitDiscriminator: boolean,
+    private readonly resolveFieldType: ResolveFieldType,
     private readonly typeMapper: TypeMapper
   ) {
     this.upperCamelAccountName = account.name
@@ -65,8 +68,19 @@ class AccountRenderer {
 
   private getPrettyFields() {
     return this.account.type.fields.map((f) => {
-      const postfix = f.type === 'publicKey' ? '.toBase58()' : ''
-      return `${f.name}: this.${f.name}${postfix}`
+      if (f.type === 'publicKey') {
+        return `${f.name}: this.${f.name}.toBase58()`
+      }
+      if (
+        isIdlTypeDefined(f.type) &&
+        this.resolveFieldType(f.type.defined)?.kind === 'enum'
+      ) {
+        const tsType = this.typeMapper.map(f.type, f.name)
+        const variant = `${tsType}[this.${f.name}`
+        return `${f.name}: '${f.type.defined}.' + ${variant}]`
+      }
+
+      return `${f.name}: this.${f.name}`
     })
   }
 
@@ -342,12 +356,14 @@ export function renderAccount(
   accountTypes: Set<string>,
   customTypes: Set<string>,
   forceFixable: ForceFixable,
+  resolveFieldType: ResolveFieldType,
   hasImplicitDiscriminator: boolean
 ) {
   const typeMapper = new TypeMapper(accountTypes, customTypes, forceFixable)
   const renderer = new AccountRenderer(
     account,
     hasImplicitDiscriminator,
+    resolveFieldType,
     typeMapper
   )
   return renderer.render()

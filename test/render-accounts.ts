@@ -30,6 +30,7 @@ async function checkRenderedAccount(
     new Set(),
     new Set(),
     FORCE_FIXABLE_NEVER,
+    (_: string) => null,
     true
   )
 
