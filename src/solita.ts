@@ -1,8 +1,9 @@
 import { PathLike, promises as fs } from 'fs'
 import path from 'path'
-// import { renderAccount } from './render-account'
+import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
+import { renderType } from './render-type'
 import {
   Idl,
   IdlType,
@@ -10,11 +11,16 @@ import {
   isIdlTypeDefined,
   isIdlTypeEnum,
   isShankIdl,
+  SOLANA_WEB3_PACKAGE,
 } from './types'
-import { logDebug, logInfo, logTrace, prepareTargetDir } from './utils'
+import {
+  logDebug,
+  logInfo,
+  logTrace,
+  prepareTargetDir,
+  prependGeneratedWarning,
+} from './utils'
 import { format, Options } from 'prettier'
-import { renderType } from './render-type'
-import { renderAccount } from './render-account'
 
 export * from './types'
 
@@ -37,21 +43,53 @@ export class Solita {
   private readonly formatCode: boolean
   private readonly formatOpts: Options
   private readonly accountsHaveImplicitDiscriminator: boolean
+  private readonly prependGeneratedWarning: boolean
   constructor(
     private readonly idl: Idl,
     {
       formatCode = false,
       formatOpts = {},
-    }: { formatCode?: boolean; formatOpts?: Options } = {}
+      prependGeneratedWarning = true,
+    }: {
+      formatCode?: boolean
+      formatOpts?: Options
+      prependGeneratedWarning?: boolean
+    } = {}
   ) {
     this.formatCode = formatCode
     this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
+    this.prependGeneratedWarning = prependGeneratedWarning
     this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
   }
 
+  // -----------------
+  // Extract
+  // -----------------
+  accountTypes() {
+    return new Set(this.idl.accounts?.map((x) => x.name) ?? [])
+  }
+
+  customTypes() {
+    return new Set(this.idl.types?.map((x) => x.name) ?? [])
+  }
+
+  resolveFieldType = (typeName: string) => {
+    for (const acc of this.idl.accounts ?? []) {
+      if (acc.name === typeName) return acc.type
+    }
+    for (const def of this.idl.types ?? []) {
+      if (def.name === typeName) return def.type
+    }
+    return null
+  }
+  // -----------------
+  // Render
+  // -----------------
   renderCode() {
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
+    const accountTypes = this.accountTypes()
+    const customTypes = this.customTypes()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -63,6 +101,9 @@ export class Solita {
     // NOTE: we render types first in order to know which ones are 'fixable' by
     // the time we render accounts and instructions
 
+    // -----------------
+    // Types
+    // -----------------
     const types: Record<string, string> = {}
     logDebug('Rendering %d types', this.idl.types?.length ?? 0)
     if (this.idl.types != null) {
@@ -76,10 +117,13 @@ export class Solita {
             logTrace('variants: %O', ty.type.variants)
           }
         }
-        let { code, isFixable } = renderType(ty)
+        let { code, isFixable } = renderType(ty, accountTypes, customTypes)
 
         if (isFixable) {
           fixableTypes.add(ty.name)
+        }
+        if (this.prependGeneratedWarning) {
+          code = prependGeneratedWarning(code)
         }
         if (this.formatCode) {
           try {
@@ -93,12 +137,24 @@ export class Solita {
       }
     }
 
+    // -----------------
+    // Instructions
+    // -----------------
     const instructions: Record<string, string> = {}
     for (const ix of this.idl.instructions) {
       logDebug(`Rendering instruction ${ix.name}`)
       logTrace('args: %O', ix.args)
       logTrace('accounts: %O', ix.accounts)
-      let code = renderInstruction(ix, programId, forceFixable)
+      let code = renderInstruction(
+        ix,
+        programId,
+        accountTypes,
+        customTypes,
+        forceFixable
+      )
+      if (this.prependGeneratedWarning) {
+        code = prependGeneratedWarning(code)
+      }
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -110,15 +166,24 @@ export class Solita {
       instructions[ix.name] = code
     }
 
+    // -----------------
+    // Accounts
+    // -----------------
     const accounts: Record<string, string> = {}
     for (const account of this.idl.accounts ?? []) {
       logDebug(`Rendering account ${account.name}`)
       logTrace('type: %O', account.type)
       let code = renderAccount(
         account,
+        accountTypes,
+        customTypes,
         forceFixable,
+        this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator
       )
+      if (this.prependGeneratedWarning) {
+        code = prependGeneratedWarning(code)
+      }
       if (this.formatCode) {
         try {
           code = format(code, this.formatOpts)
@@ -130,8 +195,15 @@ export class Solita {
       accounts[account.name] = code
     }
 
+    // -----------------
+    // Errors
+    // -----------------
     logDebug('Rendering %d errors', this.idl.errors?.length ?? 0)
     let errors = renderErrors(this.idl.errors ?? [])
+
+    if (errors != null && this.prependGeneratedWarning) {
+      errors = prependGeneratedWarning(errors)
+    }
     if (errors != null && this.formatCode) {
       try {
         errors = format(errors, this.formatOpts)
@@ -155,14 +227,14 @@ export class Solita {
     }
     if (Object.keys(types).length !== 0) {
       reexports.push('types')
-      await this.writeTypes(outputDir, types, Object.keys(accounts).length > 0)
+      await this.writeTypes(outputDir, types)
     }
     if (errors != null) {
       reexports.push('errors')
       await this.writeErrors(outputDir, errors)
     }
 
-    await writeReexports(outputDir, reexports)
+    await this.writeMainIndex(outputDir, reexports)
   }
 
   // -----------------
@@ -210,11 +282,7 @@ export class Solita {
   // -----------------
   // Types
   // -----------------
-  private async writeTypes(
-    outputDir: PathLike,
-    types: Record<string, string>,
-    accountsPresent: boolean
-  ) {
+  private async writeTypes(outputDir: PathLike, types: Record<string, string>) {
     const typesDir = path.join(outputDir.toString(), 'types')
     await prepareTargetDir(typesDir)
     logInfo('Writing types to directory: %s', typesDir)
@@ -227,7 +295,6 @@ export class Solita {
     // NOTE: this allows account types to be referenced via `defined.<AccountName>`, however
     // it would break if we have an account used that way, but no types
     // If that occurs we need to generate the `types/index.ts` just reexporting accounts
-    if (accountsPresent) reexports.push('../accounts')
     const indexCode = renderImportIndex(reexports.sort())
     await fs.writeFile(path.join(typesDir, `index.ts`), indexCode, 'utf8')
   }
@@ -242,17 +309,51 @@ export class Solita {
     logDebug('Writing index.ts containing all errors')
     await fs.writeFile(path.join(errorsDir, `index.ts`), errorsCode, 'utf8')
   }
-}
 
-// -----------------
-// Main Index File
-// -----------------
+  // -----------------
+  // Main Index File
+  // -----------------
 
-async function writeReexports(outputDir: PathLike, reexports: string[]) {
-  const indexCode = renderImportIndex(reexports.sort())
-  await fs.writeFile(
-    path.join(outputDir.toString(), `index.ts`),
-    indexCode,
-    'utf8'
-  )
+  async writeMainIndex(outputDir: PathLike, reexports: string[]) {
+    const programAddress = this.idl.metadata.address
+    const reexportCode = renderImportIndex(reexports.sort())
+    const imports = `import { PublicKey } from '${SOLANA_WEB3_PACKAGE}'`
+    const programIdConsts = `
+/**
+ * Program address
+ *
+ * @category constants
+ * @category generated
+ */
+export const PROGRAM_ADDRESS = '${programAddress}'
+
+/**
+ * Program publick key
+ *
+ * @category constants
+ * @category generated
+ */
+export const PROGRAM_ID = new PublicKey(PROGRAM_ADDRESS)
+`
+    let code = `
+${imports}
+${reexportCode}
+${programIdConsts}
+`.trim()
+
+    if (this.formatCode) {
+      try {
+        code = format(code, this.formatOpts)
+      } catch (err) {
+        console.error(`Failed to format mainIndex`)
+        console.error(err)
+      }
+    }
+
+    await fs.writeFile(
+      path.join(outputDir.toString(), `index.ts`),
+      code,
+      'utf8'
+    )
+  }
 }

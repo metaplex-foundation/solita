@@ -26,7 +26,13 @@ async function checkRenderedIx(
     logCode: boolean
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderInstruction(ix, PROGRAM_ID, FORCE_FIXABLE_NEVER)
+  const ts = renderInstruction(
+    ix,
+    PROGRAM_ID,
+    new Set(),
+    new Set(),
+    FORCE_FIXABLE_NEVER
+  )
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)

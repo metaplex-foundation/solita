@@ -5,6 +5,10 @@ export function renderScalarEnum(
 ) {
   const exp = includeExport ? 'export ' : ''
   return `
+/**
+ * @category enums
+ * @category generated
+ */
 ${exp}enum ${name} {
   ${variants.join(',\n  ')}    
 }`.trim()

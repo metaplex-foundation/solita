@@ -72,9 +72,15 @@ class InstructionRenderer {
       .map((field) => this.renderIxArgField(field))
       .join(',\n  ')
 
-    const code = `export type ${this.argsTypename} = {
+    const code = `
+/**
+ * @category Instructions
+ * @category ${this.upperCamelIxName}
+ * @category generated
+ */
+export type ${this.argsTypename} = {
   ${fields}
-}`
+}`.trim()
     return code
   }
 
@@ -135,8 +141,8 @@ ${typeMapperImports.join('\n')}`.trim()
       .filter((x) => !isKnownPubkey(x.name))
       .map((x) => {
         const attrs = []
-        if (x.isMut) attrs.push('writable')
-        if (x.isSigner) attrs.push('signer')
+        if (x.isMut) attrs.push('_writable_')
+        if (x.isSigner) attrs.push('**signer**')
 
         return ` * @property [${attrs.join(', ')}] ${x.name} ${x.desc}`
       })
@@ -149,6 +155,9 @@ ${typeMapperImports.join('\n')}`.trim()
     const docs = `
 /**
   * Accounts required by the _${this.ix.name}_ instruction${properties}
+  * @category Instructions
+  * @category ${this.upperCamelIxName}
+  * @category generated
   */
 `.trim()
     return `${docs}
@@ -181,7 +190,7 @@ export type ${this.accountsTypename} = {
       this.instructionDiscriminator.getField()
     )
     const discriminatorType = this.instructionDiscriminator.renderType()
-    return renderDataStruct({
+    const struct = renderDataStruct({
       fields: args,
       discriminatorName: 'instructionDiscriminator',
       discriminatorField,
@@ -190,6 +199,13 @@ export type ${this.accountsTypename} = {
       argsTypename: this.argsTypename,
       isFixable: this.typeMapper.usedFixableSerde,
     })
+    return `
+/**
+ * @category Instructions
+ * @category ${this.upperCamelIxName}
+ * @category generated
+ */
+${struct}`.trim()
   }
 
   render() {
@@ -234,6 +250,10 @@ const ${this.instructionDiscriminatorName} = ${instructionDisc};
  * Creates a _${this.upperCamelIxName}_ instruction.
  * 
  * @param accounts that will be accessed while the instruction is processed${createInstructionArgsComment}
+ *
+ * @category Instructions
+ * @category ${this.upperCamelIxName}
+ * @category generated
  */
 export function create${this.upperCamelIxName}Instruction(
   accounts: ${this.accountsTypename},
@@ -259,9 +279,11 @@ export function create${this.upperCamelIxName}Instruction(
 export function renderInstruction(
   ix: IdlInstruction,
   programId: string,
+  accountTypes: Set<string>,
+  customTypes: Set<string>,
   forceFixable: ForceFixable
 ) {
-  const typeMapper = new TypeMapper(forceFixable)
+  const typeMapper = new TypeMapper(accountTypes, customTypes, forceFixable)
   const renderer = new InstructionRenderer(ix, programId, typeMapper)
   return renderer.render()
 }

@@ -4,6 +4,8 @@ import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
   IdlAccount,
+  isIdlTypeDefined,
+  ResolveFieldType,
   SOLANA_WEB3_PACKAGE,
   TypeMappedSerdeField,
 } from './types'
@@ -31,6 +33,7 @@ class AccountRenderer {
   constructor(
     private readonly account: IdlAccount,
     private readonly hasImplicitDiscriminator: boolean,
+    private readonly resolveFieldType: ResolveFieldType,
     private readonly typeMapper: TypeMapper
   ) {
     this.upperCamelAccountName = account.name
@@ -65,8 +68,19 @@ class AccountRenderer {
 
   private getPrettyFields() {
     return this.account.type.fields.map((f) => {
-      const postfix = f.type === 'publicKey' ? '.toBase58()' : ''
-      return `${f.name}: this.${f.name}${postfix}`
+      if (f.type === 'publicKey') {
+        return `${f.name}: this.${f.name}.toBase58()`
+      }
+      if (
+        isIdlTypeDefined(f.type) &&
+        this.resolveFieldType(f.type.defined)?.kind === 'enum'
+      ) {
+        const tsType = this.typeMapper.map(f.type, f.name)
+        const variant = `${tsType}[this.${f.name}`
+        return `${f.name}: '${f.type.defined}.' + ${variant}]`
+      }
+
+      return `${f.name}: this.${f.name}`
     })
   }
 
@@ -92,6 +106,8 @@ class AccountRenderer {
 
     return `/**
  * Arguments used to create {@link ${this.accountDataClassName}}
+ * @category Accounts
+ * @category generated
  */
 export type ${this.accountDataArgsTypeName} = {
   ${renderedFields}
@@ -214,6 +230,9 @@ ${accountDiscriminatorVar};
 /**
  * Holds the data for the {@link ${this.upperCamelAccountName}} Account and provides de/serialization
  * functionality for that data
+ *
+ * @category Accounts
+ * @category generated
  */
 export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeName} {
   private constructor(
@@ -239,6 +258,24 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
   ): [ ${this.accountDataClassName}, number ]  {
     return ${this.accountDataClassName}.deserialize(accountInfo.data, offset)
   }
+
+  /**
+   * Retrieves the account info from the provided address and deserializes
+   * the {@link ${this.accountDataClassName}} from its data.
+   *
+   * @throws Error if no account info is found at the address or if deserialization fails
+   */
+  static async fromAccountAddress(
+    connection: web3.Connection,
+    address: web3.PublicKey,
+  ): Promise<${this.accountDataClassName}> {
+    const accountInfo = await connection.getAccountInfo(address);
+    if (accountInfo == null) {
+      throw new Error(\`Unable to find ${this.accountDataClassName} account at \${address}\`);
+    }
+    return ${this.accountDataClassName}.fromAccountInfo(accountInfo, 0)[0];
+  }
+
 
   /**
    * Deserializes the {@link ${this.accountDataClassName}} from the provided data Buffer.
@@ -292,7 +329,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       )
     }
 
-    return renderDataStruct({
+    const struct = renderDataStruct({
       fields,
       structVarName: this.beetName,
       className: this.accountDataClassName,
@@ -302,6 +339,12 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       discriminatorType,
       isFixable: this.typeMapper.usedFixableSerde,
     })
+    return `
+/**
+ * @category Accounts
+ * @category generated
+ */
+${struct}`.trim()
   }
 
   render() {
@@ -328,13 +371,17 @@ ${beetDecl}`
 
 export function renderAccount(
   account: IdlAccount,
+  accountTypes: Set<string>,
+  customTypes: Set<string>,
   forceFixable: ForceFixable,
+  resolveFieldType: ResolveFieldType,
   hasImplicitDiscriminator: boolean
 ) {
-  const typeMapper = new TypeMapper(forceFixable)
+  const typeMapper = new TypeMapper(accountTypes, customTypes, forceFixable)
   const renderer = new AccountRenderer(
     account,
     hasImplicitDiscriminator,
+    resolveFieldType,
     typeMapper
   )
   return renderer.render()

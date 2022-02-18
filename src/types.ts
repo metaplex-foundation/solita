@@ -63,7 +63,7 @@ export type IdlTypeEnum = {
 }
 
 export type IdlDefinedType = {
-  kind: 'struct'
+  kind: 'struct' | 'enum'
   fields: IdlField[]
 }
 
@@ -152,6 +152,12 @@ export type TypeMappedSerdeField = {
 }
 
 // -----------------
+// Resolvers
+// -----------------
+export type ResolveFieldType = (
+  typeName: string
+) => IdlAccountType | IdlTypeEnum | null
+// -----------------
 // Guards
 // -----------------
 export function isIdlTypeOption(ty: IdlType): ty is IdlTypeOption {
@@ -205,8 +211,10 @@ export const BEET_SOLANA_PACKAGE = '@metaplex-foundation/beet-solana'
 export const SOLANA_WEB3_PACKAGE = '@solana/web3.js'
 export const SOLANA_SPL_TOKEN_PACKAGE = '@solana/spl-token'
 export const LOCAL_TYPES_PACKAGE = '../types'
+export const LOCAL_ACCOUNTS_PACKAGE = '../accounts'
 export const BEET_EXPORT_NAME = 'beet'
 export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
 export const SOLANA_WEB3_EXPORT_NAME = 'web3'
 export const SOLANA_SPL_TOKEN_EXPORT_NAME = 'splToken'
 export const LOCAL_TYPES_EXPORT_NAME = 'definedTypes'
+export const LOCAL_ACCOUNTS_EXPORT_NAME = 'accounts'

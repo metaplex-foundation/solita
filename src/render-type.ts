@@ -102,13 +102,23 @@ class TypeRenderer {
     return `
 ${imports}
 ${typeScriptType}
+
+/**
+ * @category userTypes
+ * @category generated
+ */
 export ${dataStruct}
 `.trim()
   }
 }
 
-export function renderType(ty: IdlDefinedTypeDefinition) {
-  const renderer = new TypeRenderer(ty)
+export function renderType(
+  ty: IdlDefinedTypeDefinition,
+  accountTypes: Set<string>,
+  customTypes: Set<string>
+) {
+  const typeMapper = new TypeMapper(accountTypes, customTypes)
+  const renderer = new TypeRenderer(ty, typeMapper)
   const code = renderer.render()
   const isFixable = renderer.typeMapper.usedFixableSerde
   return { code, isFixable }

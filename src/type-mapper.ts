@@ -13,6 +13,7 @@ import {
   isIdlTypeEnum,
   isIdlTypeOption,
   isIdlTypeVec,
+  LOCAL_ACCOUNTS_PACKAGE,
   LOCAL_TYPES_PACKAGE,
   PrimaryTypeMap,
   TypeMappedSerdeField,
@@ -54,6 +55,8 @@ export class TypeMapper {
   readonly scalarEnumsUsed: Map<string, string[]> = new Map()
   usedFixableSerde: boolean = false
   constructor(
+    private readonly accountTypes: Set<string> = new Set(),
+    private readonly customTypes: Set<string> = new Set(),
     private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
@@ -123,9 +126,9 @@ export class TypeMapper {
   }
 
   private mapDefinedType(ty: IdlTypeDefined) {
-    const userDefinedPackage = LOCAL_TYPES_PACKAGE
-    this.serdePackagesUsed.add(userDefinedPackage)
-    const exp = serdePackageExportName(userDefinedPackage)
+    const definedTypePackage: SerdePackage = this.definedTypesPackage(ty)
+    this.serdePackagesUsed.add(definedTypePackage)
+    const exp = serdePackageExportName(definedTypePackage)
     return `${exp}.${ty.defined}`
   }
 
@@ -230,9 +233,9 @@ export class TypeMapper {
   }
 
   private mapDefinedSerde(ty: IdlTypeDefined) {
-    const userDefinedPackage = LOCAL_TYPES_PACKAGE
-    this.serdePackagesUsed.add(userDefinedPackage)
-    const exp = serdePackageExportName(userDefinedPackage)
+    const definedTypePackage: SerdePackage = this.definedTypesPackage(ty)
+    this.serdePackagesUsed.add(definedTypePackage)
+    const exp = serdePackageExportName(definedTypePackage)
     const varName = beetVarNameFromTypeName(ty.defined)
     return `${exp}.${varName}`
   }
@@ -316,6 +319,18 @@ export class TypeMapper {
     assert(
       this.primaryTypeMap[serde as keyof PrimaryTypeMap] != null,
       `Types to ${context} need to be supported by Beet, ${serde} is not`
+    )
+  }
+
+  private definedTypesPackage(ty: IdlTypeDefined) {
+    if (this.accountTypes.has(ty.defined)) {
+      return LOCAL_ACCOUNTS_PACKAGE
+    }
+    if (this.customTypes.has(ty.defined)) {
+      return LOCAL_TYPES_PACKAGE
+    }
+    assert.fail(
+      `Unknown type ${ty.defined} is neither found in types nor an Account`
     )
   }
 
