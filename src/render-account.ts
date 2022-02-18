@@ -260,6 +260,24 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
   }
 
   /**
+   * Retrieves the account info from the provided address and deserializes
+   * the {@link ${this.accountDataClassName}} from its data.
+   *
+   * @throws Error if no account info is found at the address or if deserialization fails
+   */
+  static async fromAccountAddress(
+    connection: web3.Connection,
+    address: web3.PublicKey,
+  ): Promise<${this.accountDataClassName}> {
+    const accountInfo = await connection.getAccountInfo(address);
+    if (accountInfo == null) {
+      throw new Error(\`Unable to find ${this.accountDataClassName} account at \${address}\`);
+    }
+    return ${this.accountDataClassName}.fromAccountInfo(accountInfo, 0)[0];
+  }
+
+
+  /**
    * Deserializes the {@link ${this.accountDataClassName}} from the provided data Buffer.
    * @returns a tuple of the account data and the offset up to which the buffer was read to obtain it.
    */
