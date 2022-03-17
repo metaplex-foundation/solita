@@ -1,3 +1,4 @@
+import { PathLike } from 'fs'
 import { renderScalarEnums } from './render-enums'
 import { renderDataStruct } from './serdes'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -32,6 +33,7 @@ class AccountRenderer {
 
   constructor(
     private readonly account: IdlAccount,
+    private readonly fullFileDir: PathLike,
     private readonly hasImplicitDiscriminator: boolean,
     private readonly resolveFieldType: ResolveFieldType,
     private readonly typeMapper: TypeMapper
@@ -88,7 +90,8 @@ class AccountRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const imports = this.typeMapper.importsForSerdePackagesUsed(
+    const imports = this.typeMapper.importsUsed(
+      this.fullFileDir.toString(),
       new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
     )
     return imports.join('\n')
@@ -371,15 +374,21 @@ ${beetDecl}`
 
 export function renderAccount(
   account: IdlAccount,
-  accountTypes: Set<string>,
-  customTypes: Set<string>,
+  fullFileDir: PathLike,
+  accountFilesByType: Map<string, string>,
+  customFilesByType: Map<string, string>,
   forceFixable: ForceFixable,
   resolveFieldType: ResolveFieldType,
   hasImplicitDiscriminator: boolean
 ) {
-  const typeMapper = new TypeMapper(accountTypes, customTypes, forceFixable)
+  const typeMapper = new TypeMapper(
+    accountFilesByType,
+    customFilesByType,
+    forceFixable
+  )
   const renderer = new AccountRenderer(
     account,
+    fullFileDir,
     hasImplicitDiscriminator,
     resolveFieldType,
     typeMapper

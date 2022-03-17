@@ -1,6 +1,7 @@
 import { PathLike } from 'fs'
 import path from 'path'
 
+// write a file
 export class Paths {
   constructor(readonly outputDir: PathLike) {}
 

@@ -12,6 +12,10 @@ export const logInfo = debug('solita:info')
 export const logDebug = debug('solita:debug')
 export const logTrace = debug('solita:trace')
 
+// -----------------
+// FileSystem
+// -----------------
+
 /**
  * Ensures that the given directory exists by creating it recursively when necessary.
  * It also removes all existing files from the directory (non-recursively).
@@ -52,6 +56,10 @@ async function canAccess(p: PathLike) {
   } catch (_) {
     return false
   }
+}
+
+export function withoutTsExtension(p: string) {
+  return p.replace(/\.ts$/, '')
 }
 
 export function prependGeneratedWarning(code: string) {
@@ -126,4 +134,14 @@ export function anchorDiscriminatorType(
 ) {
   const ty: IdlTypeArray = { array: ['u8', 8] }
   return typeMapper.map(ty, context)
+}
+
+// -----------------
+// Maps
+// -----------------
+export function getOrCreate<K, V>(map: Map<K, V>, key: K, initial: V): V {
+  const current = map.get(key)
+  if (current != null) return current
+  map.set(key, initial)
+  return initial
 }

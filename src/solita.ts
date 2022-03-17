@@ -68,12 +68,21 @@ export class Solita {
   // -----------------
   // Extract
   // -----------------
-  accountTypes() {
-    return new Set(this.idl.accounts?.map((x) => x.name) ?? [])
+  accountFilesByType() {
+    assert(this.paths != null, 'should have set paths')
+    return new Map(
+      this.idl.accounts?.map((x) => [
+        x.name,
+        this.paths!.accountFile(x.name),
+      ]) ?? []
+    )
   }
 
-  customTypes() {
-    return new Set(this.idl.types?.map((x) => x.name) ?? [])
+  customFilesByType() {
+    assert(this.paths != null, 'should have set paths')
+    return new Map(
+      this.idl.types?.map((x) => [x.name, this.paths!.typeFile(x.name)]) ?? []
+    )
   }
 
   resolveFieldType = (typeName: string) => {
@@ -89,10 +98,12 @@ export class Solita {
   // Render
   // -----------------
   renderCode() {
+    assert(this.paths != null, 'should have set paths')
+
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
-    const accountTypes = this.accountTypes()
-    const customTypes = this.customTypes()
+    const accountFiles = this.accountFilesByType()
+    const customFiles = this.customFilesByType()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -120,7 +131,12 @@ export class Solita {
             logTrace('variants: %O', ty.type.variants)
           }
         }
-        let { code, isFixable } = renderType(ty, accountTypes, customTypes)
+        let { code, isFixable } = renderType(
+          ty,
+          this.paths!.typeFile(ty.name),
+          accountFiles,
+          customFiles
+        )
 
         if (isFixable) {
           fixableTypes.add(ty.name)
@@ -150,9 +166,10 @@ export class Solita {
       logTrace('accounts: %O', ix.accounts)
       let code = renderInstruction(
         ix,
+        this.paths.instructionsDir,
         programId,
-        accountTypes,
-        customTypes,
+        accountFiles,
+        customFiles,
         forceFixable
       )
       if (this.prependGeneratedWarning) {
@@ -178,8 +195,9 @@ export class Solita {
       logTrace('type: %O', account.type)
       let code = renderAccount(
         account,
-        accountTypes,
-        customTypes,
+        this.paths.accountsDir,
+        accountFiles,
+        customFiles,
         forceFixable,
         this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator

@@ -7,10 +7,11 @@ import {
   IdlField,
   IdlType,
   IdlTypeEnum,
-  LOCAL_TYPES_PACKAGE,
   SOLANA_WEB3_PACKAGE,
 } from '../src/types'
 import { SerdePackage } from '../src/serdes'
+
+const SOME_FILE_DIR = '/root/app/'
 
 // -----------------
 // Primitive Types
@@ -287,24 +288,29 @@ test('type-mapper: composite types - array<number>', (t) => {
 // Composites User Defined
 // -----------------
 test('type-mapper: composite types - user defined', (t) => {
-  const tm = new TypeMapper(new Set(), new Set(['ConfigData']))
+  const tm = new TypeMapper(
+    new Map(),
+    new Map([['ConfigData', '/module/of/config-data.ts']])
+  )
   const type = <IdlType>{
     defined: 'ConfigData',
   }
   const ty = tm.map(type)
 
-  t.equal(ty, 'definedTypes.ConfigData')
-  spok(t, Array.from(tm.serdePackagesUsed), {
-    $topic: 'serdePackagesUsed',
-    ...[LOCAL_TYPES_PACKAGE],
+  t.equal(ty, 'ConfigData')
+  t.equal(tm.serdePackagesUsed.size, 0, 'no serde packages used')
+  spok(t, Array.from(tm.localImportsByPath), {
+    $topic: 'local imports',
+    ...[['/module/of/config-data.ts', new Set(['ConfigData'])]],
   })
   tm.clearUsages()
 
   const serde = tm.mapSerde(type)
-  t.equal(serde, 'definedTypes.configDataBeet')
-  spok(t, Array.from(tm.serdePackagesUsed), {
-    $topic: 'serdePackagesUsed',
-    ...[LOCAL_TYPES_PACKAGE],
+  t.equal(serde, 'configDataBeet')
+  t.equal(tm.serdePackagesUsed.size, 0, 'no serde packages used')
+  spok(t, Array.from(tm.localImportsByPath), {
+    $topic: 'local imports',
+    ...[['/module/of/config-data.ts', new Set(['configDataBeet'])]],
   })
   t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
 
@@ -421,7 +427,10 @@ test('type-mapper: composite types multilevel - option<option<publicKey>>', (t) 
 })
 
 test('type-mapper: composite types multilevel - vec<option<ConfigData>>', (t) => {
-  const tm = new TypeMapper(new Set(), new Set(['ConfigData']))
+  const tm = new TypeMapper(
+    new Map(),
+    new Map([['ConfigData', '/module/of/config-data.ts']])
+  )
   const type = <IdlType>{
     vec: {
       option: {
@@ -430,18 +439,26 @@ test('type-mapper: composite types multilevel - vec<option<ConfigData>>', (t) =>
     },
   }
   const ty = tm.map(type)
-  t.equal(ty, 'beet.COption<definedTypes.ConfigData>[]')
+  t.equal(ty, 'beet.COption<ConfigData>[]')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
-    ...[LOCAL_TYPES_PACKAGE, BEET_PACKAGE],
+    ...[BEET_PACKAGE],
+  })
+  spok(t, Array.from(tm.localImportsByPath), {
+    $topic: 'local imports',
+    ...[['/module/of/config-data.ts', new Set(['ConfigData'])]],
   })
 
   tm.clearUsages()
   const serde = tm.mapSerde(type)
-  t.equal(serde, 'beet.array(beet.coption(definedTypes.configDataBeet))')
+  t.equal(serde, 'beet.array(beet.coption(configDataBeet))')
   spok(t, Array.from(tm.serdePackagesUsed), {
     $topic: 'serdePackagesUsed',
-    ...[LOCAL_TYPES_PACKAGE, BEET_PACKAGE],
+    ...[BEET_PACKAGE],
+  })
+  spok(t, Array.from(tm.localImportsByPath), {
+    $topic: 'local imports',
+    ...[['/module/of/config-data.ts', new Set(['configDataBeet'])]],
   })
   t.ok(tm.usedFixableSerde, 'used fixable serde')
 
@@ -476,7 +493,10 @@ test('type-mapper: serde fields', (t) => {
     },
   }
 
-  const tm = new TypeMapper(new Set(), new Set(['ConfigData']))
+  const tm = new TypeMapper(
+    new Map(),
+    new Map([['ConfigData', '/module/of/config-data.ts']])
+  )
   {
     t.comment('+++ u16 field only')
     tm.clearUsages()
@@ -528,17 +548,21 @@ test('type-mapper: serde fields', (t) => {
       },
       {
         name: 'configData',
-        type: 'definedTypes.configDataBeet',
+        type: 'configDataBeet',
       },
       {
         name: 'vecOptionConfigData',
-        type: 'beet.array(beet.coption(definedTypes.configDataBeet))',
+        type: 'beet.array(beet.coption(configDataBeet))',
       },
     ])
 
     spok(t, Array.from(tm.serdePackagesUsed), {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE, BEET_SOLANA_PACKAGE],
+    })
+    spok(t, Array.from(tm.localImportsByPath), {
+      $topic: 'local imports',
+      ...[['/module/of/config-data.ts', new Set(['configDataBeet'])]],
     })
     t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
@@ -563,7 +587,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
     for (const pack of packsUsed) {
       tm.serdePackagesUsed.add(pack)
     }
-    const imports = tm.importsForSerdePackagesUsed()
+    const imports = tm.importsUsed(SOME_FILE_DIR)
     spok(t, imports, [
       `import * as web3 from '@solana/web3.js';`,
       `import * as beet from '@metaplex-foundation/beet';`,
@@ -579,7 +603,7 @@ test('type-mapper: imports for serde packages used ', (t) => {
     for (const pack of packsUsed) {
       tm.serdePackagesUsed.add(pack)
     }
-    const imports = tm.importsForSerdePackagesUsed()
+    const imports = tm.importsUsed(SOME_FILE_DIR)
     spok(t, imports, [`import * as beet from '@metaplex-foundation/beet';`])
   }
   t.end()

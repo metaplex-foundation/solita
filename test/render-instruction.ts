@@ -16,6 +16,7 @@ import {
 const PROGRAM_ID = 'testprogram'
 
 const DIAGNOSTIC_ON = false
+const INSTRUCTION_FILE_DIR = '/root/app/instructions/'
 
 async function checkRenderedIx(
   t: Test,
@@ -28,9 +29,10 @@ async function checkRenderedIx(
 ) {
   const ts = renderInstruction(
     ix,
+    INSTRUCTION_FILE_DIR,
     PROGRAM_ID,
-    new Set(),
-    new Set(),
+    new Map(),
+    new Map(),
     FORCE_FIXABLE_NEVER
   )
   verifySyntacticCorrectness(t, ts)
