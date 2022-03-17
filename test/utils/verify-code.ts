@@ -141,14 +141,20 @@ export async function verifySyntacticCorrectnessForGeneratedDir(
   t: Test,
   fullDirPath: string
 ) {
+  const rootName = path.dirname(fullDirPath).split(path.sep).pop()
   const files = await recursiveReaddir(fullDirPath)
   for (const file of files) {
-    t.comment(`+++ Syntactically checking ${path.relative(fullDirPath, file)}`)
+    t.comment(
+      `+++ Syntactically checking ${path.relative(
+        fullDirPath,
+        file
+      )} inside ${rootName}`
+    )
     const ts = await fs.readFile(file, 'utf8')
     await verifySyntacticCorrectness(t, ts)
   }
 }
-export async function verifyTopLevelScriptF(
+export async function verifyTopLevelScript(
   t: Test,
   file: string,
   relFile: string
@@ -167,12 +173,13 @@ export async function verifyTopLevelScriptForGeneratedDir(
   indexFilesOnly = true
 ) {
   let files = await recursiveReaddir(fullDirPath)
+  const rootName = path.dirname(fullDirPath).split(path.sep).pop()
   if (indexFilesOnly) {
     files = files.filter((x) => x.endsWith('index.ts'))
   }
   for (const file of files) {
     const relFile = path.relative(fullDirPath, file)
-    t.comment(`+++ Running ${relFile}`)
-    await verifyTopLevelScriptF(t, file, relFile)
+    t.comment(`+++ Running ${relFile} inside ${rootName}`)
+    await verifyTopLevelScript(t, file, relFile)
   }
 }
