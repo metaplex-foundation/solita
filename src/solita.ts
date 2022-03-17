@@ -133,7 +133,7 @@ export class Solita {
         }
         let { code, isFixable } = renderType(
           ty,
-          this.paths!.typeFile(ty.name),
+          this.paths!.typesDir,
           accountFiles,
           customFiles
         )

@@ -303,7 +303,7 @@ export class TypeMapper {
   importsUsed(fileDir: PathLike, forcePackages?: Set<SerdePackage>) {
     return [
       ...this._importsForSerdePackages(forcePackages),
-      ...this._importsForLocalPackages(fileDir),
+      ...this._importsForLocalPackages(fileDir.toString()),
     ]
   }
 
@@ -323,10 +323,13 @@ export class TypeMapper {
     return imports
   }
 
-  private _importsForLocalPackages(filePath: PathLike) {
+  private _importsForLocalPackages(fileDir: string) {
     const renderedImports: string[] = []
     for (const [originPath, imports] of this.localImportsByPath) {
-      const relPath = path.relative(filePath.toString(), originPath)
+      let relPath = path.relative(fileDir, originPath)
+      if (!relPath.startsWith('.')) {
+        relPath = `./${relPath}`
+      }
       const importPath = withoutTsExtension(relPath)
       renderedImports.push(
         `import { ${Array.from(imports).join(', ')} }  from '${importPath}';`
