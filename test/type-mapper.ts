@@ -25,6 +25,7 @@ test('type-mapper: primitive types - numbers', (t) => {
     t.equal(ty, 'number', `'${n}' maps to '${ty}' TypeScript type`)
   }
   t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
 
   tm.clearUsages()
   for (const n of types) {
@@ -36,6 +37,7 @@ test('type-mapper: primitive types - numbers', (t) => {
     ...[BEET_PACKAGE],
   })
   t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
   t.end()
 })
 
@@ -52,6 +54,7 @@ test('type-mapper: primitive types - bignums', (t) => {
     ...[BEET_PACKAGE],
   })
   t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
 
   tm.clearUsages()
   for (const n of types) {
@@ -72,6 +75,7 @@ test('type-mapper: primitive types - string', (t) => {
   const ty = tm.map('string')
   t.equal(ty, 'string', 'string type')
   t.equal(tm.serdePackagesUsed.size, 0, 'no serdePackagesUsed')
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
 
   tm.clearUsages()
   const serde = tm.mapSerde('string')
@@ -133,6 +137,7 @@ test('type-mapper: enums scalar', (t) => {
       $topic: 'scalarEnumsUsed',
       ...[['MembershipModel', ['Wallet', 'Token', 'NFT']]],
     })
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
 
     tm.clearUsages()
     const serde = tm.mapSerde(enumType, 'MembershipModel')
@@ -145,6 +150,7 @@ test('type-mapper: enums scalar', (t) => {
       $topic: 'scalarEnumsUsed',
       ...[['MembershipModel', ['Wallet', 'Token', 'NFT']]],
     })
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
   }
   t.end()
 })
@@ -175,6 +181,7 @@ test('type-mapper: composite types - option<number | bignum>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
     t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
@@ -199,6 +206,7 @@ test('type-mapper: composite types - option<number | bignum>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
     t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
@@ -226,6 +234,7 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
     t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
 
@@ -249,6 +258,7 @@ test('type-mapper: composite types - vec<number | bignum>', (t) => {
       $topic: 'serdePackagesUsed',
       ...[BEET_PACKAGE],
     })
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
     t.ok(tm.usedFixableSerde, 'used fixable serde')
   }
   t.end()
@@ -370,6 +380,7 @@ test('type-mapper: composite with type extensions - publicKey', (t) => {
     $topic: 'serdePackagesUsed',
     ...[BEET_SOLANA_PACKAGE, BEET_PACKAGE],
   })
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
   t.ok(tm.usedFixableSerde, 'used fixable serde')
 
   t.end()
@@ -396,6 +407,7 @@ test('type-mapper: composite types multilevel - option<option<number>>', (t) => 
     $topic: 'serdePackagesUsed',
     ...[BEET_PACKAGE],
   })
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
   t.ok(tm.usedFixableSerde, 'used fixable serde')
   t.end()
 })
@@ -421,6 +433,7 @@ test('type-mapper: composite types multilevel - option<option<publicKey>>', (t) 
     $topic: 'serdePackagesUsed',
     ...[BEET_SOLANA_PACKAGE, BEET_PACKAGE],
   })
+  t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
   t.ok(tm.usedFixableSerde, 'used fixable serde')
 
   t.end()
