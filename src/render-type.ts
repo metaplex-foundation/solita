@@ -1,4 +1,4 @@
-import { TypeMapper } from './type-mapper'
+import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
   IdlDefinedTypeDefinition,
@@ -91,8 +91,7 @@ class TypeRenderer {
     })
   }
 
-  render() {
-    this.typeMapper.clearUsages()
+  private renderDataStructs() {
     const kind = this.ty.type.kind
     assert(
       kind === 'struct' || kind === 'enum',
@@ -100,6 +99,23 @@ class TypeRenderer {
     )
     const typeScriptType = this.renderTypeScriptType()
     const dataStruct = this.renderDataStructOrEnum()
+    return { typeScriptType, dataStruct }
+  }
+
+  /**
+   * Performs parts of the render process that is necessary to determine if the
+   * type is fixed or fixable.
+   */
+  determineIsFixable() {
+    this.typeMapper.clearUsages()
+    this.renderDataStructs()
+    return this.typeMapper.usedFixableSerde
+  }
+
+  render() {
+    this.typeMapper.clearUsages()
+    const { typeScriptType, dataStruct } = this.renderDataStructs()
+
     const imports = this.renderImports()
     return `
 ${imports}
@@ -114,13 +130,33 @@ export ${dataStruct}
   }
 }
 
-export function renderType(
+/**
+ * Performs parts of the render process that is necessary to determine if the
+ * type is fixed or fixable.
+ */
+export function determineTypeIsFixable(
   ty: IdlDefinedTypeDefinition,
   fullFileDir: PathLike,
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>
 ) {
   const typeMapper = new TypeMapper(accountFilesByType, customFilesByType)
+  const renderer = new TypeRenderer(ty, fullFileDir, typeMapper)
+  return renderer.determineIsFixable()
+}
+
+export function renderType(
+  ty: IdlDefinedTypeDefinition,
+  fullFileDir: PathLike,
+  accountFilesByType: Map<string, string>,
+  customFilesByType: Map<string, string>,
+  forceFixable: ForceFixable
+) {
+  const typeMapper = new TypeMapper(
+    accountFilesByType,
+    customFilesByType,
+    forceFixable
+  )
   const renderer = new TypeRenderer(ty, fullFileDir, typeMapper)
   const code = renderer.render()
   const isFixable = renderer.typeMapper.usedFixableSerde
