@@ -13,12 +13,10 @@ import {
   isIdlTypeEnum,
   isIdlTypeOption,
   isIdlTypeVec,
-  LOCAL_ACCOUNTS_PACKAGE,
-  LOCAL_TYPES_PACKAGE,
   PrimaryTypeMap,
   TypeMappedSerdeField,
 } from './types'
-import { logDebug } from './utils'
+import { getOrCreate, logDebug, withoutTsExtension } from './utils'
 import { strict as assert } from 'assert'
 import {
   BeetTypeMapKey,
@@ -36,6 +34,8 @@ import {
   serdePackageExportName,
 } from './serdes'
 import { beetVarNameFromTypeName } from './render-type'
+import path from 'path'
+import { PathLike } from 'fs'
 
 export function resolveSerdeAlias(ty: string) {
   switch (ty) {
@@ -52,17 +52,21 @@ export const FORCE_FIXABLE_NEVER: ForceFixable = () => false
 const NO_NAME_PROVIDED = '<no name provided>'
 export class TypeMapper {
   readonly serdePackagesUsed: Set<SerdePackage> = new Set()
+  readonly localImportsByPath: Map<string, Set<string>> = new Map()
   readonly scalarEnumsUsed: Map<string, string[]> = new Map()
   usedFixableSerde: boolean = false
   constructor(
-    private readonly accountTypes: Set<string> = new Set(),
-    private readonly customTypes: Set<string> = new Set(),
+    /** Account types mapped { typeName: fullPath } */
+    private readonly accountTypesPaths: Map<string, string> = new Map(),
+    /** Custom types mapped { typeName: fullPath } */
+    private readonly customTypesPaths: Map<string, string> = new Map(),
     private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
 
   clearUsages() {
     this.serdePackagesUsed.clear()
+    this.localImportsByPath.clear()
     this.usedFixableSerde = false
     this.scalarEnumsUsed.clear()
   }
@@ -126,10 +130,10 @@ export class TypeMapper {
   }
 
   private mapDefinedType(ty: IdlTypeDefined) {
-    const definedTypePackage: SerdePackage = this.definedTypesPackage(ty)
-    this.serdePackagesUsed.add(definedTypePackage)
-    const exp = serdePackageExportName(definedTypePackage)
-    return `${exp}.${ty.defined}`
+    const fullFileDir = this.definedTypesImport(ty)
+    const imports = getOrCreate(this.localImportsByPath, fullFileDir, new Set())
+    imports.add(ty.defined)
+    return ty.defined
   }
 
   private mapEnumType(ty: IdlTypeEnum, name: string) {
@@ -233,11 +237,11 @@ export class TypeMapper {
   }
 
   private mapDefinedSerde(ty: IdlTypeDefined) {
-    const definedTypePackage: SerdePackage = this.definedTypesPackage(ty)
-    this.serdePackagesUsed.add(definedTypePackage)
-    const exp = serdePackageExportName(definedTypePackage)
+    const fullFileDir = this.definedTypesImport(ty)
+    const imports = getOrCreate(this.localImportsByPath, fullFileDir, new Set())
     const varName = beetVarNameFromTypeName(ty.defined)
-    return `${exp}.${varName}`
+    imports.add(varName)
+    return varName
   }
 
   private mapEnumSerde(ty: IdlTypeEnum, name: string) {
@@ -296,8 +300,14 @@ export class TypeMapper {
   // -----------------
   // Imports Generator
   // -----------------
-  importsForSerdePackagesUsed(forcePackages?: Set<SerdePackage>) {
-    const imports = []
+  importsUsed(fileDir: PathLike, forcePackages?: Set<SerdePackage>) {
+    return [
+      ...this._importsForSerdePackages(forcePackages),
+      ...this._importsForLocalPackages(fileDir.toString()),
+    ]
+  }
+
+  private _importsForSerdePackages(forcePackages?: Set<SerdePackage>) {
     const packagesToInclude =
       forcePackages == null
         ? this.serdePackagesUsed
@@ -305,11 +315,27 @@ export class TypeMapper {
             ...Array.from(this.serdePackagesUsed),
             ...Array.from(forcePackages),
           ])
+    const imports = []
     for (const pack of packagesToInclude) {
       const exp = serdePackageExportName(pack)
       imports.push(`import * as ${exp} from '${pack}';`)
     }
     return imports
+  }
+
+  private _importsForLocalPackages(fileDir: string) {
+    const renderedImports: string[] = []
+    for (const [originPath, imports] of this.localImportsByPath) {
+      let relPath = path.relative(fileDir, originPath)
+      if (!relPath.startsWith('.')) {
+        relPath = `./${relPath}`
+      }
+      const importPath = withoutTsExtension(relPath)
+      renderedImports.push(
+        `import { ${Array.from(imports).join(', ')} }  from '${importPath}';`
+      )
+    }
+    return renderedImports
   }
 
   assertBeetSupported(
@@ -321,16 +347,13 @@ export class TypeMapper {
       `Types to ${context} need to be supported by Beet, ${serde} is not`
     )
   }
-
-  private definedTypesPackage(ty: IdlTypeDefined) {
-    if (this.accountTypes.has(ty.defined)) {
-      return LOCAL_ACCOUNTS_PACKAGE
-    }
-    if (this.customTypes.has(ty.defined)) {
-      return LOCAL_TYPES_PACKAGE
-    }
-    assert.fail(
-      `Unknown type ${ty.defined} is neither found in types nor an Account`
+  private definedTypesImport(ty: IdlTypeDefined) {
+    return (
+      this.accountTypesPaths.get(ty.defined) ??
+      this.customTypesPaths.get(ty.defined) ??
+      assert.fail(
+        `Unknown type ${ty.defined} is neither found in types nor an Account`
+      )
     )
   }
 

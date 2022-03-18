@@ -20,6 +20,7 @@ import {
 import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import { renderScalarEnums } from './render-enums'
 import { InstructionDiscriminator } from './instruction-discriminator'
+import { PathLike } from 'fs'
 
 type ProcessedAccountKey = IdlInstructionAccount & {
   knownPubkey?: ResolvedKnownPubkey
@@ -36,6 +37,7 @@ class InstructionRenderer {
 
   constructor(
     readonly ix: IdlInstruction,
+    readonly fullFileDir: PathLike,
     readonly programId: string,
     private readonly typeMapper: TypeMapper
   ) {
@@ -88,7 +90,8 @@ export type ${this.argsTypename} = {
   // Imports
   // -----------------
   private renderImports(processedKeys: ProcessedAccountKey[]) {
-    const typeMapperImports = this.typeMapper.importsForSerdePackagesUsed(
+    const typeMapperImports = this.typeMapper.importsUsed(
+      this.fullFileDir.toString(),
       new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
     )
     const needsSplToken = processedKeys.some(
@@ -278,12 +281,22 @@ export function create${this.upperCamelIxName}Instruction(
 
 export function renderInstruction(
   ix: IdlInstruction,
+  fullFileDir: PathLike,
   programId: string,
-  accountTypes: Set<string>,
-  customTypes: Set<string>,
+  accountFilesByType: Map<string, string>,
+  customFilesByType: Map<string, string>,
   forceFixable: ForceFixable
 ) {
-  const typeMapper = new TypeMapper(accountTypes, customTypes, forceFixable)
-  const renderer = new InstructionRenderer(ix, programId, typeMapper)
+  const typeMapper = new TypeMapper(
+    accountFilesByType,
+    customFilesByType,
+    forceFixable
+  )
+  const renderer = new InstructionRenderer(
+    ix,
+    fullFileDir,
+    programId,
+    typeMapper
+  )
   return renderer.render()
 }

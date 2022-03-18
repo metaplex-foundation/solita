@@ -16,6 +16,8 @@ import {
 
 const DIAGNOSTIC_ON = false
 
+const ACCOUNT_FILE_DIR = '/root/app/accounts/'
+
 async function checkRenderedAccount(
   t: Test,
   account: IdlAccount,
@@ -27,8 +29,9 @@ async function checkRenderedAccount(
 ) {
   const ts = renderAccount(
     account,
-    new Set(),
-    new Set(),
+    ACCOUNT_FILE_DIR,
+    new Map(),
+    new Map(),
     FORCE_FIXABLE_NEVER,
     (_: string) => null,
     true

@@ -1,11 +1,7 @@
 import test, { Test } from 'tape'
 import { renderType } from '../src/render-type'
 import { SerdePackage } from '../src/serdes'
-import {
-  BEET_PACKAGE,
-  IdlDefinedTypeDefinition,
-  LOCAL_TYPES_PACKAGE,
-} from '../src/types'
+import { BEET_PACKAGE, IdlDefinedTypeDefinition } from '../src/types'
 import {
   analyzeCode,
   verifyImports,
@@ -13,6 +9,7 @@ import {
 } from './utils/verify-code'
 
 const DIAGNOSTIC_ON = false
+const TYPE_FILE_DIR = '/root/app/instructions/'
 
 async function checkRenderedType(
   t: Test,
@@ -23,7 +20,12 @@ async function checkRenderedType(
     logCode: boolean
   } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
 ) {
-  const ts = renderType(ty, new Set(), new Set(['Creator']))
+  const ts = renderType(
+    ty,
+    TYPE_FILE_DIR,
+    new Map(),
+    new Map([['Creator', '/module/of/creator.ts']])
+  )
   verifySyntacticCorrectness(t, ts.code)
 
   const analyzed = await analyzeCode(ts.code)
@@ -111,6 +113,6 @@ test('types: with four fields, one referring to other defined type', async (t) =
     },
   }
 
-  await checkRenderedType(t, ty, [BEET_PACKAGE, LOCAL_TYPES_PACKAGE])
+  await checkRenderedType(t, ty, [BEET_PACKAGE])
   t.end()
 })

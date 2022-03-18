@@ -4,6 +4,7 @@ import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
 import { renderType } from './render-type'
+import { strict as assert } from 'assert'
 import {
   Idl,
   IdlType,
@@ -21,6 +22,7 @@ import {
   prependGeneratedWarning,
 } from './utils'
 import { format, Options } from 'prettier'
+import { Paths } from './paths'
 
 export * from './types'
 
@@ -44,6 +46,7 @@ export class Solita {
   private readonly formatOpts: Options
   private readonly accountsHaveImplicitDiscriminator: boolean
   private readonly prependGeneratedWarning: boolean
+  private paths: Paths | undefined
   constructor(
     private readonly idl: Idl,
     {
@@ -65,12 +68,21 @@ export class Solita {
   // -----------------
   // Extract
   // -----------------
-  accountTypes() {
-    return new Set(this.idl.accounts?.map((x) => x.name) ?? [])
+  accountFilesByType() {
+    assert(this.paths != null, 'should have set paths')
+    return new Map(
+      this.idl.accounts?.map((x) => [
+        x.name,
+        this.paths!.accountFile(x.name),
+      ]) ?? []
+    )
   }
 
-  customTypes() {
-    return new Set(this.idl.types?.map((x) => x.name) ?? [])
+  customFilesByType() {
+    assert(this.paths != null, 'should have set paths')
+    return new Map(
+      this.idl.types?.map((x) => [x.name, this.paths!.typeFile(x.name)]) ?? []
+    )
   }
 
   resolveFieldType = (typeName: string) => {
@@ -86,10 +98,12 @@ export class Solita {
   // Render
   // -----------------
   renderCode() {
+    assert(this.paths != null, 'should have set paths')
+
     const programId = this.idl.metadata.address
     const fixableTypes: Set<string> = new Set()
-    const accountTypes = this.accountTypes()
-    const customTypes = this.customTypes()
+    const accountFiles = this.accountFilesByType()
+    const customFiles = this.customFilesByType()
 
     function forceFixable(ty: IdlType) {
       if (isIdlTypeDefined(ty) && fixableTypes.has(ty.defined)) {
@@ -117,7 +131,12 @@ export class Solita {
             logTrace('variants: %O', ty.type.variants)
           }
         }
-        let { code, isFixable } = renderType(ty, accountTypes, customTypes)
+        let { code, isFixable } = renderType(
+          ty,
+          this.paths!.typesDir,
+          accountFiles,
+          customFiles
+        )
 
         if (isFixable) {
           fixableTypes.add(ty.name)
@@ -147,9 +166,10 @@ export class Solita {
       logTrace('accounts: %O', ix.accounts)
       let code = renderInstruction(
         ix,
+        this.paths.instructionsDir,
         programId,
-        accountTypes,
-        customTypes,
+        accountFiles,
+        customFiles,
         forceFixable
       )
       if (this.prependGeneratedWarning) {
@@ -175,8 +195,9 @@ export class Solita {
       logTrace('type: %O', account.type)
       let code = renderAccount(
         account,
-        accountTypes,
-        customTypes,
+        this.paths.accountsDir,
+        accountFiles,
+        customFiles,
         forceFixable,
         this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator
@@ -217,78 +238,72 @@ export class Solita {
   }
 
   async renderAndWriteTo(outputDir: PathLike) {
+    this.paths = new Paths(outputDir)
     const { instructions, accounts, types, errors } = this.renderCode()
     const reexports = ['instructions']
-    await this.writeInstructions(outputDir, instructions)
+    await this.writeInstructions(instructions)
 
     if (Object.keys(accounts).length !== 0) {
       reexports.push('accounts')
-      await this.writeAccounts(outputDir, accounts)
+      await this.writeAccounts(accounts)
     }
     if (Object.keys(types).length !== 0) {
       reexports.push('types')
-      await this.writeTypes(outputDir, types)
+      await this.writeTypes(types)
     }
     if (errors != null) {
       reexports.push('errors')
-      await this.writeErrors(outputDir, errors)
+      await this.writeErrors(errors)
     }
 
-    await this.writeMainIndex(outputDir, reexports)
+    await this.writeMainIndex(reexports)
   }
 
   // -----------------
   // Instructions
   // -----------------
-  private async writeInstructions(
-    outputDir: PathLike,
-    instructions: Record<string, string>
-  ) {
-    const instructionsDir = path.join(outputDir.toString(), 'instructions')
-    await prepareTargetDir(instructionsDir)
-    logInfo('Writing instructions to directory: %s', instructionsDir)
+  private async writeInstructions(instructions: Record<string, string>) {
+    assert(this.paths != null, 'should have set paths')
+
+    await prepareTargetDir(this.paths.instructionsDir)
+    logInfo('Writing instructions to directory: %s', this.paths.instructionsDir)
     for (const [name, code] of Object.entries(instructions)) {
       logDebug('Writing instruction: %s', name)
-      await fs.writeFile(path.join(instructionsDir, `${name}.ts`), code, 'utf8')
+      await fs.writeFile(this.paths.instructionFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all instructions')
     const indexCode = renderImportIndex(Object.keys(instructions).sort())
-    await fs.writeFile(
-      path.join(instructionsDir, `index.ts`),
-      indexCode,
-      'utf8'
-    )
+    await fs.writeFile(this.paths.instructionFile('index'), indexCode, 'utf8')
   }
 
   // -----------------
   // Accounts
   // -----------------
-  private async writeAccounts(
-    outputDir: PathLike,
-    accounts: Record<string, string>
-  ) {
-    const accountsDir = path.join(outputDir.toString(), 'accounts')
-    await prepareTargetDir(accountsDir)
-    logInfo('Writing accounts to directory: %s', accountsDir)
+  private async writeAccounts(accounts: Record<string, string>) {
+    assert(this.paths != null, 'should have set paths')
+
+    await prepareTargetDir(this.paths.accountsDir)
+    logInfo('Writing accounts to directory: %s', this.paths.accountsDir)
     for (const [name, code] of Object.entries(accounts)) {
       logDebug('Writing account: %s', name)
-      await fs.writeFile(path.join(accountsDir, `${name}.ts`), code, 'utf8')
+      await fs.writeFile(this.paths.accountFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all accounts')
     const indexCode = renderImportIndex(Object.keys(accounts).sort())
-    await fs.writeFile(path.join(accountsDir, `index.ts`), indexCode, 'utf8')
+    await fs.writeFile(this.paths.accountFile('index'), indexCode, 'utf8')
   }
 
   // -----------------
   // Types
   // -----------------
-  private async writeTypes(outputDir: PathLike, types: Record<string, string>) {
-    const typesDir = path.join(outputDir.toString(), 'types')
-    await prepareTargetDir(typesDir)
-    logInfo('Writing types to directory: %s', typesDir)
+  private async writeTypes(types: Record<string, string>) {
+    assert(this.paths != null, 'should have set paths')
+
+    await prepareTargetDir(this.paths.typesDir)
+    logInfo('Writing types to directory: %s', this.paths.typesDir)
     for (const [name, code] of Object.entries(types)) {
       logDebug('Writing type: %s', name)
-      await fs.writeFile(path.join(typesDir, `${name}.ts`), code, 'utf8')
+      await fs.writeFile(this.paths.typeFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all types')
     const reexports = Object.keys(types)
@@ -296,25 +311,28 @@ export class Solita {
     // it would break if we have an account used that way, but no types
     // If that occurs we need to generate the `types/index.ts` just reexporting accounts
     const indexCode = renderImportIndex(reexports.sort())
-    await fs.writeFile(path.join(typesDir, `index.ts`), indexCode, 'utf8')
+    await fs.writeFile(this.paths.typeFile('index'), indexCode, 'utf8')
   }
 
   // -----------------
   // Errors
   // -----------------
-  private async writeErrors(outputDir: PathLike, errorsCode: string) {
-    const errorsDir = path.join(outputDir.toString(), 'errors')
-    await prepareTargetDir(errorsDir)
-    logInfo('Writing errors to directory: %s', errorsDir)
+  private async writeErrors(errorsCode: string) {
+    assert(this.paths != null, 'should have set paths')
+
+    await prepareTargetDir(this.paths.errorsDir)
+    logInfo('Writing errors to directory: %s', this.paths.errorsDir)
     logDebug('Writing index.ts containing all errors')
-    await fs.writeFile(path.join(errorsDir, `index.ts`), errorsCode, 'utf8')
+    await fs.writeFile(this.paths.errorFile('index'), errorsCode, 'utf8')
   }
 
   // -----------------
   // Main Index File
   // -----------------
 
-  async writeMainIndex(outputDir: PathLike, reexports: string[]) {
+  async writeMainIndex(reexports: string[]) {
+    assert(this.paths != null, 'should have set paths')
+
     const programAddress = this.idl.metadata.address
     const reexportCode = renderImportIndex(reexports.sort())
     const imports = `import { PublicKey } from '${SOLANA_WEB3_PACKAGE}'`
@@ -350,10 +368,6 @@ ${programIdConsts}
       }
     }
 
-    await fs.writeFile(
-      path.join(outputDir.toString(), `index.ts`),
-      code,
-      'utf8'
-    )
+    await fs.writeFile(path.join(this.paths.root, `index.ts`), code, 'utf8')
   }
 }

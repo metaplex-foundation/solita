@@ -8,6 +8,7 @@ import {
 import { strict as assert } from 'assert'
 import { renderTypeDataStruct, serdePackageExportName } from './serdes'
 import { renderScalarEnum } from './render-enums'
+import { PathLike } from 'fs'
 
 export function beetVarNameFromTypeName(ty: string) {
   const camelTyName = ty.charAt(0).toLowerCase().concat(ty.slice(1))
@@ -20,6 +21,7 @@ class TypeRenderer {
   readonly beetArgName: string
   constructor(
     readonly ty: IdlDefinedTypeDefinition,
+    readonly fullFileDir: PathLike,
     readonly typeMapper = new TypeMapper()
   ) {
     this.upperCamelTyName = ty.name
@@ -62,7 +64,7 @@ class TypeRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const imports = this.typeMapper.importsForSerdePackagesUsed()
+    const imports = this.typeMapper.importsUsed(this.fullFileDir)
     return imports.join('\n')
   }
 
@@ -114,11 +116,12 @@ export ${dataStruct}
 
 export function renderType(
   ty: IdlDefinedTypeDefinition,
-  accountTypes: Set<string>,
-  customTypes: Set<string>
+  fullFileDir: PathLike,
+  accountFilesByType: Map<string, string>,
+  customFilesByType: Map<string, string>
 ) {
-  const typeMapper = new TypeMapper(accountTypes, customTypes)
-  const renderer = new TypeRenderer(ty, typeMapper)
+  const typeMapper = new TypeMapper(accountFilesByType, customFilesByType)
+  const renderer = new TypeRenderer(ty, fullFileDir, typeMapper)
   const code = renderer.render()
   const isFixable = renderer.typeMapper.usedFixableSerde
   return { code, isFixable }
