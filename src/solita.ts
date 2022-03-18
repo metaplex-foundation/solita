@@ -3,7 +3,7 @@ import path from 'path'
 import { renderAccount } from './render-account'
 import { renderErrors } from './render-errors'
 import { renderInstruction } from './render-instruction'
-import { renderType } from './render-type'
+import { determineTypeIsFixable, renderType } from './render-type'
 import { strict as assert } from 'assert'
 import {
   Idl,
@@ -114,6 +114,7 @@ export class Solita {
 
     // NOTE: we render types first in order to know which ones are 'fixable' by
     // the time we render accounts and instructions
+    // However since types may depend on other types we obtain this info in 2 passes.
 
     // -----------------
     // Types
@@ -121,6 +122,21 @@ export class Solita {
     const types: Record<string, string> = {}
     logDebug('Rendering %d types', this.idl.types?.length ?? 0)
     if (this.idl.types != null) {
+      for (const ty of this.idl.types) {
+        // Here we detect if the type itself is fixable solely based on its
+        // primitive field types
+        let isFixable = determineTypeIsFixable(
+          ty,
+          this.paths.typesDir,
+          accountFiles,
+          customFiles
+        )
+
+        if (isFixable) {
+          fixableTypes.add(ty.name)
+        }
+      }
+
       for (const ty of this.idl.types) {
         logDebug(`Rendering type ${ty.name}`)
         logTrace('kind: %s', ty.type.kind)
@@ -135,12 +151,15 @@ export class Solita {
           ty,
           this.paths!.typesDir,
           accountFiles,
-          customFiles
+          customFiles,
+          forceFixable
         )
-
+        // If the type by itself does not need to be fixable, here we detect if
+        // it needs to be fixable due to including a fixable type
         if (isFixable) {
           fixableTypes.add(ty.name)
         }
+
         if (this.prependGeneratedWarning) {
           code = prependGeneratedWarning(code)
         }

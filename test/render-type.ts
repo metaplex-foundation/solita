@@ -1,6 +1,7 @@
 import test, { Test } from 'tape'
 import { renderType } from '../src/render-type'
 import { SerdePackage } from '../src/serdes'
+import { FORCE_FIXABLE_NEVER } from '../src/type-mapper'
 import { BEET_PACKAGE, IdlDefinedTypeDefinition } from '../src/types'
 import {
   analyzeCode,
@@ -24,7 +25,8 @@ async function checkRenderedType(
     ty,
     TYPE_FILE_DIR,
     new Map(),
-    new Map([['Creator', '/module/of/creator.ts']])
+    new Map([['Creator', '/module/of/creator.ts']]),
+    FORCE_FIXABLE_NEVER
   )
   verifySyntacticCorrectness(t, ts.code)
 
