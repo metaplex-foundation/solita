@@ -9,6 +9,7 @@ import {
   SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
 } from './types'
+import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
 import {
@@ -24,6 +25,7 @@ import { PathLike } from 'fs'
 
 type ProcessedAccountKey = IdlInstructionAccount & {
   knownPubkey?: ResolvedKnownPubkey
+  optional: boolean
 }
 
 class InstructionRenderer {
@@ -112,12 +114,25 @@ ${typeMapperImports.join('\n')}`.trim()
   private processIxAccounts(): ProcessedAccountKey[] {
     return this.ix.accounts.map((acc) => {
       const knownPubkey = resolveKnownPubkey(acc.name)
-      return knownPubkey == null ? acc : { ...acc, knownPubkey }
+      const optional = acc.optional ?? false
+      return knownPubkey == null
+        ? { ...acc, optional }
+        : { ...acc, knownPubkey, optional }
     })
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
-    const keys = processedKeys
+    const requireds = processedKeys.filter((x) => !x.optional)
+    const optionals = processedKeys.filter((x, idx) => {
+      if (!x.optional) return false
+      assert(
+        idx >= requireds.length,
+        `All optional accounts need to follow required accounts, ${x.name} is not`
+      )
+      return true
+    })
+
+    const requiredKeys = requireds
       .map(({ name, isMut, isSigner, knownPubkey }) => {
         const access =
           knownPubkey == null ? name : renderKnownPubkeyAccess(knownPubkey)
@@ -128,14 +143,50 @@ ${typeMapperImports.join('\n')}`.trim()
     }`
       })
       .join(',\n    ')
-    return `[\n    ${keys}\n  ]\n`
+
+    const optionalKeys =
+      optionals.length > 0
+        ? optionals
+            .map(({ name, isMut, isSigner, knownPubkey }, idx) => {
+              const access =
+                knownPubkey == null
+                  ? name
+                  : renderKnownPubkeyAccess(knownPubkey)
+              const requiredOptionals = optionals.slice(0, idx)
+              const requiredChecks = requiredOptionals
+                .map((x) => `${x.name} == null`)
+                .join(' || ')
+              const checkRequireds =
+                requiredChecks.length > 0
+                  ? `if (${requiredChecks}) { throw new Error('When providing \\'${name}\\' then ` +
+                    `${requiredOptionals
+                      .map((x) => `\\'${x.name}\\'`)
+                      .join(', ')} need(s) to be provided as well.') }`
+                  : ''
+              return `
+  if (${name} != null) {
+    ${checkRequireds}
+    keys.push({
+      pubkey: ${access},
+      isWritable: ${isMut.toString()},
+      isSigner: ${isSigner.toString()},
+    })
+  }`
+            })
+            .join('\n') + '\n'
+        : ''
+
+    return `[\n    ${requiredKeys}\n  ]\n${optionalKeys}\n`
   }
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = processedKeys
       .filter((x) => x.knownPubkey == null)
-      .map((x) => `${x.name}: ${web3}.PublicKey`)
+      .map((x) => {
+        const optional = x.optional ? '?' : ''
+        return `${x.name}${optional}: ${web3}.PublicKey`
+      })
       .join('\n  ')
 
     const propertyComments = processedKeys
@@ -147,7 +198,11 @@ ${typeMapperImports.join('\n')}`.trim()
         if (x.isMut) attrs.push('_writable_')
         if (x.isSigner) attrs.push('**signer**')
 
-        return ` * @property [${attrs.join(', ')}] ${x.name} ${x.desc}`
+        const optional = x.optional ? ' (optional) ' : ' '
+        return (
+          ` * @property [${attrs.join(', ')}] ` +
+          `${x.name}${optional}${x.desc}`
+        )
       })
 
     const properties =

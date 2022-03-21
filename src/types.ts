@@ -25,6 +25,8 @@ export type IdlInstructionAccount = {
   name: string
   isMut: boolean
   isSigner: boolean
+  desc?: string
+  optional?: boolean
 }
 
 export type IdlType =
