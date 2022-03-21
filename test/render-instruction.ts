@@ -23,10 +23,12 @@ async function checkRenderedIx(
   ix: IdlInstruction,
   imports: SerdePackage[],
   opts: {
-    logImports: boolean
-    logCode: boolean
-  } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
+    logImports?: boolean
+    logCode?: boolean
+    rxs?: RegExp[]
+  } = {}
 ) {
+  const { logImports = DIAGNOSTIC_ON, logCode = DIAGNOSTIC_ON } = opts
   const ts = renderInstruction(
     ix,
     INSTRUCTION_FILE_DIR,
@@ -38,12 +40,17 @@ async function checkRenderedIx(
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)
-  if (opts.logCode) {
+  if (logCode) {
     console.log(
       `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`
     )
   }
-  verifyImports(t, analyzed, imports, { logImports: opts.logImports })
+  verifyImports(t, analyzed, imports, { logImports })
+  if (opts.rxs != null) {
+    for (const rx of opts.rxs) {
+      t.match(ts, rx)
+    }
+  }
 }
 
 test('ix: empty args', async (t) => {
@@ -155,5 +162,49 @@ test('ix: two accounts and two args', async (t) => {
     BEET_SOLANA_PACKAGE,
     SOLANA_WEB3_PACKAGE,
   ])
+  t.end()
+})
+
+test.only('ix: three accounts, two optional', async (t) => {
+  const ix = <IdlInstruction>{
+    name: 'choicy',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'useAuthorityRecord',
+        isMut: true,
+        isSigner: false,
+        desc: 'Use Authority Record PDA If present the program Assumes a delegated use authority',
+        optional: true,
+      },
+      {
+        name: 'burner',
+        isMut: false,
+        isSigner: false,
+        desc: 'Program As Signer (Burner)',
+        optional: true,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      // Ensuring that the pubkeys for optional accounts aren't required
+      /authority\: web3\.PublicKey/,
+      /useAuthorityRecord\?\: web3\.PublicKey/,
+      /burner\?\: web3\.PublicKey/,
+      // Ensuring that the accounts are only added if the relevant pubkey is
+      // provided
+      /if \(useAuthorityRecord != null\)/,
+      /if \(burner != null\)/,
+      // Additionally verifying that either the first or both optional pubkeys are
+      // provided, but not only the second optional pubkey
+      /if \(useAuthorityRecord == null\).+throw new Error/,
+    ],
+  })
   t.end()
 })
