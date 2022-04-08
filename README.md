@@ -8,9 +8,9 @@
 
 - [How does it Work?](#how-does-it-work)
 - [Shank + Solita Example](#shank--solita-example)
-  - [Metaplex Program Library Token Metadata Solita + Shank Setup](#metaplex-program-library-token-metadata-solita--shank-setup)
+  - [Full Example: Token Metadata Solita + Shank Setup](#full-example-token-metadata-solita--shank-setup)
 - [Anchor + Solita Example](#anchor--solita-example)
-  - [Metaplex Program Library Token Metadata Solita + Anchor Setup](#metaplex-program-library-token-metadata-solita--anchor-setup)
+  - [Full Example: MPL Candy Machine Solita + Anchor Setup](#full-example-mpl-candy-machine-solita--anchor-setup)
 - [Solita in the Wild](#solita-in-the-wild)
 - [LICENSE](#license)
 
@@ -73,7 +73,7 @@ async function generateTypeScriptSDK() {
 }
 ```
 
-### Metaplex Program Library Token Metadata Solita + Shank Setup
+### Full Example: Token Metadata Solita + Shank Setup
 
 - [annotated instructions](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/token-metadata/program/src/instruction.rs#L80)
 - [annotated accounts](https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/state.rs#L194)
@@ -138,7 +138,7 @@ async function generateTypeScriptSDK() {
 }
 ```
 
-### Metaplex Program Library Token Metadata Solita + Anchor Setup
+### Full Example: MPL Candy Machine Solita + Anchor Setup
   
 - [annotated anchor program](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/candy-machine/program/src/lib.rs) 
 - [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/candy-machine/js/src/generated)
