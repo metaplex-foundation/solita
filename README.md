@@ -2,6 +2,20 @@
 
 **Sol** ana **I** DL **t** o **A** PI generator.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [How does it Work?](#how-does-it-work)
+- [Shank + Solita Example](#shank--solita-example)
+  - [Metaplex Program Library Token Metadata Solita + Shank Setup](#metaplex-program-library-token-metadata-solita--shank-setup)
+- [Anchor + Solita Example](#anchor--solita-example)
+  - [Metaplex Program Library Token Metadata Solita + Anchor Setup](#metaplex-program-library-token-metadata-solita--anchor-setup)
+- [Solita in the Wild](#solita-in-the-wild)
+- [LICENSE](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## How does it Work?
 
 _Solita_ generates a low level TypeScript SDK for your _Solana_ Rust programs from the [IDL](https://en.wikipedia.org/wiki/Interface_description_language) extracted by
