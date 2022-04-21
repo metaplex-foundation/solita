@@ -10,7 +10,7 @@ import json from './fixtures/auction_house-1.1.4-anchor-0.19.0.json'
 const outputDir = path.join(__dirname, 'output', 'ah-1.1.4-anchor-0.19.0')
 const generatedSDKDir = path.join(outputDir, 'generated')
 
-test('renders type correct SDK for auction house', async (t) => {
+test('renders type correct SDK for auction house 1.1.4 using anchor-0.19.0', async (t) => {
   const idl = json as Idl
   idl.metadata = {
     ...idl.metadata,

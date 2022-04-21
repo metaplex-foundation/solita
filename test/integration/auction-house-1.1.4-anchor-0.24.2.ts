@@ -5,12 +5,12 @@ import {
   verifySyntacticCorrectnessForGeneratedDir,
   verifyTopLevelScriptForGeneratedDir,
 } from '../utils/verify-code'
-import json from './fixtures/auction_house-1.1.4-anchor-0.24.0.json'
+import json from './fixtures/auction_house-1.1.4-anchor-0.24.2.json'
 
-const outputDir = path.join(__dirname, 'output', 'ah-1.1.4-anchor-0.24.0')
+const outputDir = path.join(__dirname, 'output', 'ah-1.1.4-anchor-0.24.2')
 const generatedSDKDir = path.join(outputDir, 'generated')
 
-test('renders type correct SDK for auction house', async (t) => {
+test('renders type correct SDK for auction house 1.1.4 using anchor-0.24.2', async (t) => {
   const idl = json as Idl
   idl.metadata = {
     ...idl.metadata,
