@@ -79,23 +79,21 @@
       }
     }
   ],
-  "types": [
+  "errors": [
     {
-      "name": "ErrorCode",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Unauthorized"
-          },
-          {
-            "name": "MaxCountExceeded"
-          },
-          {
-            "name": "MinCountSubceeded"
-          }
-        ]
-      }
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "You are not authorized to perform this action."
+    },
+    {
+      "code": 6001,
+      "name": "MaxCountExceeded",
+      "msg": "You cannot increment more."
+    },
+    {
+      "code": 6002,
+      "name": "MinCountSubceeded",
+      "msg": "You cannot decrement more."
     }
   ],
   "metadata": {
