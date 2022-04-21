@@ -1,9 +1,11 @@
-use anchor_lang::prelude::*;
+use anchor_lang::program;
+use anchor_lang::{declare_id, prelude::*, solana_program::entrypoint::ProgramResult};
 
 declare_id!("CwrqeMj2U8tFr1Rhkgwc84tpAsqbt9pTt2a4taoTADPr");
 
 #[program]
 mod basic_4 {
+
     use super::*;
 
     pub fn create(ctx: Context<Create>, authority: Pubkey) -> ProgramResult {
@@ -13,7 +15,7 @@ mod basic_4 {
         Ok(())
     }
 
-    pub fn increment(ctx: Context<Increment>) -> ProgramResult {
+    pub fn increment(ctx: Context<Increment>) -> Result<()> {
         let counter = &mut ctx.accounts.counter;
         if !counter.authority.eq(ctx.accounts.authority.key) {
             return Err(ErrorCode::Unauthorized.into());
@@ -25,7 +27,7 @@ mod basic_4 {
         Ok(())
     }
 
-    pub fn decrement(ctx: Context<Increment>) -> ProgramResult {
+    pub fn decrement(ctx: Context<Increment>) -> Result<()> {
         let counter = &mut ctx.accounts.counter;
         if !counter.authority.eq(ctx.accounts.authority.key) {
             return Err(ErrorCode::Unauthorized.into());
@@ -60,7 +62,7 @@ pub struct Counter {
     pub count: u64,
 }
 
-#[error]
+#[error_code]
 pub enum ErrorCode {
     #[msg("You are not authorized to perform this action.")]
     Unauthorized,
