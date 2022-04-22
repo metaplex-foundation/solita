@@ -10,8 +10,12 @@ import path from 'path'
 import { enhanceIdl } from './enhance-idl'
 import { generateTypeScriptSDK } from './gen-typescript'
 import { logError, logInfo } from '../utils'
+import { Options as PrettierOptions } from 'prettier'
 
-export function handleAnchor(config: SolitaConfigAnchor) {
+export function handleAnchor(
+  config: SolitaConfigAnchor,
+  prettierConfig?: PrettierOptions
+) {
   const { idlDir, binaryInstallDir, programDir } = config
   const spawnArgs = ['build', '--idl', idlDir]
   const spawnOpts: SpawnOptionsWithoutStdio = {
@@ -26,10 +30,13 @@ export function handleAnchor(config: SolitaConfigAnchor) {
     dryRun: false,
   }
 
-  return handle(config, rustbinConfig, spawnArgs, spawnOpts)
+  return handle(config, rustbinConfig, spawnArgs, spawnOpts, prettierConfig)
 }
 
-export function handleShank(config: SolitaConfigShank) {
+export function handleShank(
+  config: SolitaConfigShank,
+  prettierConfig?: PrettierOptions
+) {
   const { idlDir, binaryInstallDir, programDir } = config
   const spawnArgs = ['idl', '--out-dir', idlDir, '--crate-root', programDir]
   const spawnOpts: SpawnOptionsWithoutStdio = {
@@ -44,14 +51,15 @@ export function handleShank(config: SolitaConfigShank) {
     dryRun: false,
   }
 
-  return handle(config, rustbinConfig, spawnArgs, spawnOpts)
+  return handle(config, rustbinConfig, spawnArgs, spawnOpts, prettierConfig)
 }
 
 async function handle(
   config: SolitaConfig,
   rustbinConfig: RustbinConfig,
   spawnArgs: string[],
-  spawnOpts: SpawnOptionsWithoutStdio
+  spawnOpts: SpawnOptionsWithoutStdio,
+  prettierConfig?: PrettierOptions
 ) {
   const { programName, idlDir, sdkDir } = config
 
@@ -65,17 +73,20 @@ async function handle(
     )
   }
 
-  const idlGenerator = spawn(fullPathToBinary, spawnArgs, spawnOpts)
-    .on('error', (err) => {
-      logError(err)
-      process.exit(1)
-    })
-    .on('exit', async () => {
-      logInfo('IDL written to: %s', path.join(idlDir, `${programName}.json`))
-      const idl = await enhanceIdl(config, binVersion)
-      await generateTypeScriptSDK(idl, sdkDir)
-    })
+  return new Promise<void>((resolve, reject) => {
+    const idlGenerator = spawn(fullPathToBinary, spawnArgs, spawnOpts)
+      .on('error', (err) => {
+        logError(`${programName} idl generation failed`)
+        reject(err)
+      })
+      .on('exit', async () => {
+        logInfo('IDL written to: %s', path.join(idlDir, `${programName}.json`))
+        const idl = await enhanceIdl(config, binVersion)
+        await generateTypeScriptSDK(idl, sdkDir, prettierConfig)
+        resolve()
+      })
 
-  idlGenerator.stdout.on('data', (buf) => process.stdout.write(buf))
-  idlGenerator.stderr.on('data', (buf) => process.stderr.write(buf))
+    idlGenerator.stdout.on('data', (buf) => process.stdout.write(buf))
+    idlGenerator.stderr.on('data', (buf) => process.stderr.write(buf))
+  })
 }

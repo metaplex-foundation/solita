@@ -1,7 +1,13 @@
 import { Idl, Solita } from '../solita'
+import { Options as PrettierOptions } from 'prettier'
+import { logError } from '../utils'
 
-export function generateTypeScriptSDK(idl: Idl, sdkDir: string) {
-  console.error('Generating TypeScript SDK to %s', sdkDir)
-  const gen = new Solita(idl, { formatCode: true })
+export function generateTypeScriptSDK(
+  idl: Idl,
+  sdkDir: string,
+  prettierConfig?: PrettierOptions
+) {
+  logError('Generating TypeScript SDK to %s', sdkDir)
+  const gen = new Solita(idl, { formatCode: true, formatOpts: prettierConfig })
   return gen.renderAndWriteTo(sdkDir)
 }
