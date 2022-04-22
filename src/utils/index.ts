@@ -1,16 +1,12 @@
 import { PathLike, promises as fs } from 'fs'
-import debug from 'debug'
 import path from 'path'
 import { sha256 } from 'js-sha256'
 import camelcase from 'camelcase'
 import { snakeCase } from 'snake-case'
-import { IdlTypeArray } from './types'
-import { TypeMapper } from './type-mapper'
+import { IdlTypeArray } from '../types'
+import { TypeMapper } from '../type-mapper'
 
-export const logError = debug('solita:error')
-export const logInfo = debug('solita:info')
-export const logDebug = debug('solita:debug')
-export const logTrace = debug('solita:trace')
+export * from './logs'
 
 // -----------------
 // FileSystem
@@ -49,7 +45,7 @@ async function cleanDir(dir: PathLike) {
   return Promise.all(unlinks)
 }
 
-async function canAccess(p: PathLike) {
+export async function canAccess(p: PathLike) {
   try {
     await fs.access(p)
     return true

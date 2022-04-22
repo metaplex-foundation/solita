@@ -16,6 +16,7 @@ import {
 } from './types'
 import {
   logDebug,
+  logError,
   logInfo,
   logTrace,
   prepareTargetDir,
@@ -167,8 +168,8 @@ export class Solita {
           try {
             code = format(code, this.formatOpts)
           } catch (err) {
-            console.error(`Failed to format ${ty.name} instruction`)
-            console.error(err)
+            logError(`Failed to format ${ty.name} instruction`)
+            logError(err)
           }
         }
         types[ty.name] = code
@@ -198,8 +199,8 @@ export class Solita {
         try {
           code = format(code, this.formatOpts)
         } catch (err) {
-          console.error(`Failed to format ${ix.name} instruction`)
-          console.error(err)
+          logError(`Failed to format ${ix.name} instruction`)
+          logError(err)
         }
       }
       instructions[ix.name] = code
@@ -228,8 +229,8 @@ export class Solita {
         try {
           code = format(code, this.formatOpts)
         } catch (err) {
-          console.error(`Failed to format ${account.name} account`)
-          console.error(err)
+          logError(`Failed to format ${account.name} account`)
+          logError(err)
         }
       }
       accounts[account.name] = code
@@ -248,8 +249,8 @@ export class Solita {
       try {
         errors = format(errors, this.formatOpts)
       } catch (err) {
-        console.error(`Failed to format errors`)
-        console.error(err)
+        logError(`Failed to format errors`)
+        logError(err)
       }
     }
 
@@ -382,8 +383,8 @@ ${programIdConsts}
       try {
         code = format(code, this.formatOpts)
       } catch (err) {
-        console.error(`Failed to format mainIndex`)
-        console.error(err)
+        logError(`Failed to format mainIndex`)
+        logError(err)
       }
     }
 
