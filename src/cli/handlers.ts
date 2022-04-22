@@ -1,8 +1,8 @@
 import {
   rustbinMatch,
-  confirmAutoMessageConsole,
   RustbinConfig,
   RustbinMatchReturn,
+  ConfirmInstallArgs,
 } from '@metaplex-foundation/rustbin'
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
 import { SolitaConfig, SolitaConfigAnchor, SolitaConfigShank } from './types'
@@ -64,7 +64,7 @@ async function handle(
   const { programName, idlDir, sdkDir } = config
 
   const { fullPathToBinary, binVersion }: RustbinMatchReturn =
-    await rustbinMatch(rustbinConfig, confirmAutoMessageConsole)
+    await rustbinMatch(rustbinConfig, confirmAutoMessageLog)
 
   if (binVersion == null) {
     throw new Error(
@@ -89,4 +89,22 @@ async function handle(
     idlGenerator.stdout.on('data', (buf) => process.stdout.write(buf))
     idlGenerator.stderr.on('data', (buf) => process.stderr.write(buf))
   })
+}
+
+function confirmAutoMessageLog({
+  binaryName,
+  libVersion,
+  libName,
+  binVersion,
+  fullPathToBinary,
+}: ConfirmInstallArgs) {
+  if (binVersion == null) {
+    logInfo(`No existing version found for ${binaryName}.`)
+  } else {
+    logInfo(`Version for ${binaryName}: ${binVersion}`)
+  }
+  logInfo(
+    `Will install version matching "${libName}: '${libVersion}'" to ${fullPathToBinary}`
+  )
+  return Promise.resolve(true)
 }
