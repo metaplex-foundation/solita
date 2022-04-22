@@ -4,6 +4,9 @@
   "description": "Generates SDK API from solana contract IDL.",
   "main": "dist/src/solita.js",
   "types": "dist/src/solita.d.ts",
+  "bin": {
+    "amman": "dist/src/cli/solita.js"
+  },
   "scripts": {
     "check:publish-ready": "yarn build && yarn test",
     "preversion": "yarn check:publish-ready",
