@@ -1,7 +1,6 @@
 import { PathLike } from 'fs'
 import path from 'path'
 
-// write a file
 export class Paths {
   constructor(readonly outputDir: PathLike) {}
 
@@ -13,16 +12,31 @@ export class Paths {
     return path.join(this.outputDir.toString(), 'accounts')
   }
 
+  get relAccountsDir() {
+    return path.relative(process.cwd(), this.accountsDir)
+  }
+
   get instructionsDir() {
     return path.join(this.outputDir.toString(), 'instructions')
+  }
+  get relInstructionsDir() {
+    return path.relative(process.cwd(), this.instructionsDir)
   }
 
   get typesDir() {
     return path.join(this.outputDir.toString(), 'types')
   }
 
+  get relTypesDir() {
+    return path.relative(process.cwd(), this.typesDir)
+  }
+
   get errorsDir() {
     return path.join(this.outputDir.toString(), 'errors')
+  }
+
+  get relErrorsDir() {
+    return path.relative(process.cwd(), this.errorsDir)
   }
 
   accountFile(name: string) {
