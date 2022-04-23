@@ -11,6 +11,8 @@
   - [Full Example: Token Metadata Solita + Shank Setup](#full-example-token-metadata-solita--shank-setup)
 - [Anchor + Solita Example](#anchor--solita-example)
   - [Full Example: MPL Candy Machine Solita + Anchor Setup](#full-example-mpl-candy-machine-solita--anchor-setup)
+- [Advanced Shank + Solita Example](#advanced-shank--solita-example)
+- [Advanced Anchor + Solita Example](#advanced-anchor--solita-example)
 - [Solita in the Wild](#solita-in-the-wild)
 - [LICENSE](#license)
 
@@ -26,13 +28,89 @@ _Solita_ generates a low level TypeScript SDK for your _Solana_ Rust programs fr
 
 In order to use _solita_ with shank do the following:
 
-- globally install `shank` via `cargo install shank-cli`
 - add the `shank` library to your Rust project via `cargo add shank`
 - annotate your Rust program as outlined [here](https://docs.rs/crate/shank_macro/latest)
 - add `solita` to the dev dependencies of your SDK package via `yarn add -D @metaplex-foundation/solita`
-- add a script similar to the below to your SDK package and run it each time you make a change
-  to your program to generate the TypeScript SDK
+- add a config similar to the below into `.solitarc.js` in your SDK package root
 
+```js
+const path = require('path');
+const programDir = path.join(__dirname, '..', 'program');
+const idlDir = path.join(__dirname, 'idl');
+const sdkDir = path.join(__dirname, 'src', 'generated');
+const binaryInstallDir = path.join(__dirname, '.crates');
+
+module.exports = {
+  idlGenerator: 'shank',
+  programName: 'mpl_token_vault',
+  idlDir,
+  sdkDir,
+  binaryInstallDir,
+  programDir,
+};
+```
+
+Now running `yarn solita` from the same folder will take care of installing the matching
+_shank_ binary and generating the IDL and SDK.
+
+Run it each time you make a change to your program to generate the TypeScript SDK.
+
+Since we're writing the _shank_ binary to `.crates/` you should add that folder to your
+`.gitignore`.
+
+### Full Example: Token Metadata Solita + Shank Setup
+
+- [annotated instructions](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/token-metadata/program/src/instruction.rs#L80)
+- [annotated accounts](https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/state.rs#L194)
+- [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/token-metadata/js/src/generated)
+
+## Anchor + Solita Example
+
+In order to use _solita_ with anchor do the following:
+
+- annotate your Rust program with anchor attributes 
+- add `solita` to the dev dependencies of your SDK package via `yarn add -D @metaplex-foundation/solita`
+- add a config similar to the below into `.solitarc.js` in your SDK package root
+
+```js
+const path = require('path');
+const programDir = path.join(__dirname, '..', 'program');
+const idlDir = path.join(__dirname, 'idl');
+const sdkDir = path.join(__dirname, 'src', 'generated');
+const binaryInstallDir = path.join(__dirname, '.crates');
+
+module.exports = {
+  idlGenerator: 'anchor',
+  programName: 'auction_house',
+  programId: 'hausS13jsjafwWwGqZTUQRmWyvyxn9EQpqMwV1PBBmk',
+  idlDir,
+  sdkDir,
+  binaryInstallDir,
+  programDir,
+};
+```
+
+Now running `yarn solita` from the same folder will take care of installing the matching
+_anchor_ binary and generating the IDL and SDK.
+
+Run it each time you make a change to your program to generate the TypeScript SDK.
+
+Since we're writing the _anchor_ binary to `.crates/` you should add that folder to your
+`.gitignore`.
+
+### Full Example: MPL Candy Machine Solita + Anchor Setup
+  
+- [annotated anchor program](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/candy-machine/program/src/lib.rs) 
+- [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/candy-machine/js/src/generated)
+
+## Advanced Shank + Solita Example
+
+If you need more control you can also add a script. However you're on your own to ensure that
+the globally installed _shank_ binary matches the version of its library you're using.
+
+- globally install `shank` via `cargo install shank-cli`
+- add a script similar to the below to your SDK package and 
+ 
 ```js
 const path = require('path');
 const programDir = path.join(__dirname, '..', '..', 'program');
@@ -73,21 +151,13 @@ async function generateTypeScriptSDK() {
 }
 ```
 
-### Full Example: Token Metadata Solita + Shank Setup
+## Advanced Anchor + Solita Example
 
-- [annotated instructions](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/token-metadata/program/src/instruction.rs#L80)
-- [annotated accounts](https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/state.rs#L194)
-- [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/token-metadata/js/src/generated)
-
-## Anchor + Solita Example
-
-In order to use _solita_ with anchor do the following:
+If you need more control you can also add a script. However you're on your own to ensure that
+the globally installed _anchor_ binary matches the version of its library you're using.
 
 - globally [install anchor](https://book.anchor-lang.com/chapter_2/installation.html)
-- annotate your Rust program with anchor attributes 
-- add `solita` to the dev dependencies of your SDK package via `yarn add -D @metaplex-foundation/solita`
-- add a script similar to the below to your SDK package and run it each time you make a change
-  to your program to generate the TypeScript SDK
+- add a script similar to the below to your SDK package
 
 ```js
 const PROGRAM_NAME = 'candy_machine';
@@ -138,15 +208,9 @@ async function generateTypeScriptSDK() {
 }
 ```
 
-### Full Example: MPL Candy Machine Solita + Anchor Setup
-  
-- [annotated anchor program](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/candy-machine/program/src/lib.rs) 
-- [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/candy-machine/js/src/generated)
-
 ## Solita in the Wild
 
-Find more _solita_, _shank_ and _anchor_  examples inside the
-[metaplex-program-library](https://github.com/metaplex-foundation/metaplex-program-library).
+Find more _solita_, _shank_ and _anchor_  examples inside the [metaplex-program-library](https://github.com/metaplex-foundation/metaplex-program-library).
 
 ## LICENSE
 
