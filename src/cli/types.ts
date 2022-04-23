@@ -1,9 +1,13 @@
+import { RustbinConfig } from '@metaplex-foundation/rustbin'
+export { RustbinConfig }
+
 type SolitaConfigBase = {
   programName: string
   idlDir: string
   sdkDir: string
   binaryInstallDir: string
   programDir: string
+  rustbin?: RustbinConfig
 }
 
 export type SolitaConfigAnchor = SolitaConfigBase & {

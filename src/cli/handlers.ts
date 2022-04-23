@@ -28,6 +28,7 @@ export function handleAnchor(
     libName: 'anchor-lang',
     cargoToml: path.join(programDir, 'Cargo.toml'),
     dryRun: false,
+    ...config.rustbin,
   }
 
   return handle(config, rustbinConfig, spawnArgs, spawnOpts, prettierConfig)
