@@ -39,7 +39,7 @@ async function tryLoadLocalConfigRc(
   const configPath = path.join(process.cwd(), rcFile)
   if (await canAccess(configPath)) {
     const config = require(configPath)
-    logDebug('Found `%s` in current directory and using that as config', rcFile)
+    logDebug('Found `%s` in current directory', rcFile)
     return config
   } else if (required) {
     throw new Error(
