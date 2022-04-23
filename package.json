@@ -4,6 +4,9 @@
   "description": "Generates SDK API from solana contract IDL.",
   "main": "dist/src/solita.js",
   "types": "dist/src/solita.d.ts",
+  "bin": {
+    "amman": "dist/src/cli/solita.js"
+  },
   "scripts": {
     "check:publish-ready": "yarn build && yarn test",
     "preversion": "yarn check:publish-ready",
@@ -47,6 +50,7 @@
   "dependencies": {
     "@metaplex-foundation/beet": "^0.1.0",
     "@metaplex-foundation/beet-solana": "^0.1.1",
+    "@metaplex-foundation/rustbin": "^0.1.0",
     "@solana/web3.js": "^1.36.0",
     "camelcase": "^6.2.1",
     "debug": "^4.3.3",

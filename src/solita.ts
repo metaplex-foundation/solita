@@ -16,6 +16,7 @@ import {
 } from './types'
 import {
   logDebug,
+  logError,
   logInfo,
   logTrace,
   prepareTargetDir,
@@ -167,8 +168,8 @@ export class Solita {
           try {
             code = format(code, this.formatOpts)
           } catch (err) {
-            console.error(`Failed to format ${ty.name} instruction`)
-            console.error(err)
+            logError(`Failed to format ${ty.name} instruction`)
+            logError(err)
           }
         }
         types[ty.name] = code
@@ -198,8 +199,8 @@ export class Solita {
         try {
           code = format(code, this.formatOpts)
         } catch (err) {
-          console.error(`Failed to format ${ix.name} instruction`)
-          console.error(err)
+          logError(`Failed to format ${ix.name} instruction`)
+          logError(err)
         }
       }
       instructions[ix.name] = code
@@ -228,8 +229,8 @@ export class Solita {
         try {
           code = format(code, this.formatOpts)
         } catch (err) {
-          console.error(`Failed to format ${account.name} account`)
-          console.error(err)
+          logError(`Failed to format ${account.name} account`)
+          logError(err)
         }
       }
       accounts[account.name] = code
@@ -248,8 +249,8 @@ export class Solita {
       try {
         errors = format(errors, this.formatOpts)
       } catch (err) {
-        console.error(`Failed to format errors`)
-        console.error(err)
+        logError(`Failed to format errors`)
+        logError(err)
       }
     }
 
@@ -285,7 +286,10 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.instructionsDir)
-    logInfo('Writing instructions to directory: %s', this.paths.instructionsDir)
+    logInfo(
+      'Writing instructions to directory: %s',
+      this.paths.relInstructionsDir
+    )
     for (const [name, code] of Object.entries(instructions)) {
       logDebug('Writing instruction: %s', name)
       await fs.writeFile(this.paths.instructionFile(name), code, 'utf8')
@@ -302,7 +306,7 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.accountsDir)
-    logInfo('Writing accounts to directory: %s', this.paths.accountsDir)
+    logInfo('Writing accounts to directory: %s', this.paths.relAccountsDir)
     for (const [name, code] of Object.entries(accounts)) {
       logDebug('Writing account: %s', name)
       await fs.writeFile(this.paths.accountFile(name), code, 'utf8')
@@ -319,7 +323,7 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.typesDir)
-    logInfo('Writing types to directory: %s', this.paths.typesDir)
+    logInfo('Writing types to directory: %s', this.paths.relTypesDir)
     for (const [name, code] of Object.entries(types)) {
       logDebug('Writing type: %s', name)
       await fs.writeFile(this.paths.typeFile(name), code, 'utf8')
@@ -340,7 +344,7 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     await prepareTargetDir(this.paths.errorsDir)
-    logInfo('Writing errors to directory: %s', this.paths.errorsDir)
+    logInfo('Writing errors to directory: %s', this.paths.relErrorsDir)
     logDebug('Writing index.ts containing all errors')
     await fs.writeFile(this.paths.errorFile('index'), errorsCode, 'utf8')
   }
@@ -382,8 +386,8 @@ ${programIdConsts}
       try {
         code = format(code, this.formatOpts)
       } catch (err) {
-        console.error(`Failed to format mainIndex`)
-        console.error(err)
+        logError(`Failed to format mainIndex`)
+        logError(err)
       }
     }
 
