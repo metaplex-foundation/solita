@@ -27,10 +27,6 @@ import { Paths } from './paths'
 
 export * from './types'
 
-function renderImportIndex(modules: string[]) {
-  return modules.map((x) => `export * from './${x}';`).join('\n')
-}
-
 const DEFAULT_FORMAT_OPTS: Options = {
   semi: false,
   singleQuote: true,
@@ -295,7 +291,10 @@ export class Solita {
       await fs.writeFile(this.paths.instructionFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all instructions')
-    const indexCode = renderImportIndex(Object.keys(instructions).sort())
+    const indexCode = this.renderImportIndex(
+      Object.keys(instructions).sort(),
+      'instructions'
+    )
     await fs.writeFile(this.paths.instructionFile('index'), indexCode, 'utf8')
   }
 
@@ -312,7 +311,10 @@ export class Solita {
       await fs.writeFile(this.paths.accountFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all accounts')
-    const indexCode = renderImportIndex(Object.keys(accounts).sort())
+    const indexCode = this.renderImportIndex(
+      Object.keys(accounts).sort(),
+      'accounts'
+    )
     await fs.writeFile(this.paths.accountFile('index'), indexCode, 'utf8')
   }
 
@@ -333,7 +335,7 @@ export class Solita {
     // NOTE: this allows account types to be referenced via `defined.<AccountName>`, however
     // it would break if we have an account used that way, but no types
     // If that occurs we need to generate the `types/index.ts` just reexporting accounts
-    const indexCode = renderImportIndex(reexports.sort())
+    const indexCode = this.renderImportIndex(reexports.sort(), 'types')
     await fs.writeFile(this.paths.typeFile('index'), indexCode, 'utf8')
   }
 
@@ -357,7 +359,7 @@ export class Solita {
     assert(this.paths != null, 'should have set paths')
 
     const programAddress = this.idl.metadata.address
-    const reexportCode = renderImportIndex(reexports.sort())
+    const reexportCode = this.renderImportIndex(reexports.sort(), 'main')
     const imports = `import { PublicKey } from '${SOLANA_WEB3_PACKAGE}'`
     const programIdConsts = `
 /**
@@ -390,7 +392,19 @@ ${programIdConsts}
         logError(err)
       }
     }
-
     await fs.writeFile(path.join(this.paths.root, `index.ts`), code, 'utf8')
+  }
+
+  private renderImportIndex(modules: string[], label: string) {
+    let code = modules.map((x) => `export * from './${x}';`).join('\n')
+    if (this.formatCode) {
+      try {
+        code = format(code, this.formatOpts)
+      } catch (err) {
+        logError(`Failed to format ${label} imports`)
+        logError(err)
+      }
+    }
+    return code
   }
 }
