@@ -63,7 +63,7 @@ async function handle(
 ) {
   const { programName, idlDir, sdkDir } = config
 
-  const { fullPathToBinary, binVersion }: RustbinMatchReturn =
+  const { fullPathToBinary, binVersion, libVersion }: RustbinMatchReturn =
     await rustbinMatch(rustbinConfig, confirmAutoMessageLog)
 
   if (binVersion == null) {
@@ -81,7 +81,7 @@ async function handle(
       })
       .on('exit', async () => {
         logInfo('IDL written to: %s', path.join(idlDir, `${programName}.json`))
-        const idl = await enhanceIdl(config, binVersion)
+        const idl = await enhanceIdl(config, binVersion, libVersion)
         await generateTypeScriptSDK(idl, sdkDir, prettierConfig)
         resolve()
       })

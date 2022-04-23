@@ -8,7 +8,11 @@ import {
 
 import { promises as fs } from 'fs'
 
-export async function enhanceIdl(config: SolitaConfig, binaryVersion: string) {
+export async function enhanceIdl(
+  config: SolitaConfig,
+  binaryVersion: string,
+  libVersion: string
+) {
   const { idlDir, programName } = config
   const idlPath = path.join(idlDir, `${programName}.json`)
 
@@ -19,12 +23,14 @@ export async function enhanceIdl(config: SolitaConfig, binaryVersion: string) {
       ...idl.metadata,
       address: config.programId,
       origin: config.idlGenerator,
-      version: binaryVersion,
+      binaryVersion,
+      libVersion,
     }
   } else if (isSolitaConfigShank(config)) {
     idl.metadata = {
       ...idl.metadata,
-      version: binaryVersion,
+      binaryVersion,
+      libVersion,
     }
   } else {
     throw new UnreachableCaseError(
