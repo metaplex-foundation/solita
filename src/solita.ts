@@ -371,7 +371,7 @@ export class Solita {
 export const PROGRAM_ADDRESS = '${programAddress}'
 
 /**
- * Program publick key
+ * Program public key
  *
  * @category constants
  * @category generated
