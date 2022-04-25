@@ -1,19 +1,43 @@
 #!/usr/bin/env node
 
 import path from 'path'
+import fs from 'fs'
 import { canAccess, logDebug, logError, logInfo } from '../utils'
 import { isSolitaConfigAnchor, isSolitaConfigShank } from './types'
 import { handleAnchor, handleShank } from './handlers'
 
-const SOLITA_CONFIG_RC = '.solitarc.js'
-const PRETTIER_CONFIG_RC = '.prettierrc.js'
+enum Loader {
+  JSON,
+  JS,
+}
+function loaderString(loader: Loader) {
+  switch (loader) {
+    case Loader.JSON:
+      return 'JSON'
+    case Loader.JS:
+      return 'JavaScript'
+  }
+}
+type Loadable = [string, Loader]
+
+const SOLITA_CONFIG_RCS: Loadable[] = [['.solitarc.js', Loader.JS]]
+const PRETTIER_CONFIG_RCS: Loadable[] = [
+  ['.prettierrc', Loader.JSON],
+  ['.prettierrc.js', Loader.JS],
+  ['.prettierrc.json', Loader.JSON],
+]
 
 async function main() {
-  const solitaConfig = await tryLoadLocalConfigRc(SOLITA_CONFIG_RC, true)
-  const prettierConfig = await tryLoadLocalConfigRc(PRETTIER_CONFIG_RC)
+  const { config: solitaConfig } = await tryLoadLocalConfigRc(
+    SOLITA_CONFIG_RCS,
+    true
+  )
+  const { config: prettierConfig, rcFile } = await tryLoadLocalConfigRc(
+    PRETTIER_CONFIG_RCS
+  )
   if (prettierConfig != null) {
     logInfo(
-      'Found `.prettierrc.js` in current directory and using that to format code'
+      `Found '${rcFile}' in current directory and using that to format code`
     )
   }
   if (isSolitaConfigAnchor(solitaConfig)) {
@@ -33,17 +57,38 @@ main()
   })
 
 async function tryLoadLocalConfigRc(
-  rcFile: string,
+  rcFiles: Loadable[],
   required: boolean = false
 ): Promise<any> {
-  const configPath = path.join(process.cwd(), rcFile)
-  if (await canAccess(configPath)) {
-    const config = require(configPath)
-    logDebug('Found `%s` in current directory', rcFile)
-    return config
-  } else if (required) {
+  for (const [rcFile, loader] of rcFiles) {
+    const configPath = path.join(process.cwd(), rcFile)
+    if (await canAccess(configPath)) {
+      try {
+        const config = load(configPath, loader)
+        logDebug('Found `%s` in current directory', rcFile)
+        return { config, rcFile }
+      } catch (err) {
+        logError(
+          `Failed to load '${rcFile}', ` +
+            `it should be a ${loaderString(loader)} file.`
+        )
+        logError(err)
+      }
+    }
+  }
+  if (required) {
     throw new Error(
-      `Cannot find '${rcFile}' config in current directory. Please create one.`
+      `Cannot find any of '${rcFiles.join(',')}' ` +
+        `config in current directory. Please create one.`
     )
+  }
+}
+
+function load(configPath: string, loader: Loader): any {
+  switch (loader) {
+    case Loader.JSON:
+      return JSON.parse(fs.readFileSync(configPath, 'utf8'))
+    case Loader.JS:
+      return require(configPath)
   }
 }
