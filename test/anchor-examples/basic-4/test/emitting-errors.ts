@@ -10,12 +10,10 @@ import {
   MinCountSubceededError,
 } from '../src/'
 import {
-  AddressLabels,
-  airdrop,
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-  PayerTransactionHandler,
+  Amman,
 } from '@metaplex-foundation/amman'
 import { initCusper, ErrorWithLogs } from '@metaplex-foundation/cusper'
 import { strict as assert } from 'assert'
@@ -35,24 +33,23 @@ function assertIsErrorWithLogs(err: unknown): asserts err is ErrorWithLogs {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-const addressLabels = new AddressLabels(
-  { basic1: idl.metadata.address },
-  console.log,
-  process.env.ADDRESS_LABEL_PATH
-)
+const amman = Amman.instance({
+  knownLabels: { basic1: idl.metadata.address },
+  log: console.log,
+})
 
 const cusper = initCusper(errorFromCode)
 
 async function create() {
-  const [payer, payerKeypair] = addressLabels.genKeypair('payer')
-  const [counter, counterKeypair] = addressLabels.genKeypair('counter')
+  const [payer, payerKeypair] = await amman.genLabeledKeypair('payer')
+  const [counter, counterKeypair] = await amman.genLabeledKeypair('counter')
   const connection = new Connection(LOCALHOST, 'confirmed')
-  const transactionHandler = new PayerTransactionHandler(
+  const transactionHandler = amman.payerTransactionHandler(
     connection,
     payerKeypair
   )
 
-  await airdrop(connection, payer, 2)
+  await amman.airdrop(connection, payer, 2)
 
   const ix = createCreateInstruction(
     {
