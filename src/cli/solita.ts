@@ -28,16 +28,19 @@ const PRETTIER_CONFIG_RCS: Loadable[] = [
 ]
 
 async function main() {
-  const { config: solitaConfig } = await tryLoadLocalConfigRc(
-    SOLITA_CONFIG_RCS,
-    true
-  )
-  const { config: prettierConfig, rcFile } = await tryLoadLocalConfigRc(
-    PRETTIER_CONFIG_RCS
-  )
+  const solitaConfig = (await tryLoadLocalConfigRc(SOLITA_CONFIG_RCS, true))
+    ?.config
+
+  if (solitaConfig == null) {
+    throw new Error(
+      `Unable to find solita config '.solitarc.js' in the current directory (${process.cwd()} `
+    )
+  }
+  const prettierRes = await tryLoadLocalConfigRc(PRETTIER_CONFIG_RCS)
+  const prettierConfig = prettierRes?.config
   if (prettierConfig != null) {
     logInfo(
-      `Found '${rcFile}' in current directory and using that to format code`
+      `Found '${prettierRes.rcFile}' in current directory and using that to format code`
     )
   }
   if (isSolitaConfigAnchor(solitaConfig)) {
