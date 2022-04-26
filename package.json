@@ -60,7 +60,7 @@
     "spok": "^1.4.3"
   },
   "devDependencies": {
-    "@metaplex-foundation/amman": "^0.0.9",
+    "@metaplex-foundation/amman": "^0.6.0",
     "@project-serum/anchor": "^0.19.1-beta.1",
     "@types/debug": "^4.1.7",
     "@types/eslint": "^8.2.2",
