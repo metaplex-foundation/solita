@@ -2,3 +2,4 @@ dist/
 .idea/
 yarn.lock
 test/integration/output
+.crates/

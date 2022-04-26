@@ -97,6 +97,9 @@
     }
   ],
   "metadata": {
-    "address": "CwrqeMj2U8tFr1Rhkgwc84tpAsqbt9pTt2a4taoTADPr"
+    "address": "CwrqeMj2U8tFr1Rhkgwc84tpAsqbt9pTt2a4taoTADPr",
+    "origin": "anchor",
+    "binaryVersion": "0.24.2",
+    "libVersion": "0.24.2"
   }
 }
