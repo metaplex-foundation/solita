@@ -24,7 +24,7 @@ jobs:
 
     - name: yarn install
       run: |
-        yarn install --force
+        yarn install
 
     - name: yarn build, lint and test
       run: |
