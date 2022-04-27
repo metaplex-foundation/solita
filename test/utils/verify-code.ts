@@ -15,6 +15,7 @@ import recursiveReaddir from 'recursive-readdir'
 
 import { exec as execCb } from 'child_process'
 import { promisify } from 'util'
+import { verifyTypes } from './tsc'
 const exec = promisify(execCb)
 const esr = path.join(
   require.resolve('esbuild-runner'),
@@ -181,5 +182,17 @@ export async function verifyTopLevelScriptForGeneratedDir(
     const relFile = path.relative(fullDirPath, file)
     t.comment(`+++ Running ${relFile} inside ${rootName}`)
     await verifyTopLevelScript(t, file, relFile)
+  }
+}
+
+export async function verifyWithTypescriptCompiler(
+  t: Test,
+  fullDirPath: string
+) {
+  try {
+    await verifyTypes(fullDirPath)
+    t.pass('Verifying types with tsc')
+  } catch (err) {
+    t.error(err, 'Verifying types with tsc')
   }
 }

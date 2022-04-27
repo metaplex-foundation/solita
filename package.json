@@ -74,6 +74,7 @@
     "esbuild": "^0.14.11",
     "esbuild-runner": "^2.2.1",
     "eslint": "^8.6.0",
+    "pkg-dir": "^5.0.0",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^3.0.2",
     "spok": "^1.4.3",
