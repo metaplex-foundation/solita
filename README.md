@@ -9,9 +9,9 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [How does it Work?](#how-does-it-work)
-- [Shank + Solita Example](#shank--solita-example)
+- [Shank + Solita Example (Recommended)](#shank--solita-example-recommended)
   - [Full Example: Token Metadata Solita + Shank Setup](#full-example-token-metadata-solita--shank-setup)
-- [Anchor + Solita Example](#anchor--solita-example)
+- [Anchor + Solita Example (Recommended)](#anchor--solita-example-recommended)
   - [Full Example: MPL Candy Machine Solita + Anchor Setup](#full-example-mpl-candy-machine-solita--anchor-setup)
 - [Advanced Shank + Solita Example](#advanced-shank--solita-example)
 - [Advanced Anchor + Solita Example](#advanced-anchor--solita-example)
@@ -26,7 +26,7 @@ _Solita_ generates a low level TypeScript SDK for your _Solana_ Rust programs fr
 [anchor](https://github.com/project-serum/anchor) or
 [shank](https://github.com/metaplex-foundation/shank).
 
-## Shank + Solita Example
+## Shank + Solita Example (Recommended)
 
 In order to use _solita_ with shank do the following:
 
@@ -66,7 +66,7 @@ Since we're writing the _shank_ binary to `.crates/` you should add that folder 
 - [annotated accounts](https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/state.rs#L194)
 - [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/token-metadata/js/src/generated)
 
-## Anchor + Solita Example
+## Anchor + Solita Example (Recommended)
 
 In order to use _solita_ with anchor do the following:
 
@@ -115,29 +115,51 @@ the globally installed _shank_ binary matches the version of its library you're 
  
 ```js
 const path = require('path');
-const programDir = path.join(__dirname, '..', '..', 'program');
-const generatedIdlDir = path.join(__dirname, '..', 'idl');
-const generatedSDKDir = path.join(__dirname, '..', 'src', 'generated');
-const PROGRAM_NAME = 'mpl_token_metadata';
 const { Solita } = require('@metaplex-foundation/solita');
+const {
+  rustbinMatch,
+  confirmAutoMessageConsole,
+} = require('@metaplex-foundation/rustbin')
 const { spawn } = require('child_process');
 
-const shank = spawn('shank', ['idl', '--out-dir', generatedIdlDir, '--crate-root', programDir])
-  .on('error', (err) => {
-    console.error(err);
-    if (err.code === 'ENOENT') {
-      console.error(
-        'Ensure that `shank` is installed and in your path, see:\n  https://github.com/metaplex-foundation/shank\n',
-      );
-    }
-    process.exit(1);
-  })
-  .on('exit', () => {
-    generateTypeScriptSDK();
-  });
+const programDir = path.join(__dirname, '..', '..', 'program');
+const cargoToml = path.join(programDir, 'Cargo.toml')
+const generatedIdlDir = path.join(__dirname, '..', 'idl');
+const generatedSDKDir = path.join(__dirname, '..', 'src', 'generated');
+const rootDir = path.join(__dirname, '..', '.crates')
 
-shank.stdout.on('data', (buf) => console.log(buf.toString('utf8')));
-shank.stderr.on('data', (buf) => console.error(buf.toString('utf8')));
+const PROGRAM_NAME = 'mpl_token_metadata';
+const rustbinConfig = {
+  rootDir,
+  binaryName: 'shank',
+  binaryCrateName: 'shank-cli',
+  libName: 'shank',
+  dryRun: false,
+  cargoToml,
+}
+
+async function main() {
+  const { fullPathToBinary: shankExecutable } = await rustbinMatch(
+    rustbinConfig,
+    confirmAutoMessageConsole
+  )
+  const shank = spawn(shankExecutable, ['idl', '--out-dir', generatedIdlDir, '--crate-root', programDir])
+    .on('error', (err) => {
+      console.error(err);
+      if (err.code === 'ENOENT') {
+        console.error(
+          'Ensure that `shank` is installed and in your path, see:\n  https://github.com/metaplex-foundation/shank\n',
+        );
+      }
+      process.exit(1);
+    })
+    .on('exit', () => {
+      generateTypeScriptSDK();
+    });
+
+  shank.stdout.on('data', (buf) => console.log(buf.toString('utf8')));
+  shank.stderr.on('data', (buf) => console.error(buf.toString('utf8')));
+}
 
 async function generateTypeScriptSDK() {
   console.error('Generating TypeScript SDK to %s', generatedSDKDir);
@@ -151,6 +173,11 @@ async function generateTypeScriptSDK() {
 
   process.exit(0);
 }
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
 ```
 
 ## Advanced Anchor + Solita Example
@@ -162,35 +189,48 @@ the globally installed _anchor_ binary matches the version of its library you're
 - add a script similar to the below to your SDK package
 
 ```js
-const PROGRAM_NAME = 'candy_machine';
-const PROGRAM_ID = 'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ';
-
 const path = require('path');
-const programDir = path.join(__dirname, '..', '..', 'program');
-const generatedIdlDir = path.join(__dirname, '..', 'idl');
-const generatedSDKDir = path.join(__dirname, '..', 'src', 'generated');
+const {
+  rustbinMatch,
+  confirmAutoMessageConsole,
+} = require('@metaplex-foundation/rustbin')
 const { spawn } = require('child_process');
 const { Solita } = require('@metaplex-foundation/solita');
 const { writeFile } = require('fs/promises');
 
-const anchor = spawn('anchor', ['build', '--idl', generatedIdlDir], { cwd: programDir })
-  .on('error', (err) => {
-    console.error(err);
-    // @ts-ignore this err does have a code
-    if (err.code === 'ENOENT') {
-      console.error(
-        'Ensure that `anchor` is installed and in your path, see:\n  https://project-serum.github.io/anchor/getting-started/installation.html#install-anchor\n',
-      );
-    }
-    process.exit(1);
-  })
-  .on('exit', () => {
-    console.log('IDL written to: %s', path.join(generatedIdlDir, `${PROGRAM_NAME}.json`));
-    generateTypeScriptSDK();
-  });
+const PROGRAM_NAME = 'candy_machine';
+const PROGRAM_ID = 'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ';
 
-anchor.stdout.on('data', (buf) => console.log(buf.toString('utf8')));
-anchor.stderr.on('data', (buf) => console.error(buf.toString('utf8')));
+const programDir = path.join(__dirname, '..', '..', 'program');
+const cargoToml = path.join(programDir, 'Cargo.toml')
+const generatedIdlDir = path.join(__dirname, '..', 'idl');
+const generatedSDKDir = path.join(__dirname, '..', 'src', 'generated');
+const rootDir = path.join(__dirname, '..', '.crates')
+
+async function main() {
+  const { fullPathToBinary: anchorExecutable } = await rustbinMatch(
+    rustbinConfig,
+    confirmAutoMessageConsole
+  )
+  const anchor = spawn(anchorExecutable, ['build', '--idl', generatedIdlDir], { cwd: programDir })
+    .on('error', (err) => {
+      console.error(err);
+      // @ts-ignore this err does have a code
+      if (err.code === 'ENOENT') {
+        console.error(
+          'Ensure that `anchor` is installed and in your path, see:\n  https://project-serum.github.io/anchor/getting-started/installation.html#install-anchor\n',
+        );
+      }
+      process.exit(1);
+    })
+    .on('exit', () => {
+      console.log('IDL written to: %s', path.join(generatedIdlDir, `${PROGRAM_NAME}.json`));
+      generateTypeScriptSDK();
+    });
+
+  anchor.stdout.on('data', (buf) => console.log(buf.toString('utf8')));
+  anchor.stderr.on('data', (buf) => console.error(buf.toString('utf8')));
+}
 
 async function generateTypeScriptSDK() {
   console.error('Generating TypeScript SDK to %s', generatedSDKDir);
@@ -208,6 +248,11 @@ async function generateTypeScriptSDK() {
 
   process.exit(0);
 }
+
+main().catch((err) => {
+  console.error(err)
+  process.exit(1)
+})
 ```
 
 ## Solita in the Wild
