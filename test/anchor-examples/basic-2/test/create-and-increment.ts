@@ -6,12 +6,10 @@ import {
   createIncrementInstruction,
 } from '../src/'
 import {
-  AddressLabels,
-  airdrop,
+  Amman,
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-  PayerTransactionHandler,
 } from '@metaplex-foundation/amman'
 
 const idl = require('../idl/basic_2.json')
@@ -20,22 +18,21 @@ const idl = require('../idl/basic_2.json')
   test.onFinish(() => process.exit(0))
 })()
 
-const addressLabels = new AddressLabels(
-  { basic1: idl.metadata.address },
-  console.log,
-  process.env.ADDRESS_LABEL_PATH
-)
+const amman = Amman.instance({
+  knownLabels: { basic2: idl.metadata.address },
+  log: console.log,
+})
 
 async function create() {
-  const [payer, payerKeypair] = addressLabels.genKeypair('payer')
-  const [counter, counterKeypair] = addressLabels.genKeypair('counter')
+  const [payer, payerKeypair] = await amman.genLabeledKeypair('payer')
+  const [counter, counterKeypair] = await amman.genLabeledKeypair('counter')
   const connection = new Connection(LOCALHOST, 'confirmed')
-  const transactionHandler = new PayerTransactionHandler(
+  const transactionHandler = amman.payerTransactionHandler(
     connection,
     payerKeypair
   )
 
-  await airdrop(connection, payer, 2)
+  await amman.airdrop(connection, payer, 2)
 
   const ix = createCreateInstruction(
     {
