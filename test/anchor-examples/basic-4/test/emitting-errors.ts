@@ -34,7 +34,7 @@ function assertIsErrorWithLogs(err: unknown): asserts err is ErrorWithLogs {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const amman = Amman.instance({
-  knownLabels: { basic1: idl.metadata.address },
+  knownLabels: { basic4: idl.metadata.address },
   log: console.log,
 })
 
