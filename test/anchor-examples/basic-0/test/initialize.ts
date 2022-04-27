@@ -2,12 +2,10 @@ import test from 'tape'
 import { Connection, Transaction } from '@solana/web3.js'
 import { createInitializeInstruction } from '../src/'
 import {
-  AddressLabels,
-  airdrop,
+  Amman,
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-  PayerTransactionHandler,
 } from '@metaplex-foundation/amman'
 
 const idl = require('../idl/basic_0.json')
@@ -16,20 +14,20 @@ const idl = require('../idl/basic_0.json')
   test.onFinish(() => process.exit(0))
 })()
 
-const addressLabels = new AddressLabels(
-  { basic0: idl.metadata.address },
-  console.log
-)
+const amman = Amman.instance({
+  knownLabels: { basic0: idl.metadata.address },
+  log: console.log,
+})
 
 test('initialize', async (t) => {
-  const [payer, payerKeypair] = addressLabels.genKeypair('payer')
+  const [payer, payerKeypair] = await amman.genLabeledKeypair('payer')
   const connection = new Connection(LOCALHOST, 'confirmed')
-  const transactionHandler = new PayerTransactionHandler(
+  const transactionHandler = amman.payerTransactionHandler(
     connection,
     payerKeypair
   )
 
-  await airdrop(connection, payer, 2)
+  await amman.airdrop(connection, payer, 2)
 
   const ix = createInitializeInstruction({})
   const tx = new Transaction().add(ix)
