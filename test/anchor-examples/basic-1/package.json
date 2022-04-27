@@ -2,10 +2,10 @@
   "name": "basic-1",
   "scripts": {
     "build": "tsc -p tsconfig.json && cp -R ./idl dist/",
-    "pretest": "node scripts/api-gen.js && yarn build && yarn amman:start",
-    "test": "node dist/test/*.js",
-    "posttest": "yarn amman:stop",
-    "amman:start": "DEBUG=amman* amman validator",
-    "amman:stop": "pkill solana-test-validator"
+    "pretest": " yarn api:gen && yarn build && yarn amman:start",
+    "api:gen": "DEBUG='(solita|rustbin):(info|error)' node ../../../dist/src/cli/solita.js",
+    "test": "CI=1 node dist/test/*.js",
+    "amman:start": "CI=1 DEBUG='amman:(error|info|debug)*' ../../../node_modules/.bin/amman start",
+    "amman:stop": "../../../node_modules/.bin/amman stop"
   }
 }
