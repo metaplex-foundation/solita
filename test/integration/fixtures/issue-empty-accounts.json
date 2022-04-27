@@ -1,0 +1,37 @@
+{
+  "version": "0.1.0",
+  "name": "some-game",
+  "instructions": [
+    {
+      "name": "CompensateWinner",
+      "accounts": [],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    }
+  ],
+  "accounts": [],
+  "types": [
+    {
+      "name": "CompensateWinnerArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "game",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "metadata": {
+    "origin": "shank",
+    "address": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+    "binaryVersion": "0.0.2",
+    "libVersion": "~0.0.2"
+  }
+}
