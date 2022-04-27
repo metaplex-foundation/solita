@@ -8,11 +8,13 @@ import {
   verifyWithTypescriptCompiler,
 } from '../utils/verify-code'
 import json from './fixtures/shank_token_metadata.json'
+import { sync as rmrf } from 'rimraf'
 
 const outputDir = path.join(__dirname, 'output', 'shank-token-metadata')
 const generatedSDKDir = path.join(outputDir, 'generated')
 
 test('renders type correct SDK for shank_token_metadata and bubbles fixables', async (t) => {
+  rmrf(outputDir)
   const idl = json as Idl
   const gen = new Solita(idl, { formatCode: true })
   await gen.renderAndWriteTo(generatedSDKDir)
