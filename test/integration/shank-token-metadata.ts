@@ -5,6 +5,7 @@ import path from 'path'
 import {
   verifySyntacticCorrectnessForGeneratedDir,
   verifyTopLevelScriptForGeneratedDir,
+  verifyWithTypescriptCompiler,
 } from '../utils/verify-code'
 import json from './fixtures/shank_token_metadata.json'
 
@@ -15,6 +16,7 @@ test('renders type correct SDK for shank_token_metadata and bubbles fixables', a
   const idl = json as Idl
   const gen = new Solita(idl, { formatCode: true })
   await gen.renderAndWriteTo(generatedSDKDir)
+  await verifyWithTypescriptCompiler(t, generatedSDKDir)
   await verifySyntacticCorrectnessForGeneratedDir(t, generatedSDKDir)
   await verifyTopLevelScriptForGeneratedDir(t, generatedSDKDir)
 

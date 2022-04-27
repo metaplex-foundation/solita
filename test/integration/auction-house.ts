@@ -4,6 +4,7 @@ import path from 'path'
 import {
   verifySyntacticCorrectnessForGeneratedDir,
   verifyTopLevelScriptForGeneratedDir,
+  verifyWithTypescriptCompiler,
 } from '../utils/verify-code'
 import json from './fixtures/auction_house.json'
 
@@ -18,6 +19,7 @@ test('renders type correct SDK for auction house', async (t) => {
   }
   const gen = new Solita(idl, { formatCode: true })
   await gen.renderAndWriteTo(generatedSDKDir)
+  await verifyWithTypescriptCompiler(t, generatedSDKDir)
   await verifySyntacticCorrectnessForGeneratedDir(t, generatedSDKDir)
   await verifyTopLevelScriptForGeneratedDir(t, generatedSDKDir)
 })
