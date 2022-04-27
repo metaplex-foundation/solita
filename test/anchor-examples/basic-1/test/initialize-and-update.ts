@@ -6,12 +6,10 @@ import {
   MyAccount,
 } from '../src/'
 import {
-  AddressLabels,
-  airdrop,
+  Amman,
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-  PayerTransactionHandler,
 } from '@metaplex-foundation/amman'
 
 const idl = require('../idl/basic_1.json')
@@ -20,22 +18,23 @@ const idl = require('../idl/basic_1.json')
   test.onFinish(() => process.exit(0))
 })()
 
-const addressLabels = new AddressLabels(
-  { basic1: idl.metadata.address },
-  console.log,
-  process.env.PERSIST_LABELS_PATH
-)
+const amman = Amman.instance({
+  knownLabels: { basic1: idl.metadata.address },
+  log: console.log,
+})
 
 async function initialize() {
-  const [payer, payerKeypair] = addressLabels.genKeypair('payer')
-  const [myAccount, myAccountKeypair] = addressLabels.genKeypair('myAccount')
+  const [payer, payerKeypair] = await amman.genLabeledKeypair('payer')
+  const [myAccount, myAccountKeypair] = await amman.genLabeledKeypair(
+    'myAccount'
+  )
   const connection = new Connection(LOCALHOST, 'confirmed')
-  const transactionHandler = new PayerTransactionHandler(
+  const transactionHandler = amman.payerTransactionHandler(
     connection,
     payerKeypair
   )
 
-  await airdrop(connection, payer, 2)
+  await amman.airdrop(connection, payer, 2)
 
   const ix = createInitializeInstruction(
     {

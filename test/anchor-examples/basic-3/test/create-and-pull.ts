@@ -1,12 +1,10 @@
 import test from 'tape'
 import { Connection, PublicKey, Transaction } from '@solana/web3.js'
 import {
-  AddressLabels,
-  airdrop,
+  Amman,
   assertConfirmedTransaction,
   assertTransactionSummary,
   LOCALHOST,
-  PayerTransactionHandler,
 } from '@metaplex-foundation/amman'
 import {
   createInitializeInstruction,
@@ -23,25 +21,24 @@ const puppetProgramId = new PublicKey(puppetIdl.metadata.address)
   test.onFinish(() => process.exit(0))
 })()
 
-const addressLabels = new AddressLabels(
-  {
+const amman = Amman.instance({
+  knownLabels: {
     puppet: puppetProgramId.toBase58(),
     puppetMaster: puppetMasterIdl.metadata.address,
   },
-  console.log,
-  process.env.ADDRESS_LABEL_PATH
-)
+  log: console.log,
+})
 
 async function init() {
-  const [payer, payerKeypair] = addressLabels.genKeypair('payer')
-  const [puppet, puppetKeypair] = addressLabels.genKeypair('puppet')
+  const [payer, payerKeypair] = await amman.genLabeledKeypair('payer')
+  const [puppet, puppetKeypair] = await amman.genLabeledKeypair('puppet')
   const connection = new Connection(LOCALHOST, 'confirmed')
-  const transactionHandler = new PayerTransactionHandler(
+  const transactionHandler = amman.payerTransactionHandler(
     connection,
     payerKeypair
   )
 
-  await airdrop(connection, payer, 2)
+  await amman.airdrop(connection, payer, 2)
 
   const ix = createInitializeInstruction({
     user: payer,
