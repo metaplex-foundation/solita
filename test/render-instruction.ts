@@ -165,7 +165,7 @@ test('ix: two accounts and two args', async (t) => {
   t.end()
 })
 
-test.only('ix: three accounts, two optional', async (t) => {
+test('ix: three accounts, two optional', async (t) => {
   const ix = <IdlInstruction>{
     name: 'choicy',
     accounts: [
@@ -207,4 +207,30 @@ test.only('ix: three accounts, two optional', async (t) => {
     ],
   })
   t.end()
+})
+
+test.only('ix: accounts render comments with and without desc', async (t) => {
+  const ix = <IdlInstruction>{
+    name: 'choicy',
+    accounts: [
+      {
+        name: 'withoutDesc',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'withDesc',
+        isMut: true,
+        isSigner: false,
+        desc: 'Use Authority Record PDA If present the program Assumes a delegated use authority',
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      /@property .+signer.+ withoutDesc/,
+      /@property .+writable.+ withDesc Use Authority Record PDA If present the program Assumes a delegated use authority/,
+    ],
+  })
 })

@@ -191,7 +191,6 @@ ${typeMapperImports.join('\n')}`.trim()
       .join('\n  ')
 
     const propertyComments = processedKeys
-      .filter(isIdlInstructionAccountWithDesc)
       // known pubkeys are not provided by the user and thus aren't part of the type
       .filter((x) => !isKnownPubkey(x.name))
       .map((x) => {
@@ -200,9 +199,9 @@ ${typeMapperImports.join('\n')}`.trim()
         if (x.isSigner) attrs.push('**signer**')
 
         const optional = x.optional ? ' (optional) ' : ' '
+        const desc = isIdlInstructionAccountWithDesc(x) ? x.desc : ''
         return (
-          ` * @property [${attrs.join(', ')}] ` +
-          `${x.name}${optional}${x.desc}`
+          `* @property [${attrs.join(', ')}] ` + `${x.name}${optional}${desc}`
         )
       })
 
