@@ -64,7 +64,10 @@ class TypeRenderer {
   // Imports
   // -----------------
   private renderImports() {
-    const imports = this.typeMapper.importsUsed(this.fullFileDir)
+    const imports = this.typeMapper.importsUsed(
+      this.fullFileDir,
+      new Set([BEET_PACKAGE])
+    )
     return imports.join('\n')
   }
 

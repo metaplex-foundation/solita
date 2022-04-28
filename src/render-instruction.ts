@@ -180,6 +180,7 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
+    if (processedKeys.length === 0) return ''
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = processedKeys
       .filter((x) => x.knownPubkey == null)
@@ -225,7 +226,19 @@ export type ${this.accountsTypename} = {
 `
   }
 
+  private renderAccountsParamDoc(processedKeys: ProcessedAccountKey[]) {
+    if (processedKeys.length === 0) return '  *'
+    return `  *
+  * @param accounts that will be accessed while the instruction is processed`
+  }
+
+  private renderAccountsArg(processedKeys: ProcessedAccountKey[]) {
+    if (processedKeys.length === 0) return ''
+    return `accounts: ${this.accountsTypename},\n`
+  }
+
   private renderAccountsDestructure(processedKeys: ProcessedAccountKey[]) {
+    if (processedKeys.length === 0) return ''
     const params = processedKeys
       .filter((x) => x.knownPubkey == null)
       .map((x) => `${x.name}`)
@@ -277,6 +290,8 @@ ${struct}`.trim()
     const argsStructType = this.renderDataStruct(processedArgs)
 
     const keys = this.renderIxAccountKeys(processedKeys)
+    const accountsParamDoc = this.renderAccountsParamDoc(processedKeys)
+    const accountsArg = this.renderAccountsArg(processedKeys)
     const accountsDestructure = this.renderAccountsDestructure(processedKeys)
     const instructionDisc = this.instructionDiscriminator.renderValue()
     const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
@@ -292,7 +307,7 @@ ${struct}`.trim()
       this.ix.args.length === 0
         ? ['', '', '']
         : [
-            `\n * @param args to provide as instruction data to the program`,
+            `\n * @param args to provide as instruction data to the program\n  *`,
             `args: ${this.argsTypename}`,
             '...args',
           ]
@@ -306,16 +321,13 @@ const ${this.instructionDiscriminatorName} = ${instructionDisc};
 
 /**
  * Creates a _${this.upperCamelIxName}_ instruction.
- * 
- * @param accounts that will be accessed while the instruction is processed${createInstructionArgsComment}
- *
+${accountsParamDoc}${createInstructionArgsComment}
  * @category Instructions
  * @category ${this.upperCamelIxName}
  * @category generated
  */
 export function create${this.upperCamelIxName}Instruction(
-  accounts: ${this.accountsTypename},
-  ${createInstructionArgs}
+  ${accountsArg}${createInstructionArgs}
 ) {
   ${accountsDestructure}
   const [data ] = ${this.structArgName}.serialize({ 
