@@ -74,6 +74,18 @@ class AccountRenderer {
         return `${f.name}: this.${f.name}.toBase58()`
       }
       if (
+        f.type === 'u64' ||
+        f.type === 'u128' ||
+        f.type === 'u256' ||
+        f.type === 'u512' ||
+        f.type === 'i64' ||
+        f.type === 'i128' ||
+        f.type === 'i256' ||
+        f.type === 'i512'
+      ) {
+        return `${f.name}: this.${f.name}.toString()`
+      }
+      if (
         isIdlTypeDefined(f.type) &&
         this.resolveFieldType(f.type.defined)?.kind === 'enum'
       ) {

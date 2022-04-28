@@ -23,10 +23,12 @@ async function checkRenderedAccount(
   account: IdlAccount,
   imports: SerdePackage[],
   opts: {
-    logImports: boolean
-    logCode: boolean
-  } = { logImports: DIAGNOSTIC_ON, logCode: DIAGNOSTIC_ON }
+    logImports?: boolean
+    logCode?: boolean
+    rxs?: RegExp[]
+  } = {}
 ) {
+  const { logImports = DIAGNOSTIC_ON, logCode = DIAGNOSTIC_ON } = opts
   const ts = renderAccount(
     account,
     ACCOUNT_FILE_DIR,
@@ -37,7 +39,7 @@ async function checkRenderedAccount(
     true
   )
 
-  if (opts.logCode) {
+  if (logCode) {
     console.log(
       `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`
     )
@@ -46,7 +48,12 @@ async function checkRenderedAccount(
   verifySyntacticCorrectness(t, ts)
 
   const analyzed = await analyzeCode(ts)
-  verifyImports(t, analyzed, imports, { logImports: opts.logImports })
+  verifyImports(t, analyzed, imports, { logImports })
+  if (opts.rxs != null) {
+    for (const rx of opts.rxs) {
+      t.match(ts, rx, `TypeScript matches: ${rx.toString()}`)
+    }
+  }
 }
 
 // TODO(thlorenz): Still renders args and causes compile issues
@@ -117,5 +124,41 @@ test('accounts: four fields', async (t) => {
     BEET_SOLANA_PACKAGE,
     SOLANA_WEB3_PACKAGE,
   ])
+  t.end()
+})
+
+test('accounts: pretty function for different types', async (t) => {
+  const account = <IdlAccount>{
+    name: 'AuctionHouse',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'auctionHouseFeeAccount',
+          type: 'publicKey',
+        },
+        {
+          name: 'feePayerBump',
+          type: 'u8',
+        },
+        {
+          name: 'someLargeNumber',
+          type: 'u64',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(
+    t,
+    account,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      rxs: [
+        /auctionHouseFeeAccount: this.auctionHouseFeeAccount.toBase58\(\)/,
+        /someLargeNumber: this.someLargeNumber.toString\(\)/,
+      ],
+    }
+  )
   t.end()
 })

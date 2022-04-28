@@ -48,7 +48,7 @@ async function checkRenderedIx(
   verifyImports(t, analyzed, imports, { logImports })
   if (opts.rxs != null) {
     for (const rx of opts.rxs) {
-      t.match(ts, rx)
+      t.match(ts, rx, `TypeScript matches ${rx.toString()}`)
     }
   }
 }
@@ -209,7 +209,7 @@ test('ix: three accounts, two optional', async (t) => {
   t.end()
 })
 
-test.only('ix: accounts render comments with and without desc', async (t) => {
+test('ix: accounts render comments with and without desc', async (t) => {
   const ix = <IdlInstruction>{
     name: 'choicy',
     accounts: [
