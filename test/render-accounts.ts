@@ -156,7 +156,7 @@ test('accounts: pretty function for different types', async (t) => {
     {
       rxs: [
         /auctionHouseFeeAccount: this.auctionHouseFeeAccount.toBase58\(\)/,
-        /someLargeNumber: this.someLargeNumber.toString\(\)/,
+        /const x = <{ toNumber: \(\) => number }>this.someLargeNumber/,
       ],
     }
   )

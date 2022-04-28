@@ -83,7 +83,15 @@ class AccountRenderer {
         f.type === 'i256' ||
         f.type === 'i512'
       ) {
-        return `${f.name}: this.${f.name}.toString()`
+        return `${f.name}: (() => {
+        const x = <{ toNumber: () => number }>this.${f.name}
+        if (typeof x.toNumber === 'function') {
+          try {
+            return x.toNumber()
+          } catch (_) { return x }
+        }
+        return x
+      })()`
       }
       if (
         isIdlTypeDefined(f.type) &&
