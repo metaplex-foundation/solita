@@ -14,6 +14,7 @@ import {
   isIdlTypeOption,
   isIdlTypeVec,
   PrimaryTypeMap,
+  PrimitiveTypeKey,
   TypeMappedSerdeField,
 } from './types'
 import { getOrCreate, logDebug, withoutTsExtension } from './utils'
@@ -60,6 +61,8 @@ export class TypeMapper {
     private readonly accountTypesPaths: Map<string, string> = new Map(),
     /** Custom types mapped { typeName: fullPath } */
     private readonly customTypesPaths: Map<string, string> = new Map(),
+    /** Aliases mapped { alias: actualType } */
+    private readonly typeAliases: Map<string, PrimitiveTypeKey> = new Map(),
     private readonly forceFixable: ForceFixable = FORCE_FIXABLE_NEVER,
     private readonly primaryTypeMap: PrimaryTypeMap = TypeMapper.defaultPrimaryTypeMap
   ) {}
@@ -92,7 +95,7 @@ export class TypeMapper {
   // -----------------
   // Map TypeScript Type
   // -----------------
-  private mapPrimitiveType(ty: IdlType & string, name: string) {
+  private mapPrimitiveType(ty: PrimitiveTypeKey, name: string) {
     this.assertBeetSupported(ty, 'map primitive type')
     const mapped = this.primaryTypeMap[ty]
     let typescriptType = mapped.ts
@@ -160,7 +163,10 @@ export class TypeMapper {
       return this.mapArrayType(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
-      return this.mapDefinedType(ty)
+      const alias = this.typeAliases.get(ty.defined)
+      return alias == null
+        ? this.mapDefinedType(ty)
+        : this.mapPrimitiveType(alias, name)
     }
     if (isIdlTypeEnum(ty)) {
       return this.mapEnumType(ty, name)
@@ -172,7 +178,7 @@ export class TypeMapper {
   // -----------------
   // Map Serde
   // -----------------
-  private mapPrimitiveSerde(ty: IdlType & string, name: string) {
+  private mapPrimitiveSerde(ty: PrimitiveTypeKey, name: string) {
     this.assertBeetSupported(ty, `account field ${name}`)
 
     if (ty === 'string') return this.mapStringSerde(ty)
@@ -279,7 +285,10 @@ export class TypeMapper {
       return this.mapEnumSerde(ty, name)
     }
     if (isIdlTypeDefined(ty)) {
-      return this.mapDefinedSerde(ty)
+      const alias = this.typeAliases.get(ty.defined)
+      return alias == null
+        ? this.mapDefinedSerde(ty)
+        : this.mapPrimitiveSerde(alias, name)
     }
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }

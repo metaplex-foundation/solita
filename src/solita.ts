@@ -6,6 +6,7 @@ import { renderInstruction } from './render-instruction'
 import { determineTypeIsFixable, renderType } from './render-type'
 import { strict as assert } from 'assert'
 import {
+  TypeAliases,
   Idl,
   IdlType,
   isIdlDefinedType,
@@ -13,6 +14,7 @@ import {
   isIdlTypeEnum,
   isShankIdl,
   SOLANA_WEB3_PACKAGE,
+  PrimitiveTypeKey,
 } from './types'
 import {
   logDebug,
@@ -43,6 +45,7 @@ export class Solita {
   private readonly formatOpts: Options
   private readonly accountsHaveImplicitDiscriminator: boolean
   private readonly prependGeneratedWarning: boolean
+  private readonly typeAliases: Map<string, PrimitiveTypeKey>
   private paths: Paths | undefined
   constructor(
     private readonly idl: Idl,
@@ -50,16 +53,19 @@ export class Solita {
       formatCode = false,
       formatOpts = {},
       prependGeneratedWarning = true,
+      typeAliases: aliases = {},
     }: {
       formatCode?: boolean
       formatOpts?: Options
       prependGeneratedWarning?: boolean
+      typeAliases?: TypeAliases
     } = {}
   ) {
     this.formatCode = formatCode
     this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
     this.prependGeneratedWarning = prependGeneratedWarning
     this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
+    this.typeAliases = new Map(Object.entries(aliases))
   }
 
   // -----------------
@@ -149,6 +155,7 @@ export class Solita {
           this.paths!.typesDir,
           accountFiles,
           customFiles,
+          this.typeAliases,
           forceFixable
         )
         // If the type by itself does not need to be fixable, here we detect if
@@ -186,6 +193,7 @@ export class Solita {
         programId,
         accountFiles,
         customFiles,
+        this.typeAliases,
         forceFixable
       )
       if (this.prependGeneratedWarning) {
@@ -214,6 +222,7 @@ export class Solita {
         this.paths.accountsDir,
         accountFiles,
         customFiles,
+        this.typeAliases,
         forceFixable,
         this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator

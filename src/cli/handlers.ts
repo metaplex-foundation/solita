@@ -83,7 +83,12 @@ async function handle(
       .on('exit', async () => {
         logInfo('IDL written to: %s', path.join(idlDir, `${programName}.json`))
         const idl = await enhanceIdl(config, binVersion, libVersion)
-        await generateTypeScriptSDK(idl, sdkDir, prettierConfig)
+        await generateTypeScriptSDK(
+          idl,
+          sdkDir,
+          prettierConfig,
+          config.typeAliases
+        )
         resolve()
       })
 

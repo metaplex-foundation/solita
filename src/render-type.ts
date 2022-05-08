@@ -4,6 +4,7 @@ import {
   IdlDefinedTypeDefinition,
   IdlField,
   isIdlTypeEnum,
+  PrimitiveTypeKey,
 } from './types'
 import { strict as assert } from 'assert'
 import { renderTypeDataStruct, serdePackageExportName } from './serdes'
@@ -153,11 +154,13 @@ export function renderType(
   fullFileDir: PathLike,
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
+  typeAliases: Map<string, PrimitiveTypeKey>,
   forceFixable: ForceFixable
 ) {
   const typeMapper = new TypeMapper(
     accountFilesByType,
     customFilesByType,
+    typeAliases,
     forceFixable
   )
   const renderer = new TypeRenderer(ty, fullFileDir, typeMapper)

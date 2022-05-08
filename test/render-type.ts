@@ -26,6 +26,7 @@ async function checkRenderedType(
     TYPE_FILE_DIR,
     new Map(),
     new Map([['Creator', '/module/of/creator.ts']]),
+    new Map(),
     FORCE_FIXABLE_NEVER
   )
   verifySyntacticCorrectness(t, ts.code)
