@@ -13,6 +13,7 @@
   - [Full Example: Token Metadata Solita + Shank Setup](#full-example-token-metadata-solita--shank-setup)
 - [Anchor + Solita Example (Recommended)](#anchor--solita-example-recommended)
   - [Full Example: MPL Candy Machine Solita + Anchor Setup](#full-example-mpl-candy-machine-solita--anchor-setup)
+- [Type Aliases](#type-aliases)
 - [Advanced Shank + Solita Example](#advanced-shank--solita-example)
 - [Advanced Anchor + Solita Example](#advanced-anchor--solita-example)
 - [Solita in the Wild](#solita-in-the-wild)
@@ -104,6 +105,22 @@ Since we're writing the _anchor_ binary to `.crates/` you should add that folder
   
 - [annotated anchor program](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/candy-machine/program/src/lib.rs) 
 - [generated TypeScript](https://github.com/metaplex-foundation/metaplex-program-library/tree/master/candy-machine/js/src/generated)
+
+## Type Aliases
+
+In order to have Solita resolve specific types to a Rust builtin type please provide a
+type alias map as in the below config. Solita then will treat those as if they were the aliased
+type.
+
+```js
+module.exports = {
+  idlGenerator: 'anchor',
+  [ .. ]
+  typeAliases: {
+    UnixTimestamp: 'i64'
+  }
+};
+```
 
 ## Advanced Shank + Solita Example
 
