@@ -34,6 +34,7 @@ async function checkRenderedAccount(
     ACCOUNT_FILE_DIR,
     new Map(),
     new Map(),
+    new Map(),
     FORCE_FIXABLE_NEVER,
     (_: string) => null,
     true

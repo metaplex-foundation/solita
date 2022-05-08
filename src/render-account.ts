@@ -6,6 +6,7 @@ import {
   BEET_PACKAGE,
   IdlAccount,
   isIdlTypeDefined,
+  PrimitiveTypeKey,
   ResolveFieldType,
   SOLANA_WEB3_PACKAGE,
   TypeMappedSerdeField,
@@ -397,6 +398,7 @@ export function renderAccount(
   fullFileDir: PathLike,
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
+  typeAliases: Map<string, PrimitiveTypeKey>,
   forceFixable: ForceFixable,
   resolveFieldType: ResolveFieldType,
   hasImplicitDiscriminator: boolean
@@ -404,6 +406,7 @@ export function renderAccount(
   const typeMapper = new TypeMapper(
     accountFilesByType,
     customFilesByType,
+    typeAliases,
     forceFixable
   )
   const renderer = new AccountRenderer(

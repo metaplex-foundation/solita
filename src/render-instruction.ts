@@ -8,6 +8,7 @@ import {
   TypeMappedSerdeField,
   SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
+  PrimitiveTypeKey,
 } from './types'
 import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -351,11 +352,13 @@ export function renderInstruction(
   programId: string,
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
+  typeAliases: Map<string, PrimitiveTypeKey>,
   forceFixable: ForceFixable
 ) {
   const typeMapper = new TypeMapper(
     accountFilesByType,
     customFilesByType,
+    typeAliases,
     forceFixable
   )
   const renderer = new InstructionRenderer(

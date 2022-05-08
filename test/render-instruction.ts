@@ -35,6 +35,7 @@ async function checkRenderedIx(
     PROGRAM_ID,
     new Map(),
     new Map(),
+    new Map(),
     FORCE_FIXABLE_NEVER
   )
   verifySyntacticCorrectness(t, ts)

@@ -14,6 +14,11 @@ import {
 import { SerdePackage } from './serdes'
 
 // -----------------
+// Config
+// -----------------
+export type TypeAliases = Record<string, PrimitiveTypeKey>
+
+// -----------------
 // IDL
 // -----------------
 export type IdlField = {
@@ -135,8 +140,9 @@ export type ShankMetadata = Idl['metadata'] & { origin: 'shank' }
 // -----------------
 // De/Serializers + Extensions
 // -----------------
+export type PrimitiveTypeKey = BeetTypeMapKey | BeetSolanaTypeMapKey
 export type PrimaryTypeMap = Record<
-  BeetTypeMapKey | BeetSolanaTypeMapKey,
+  PrimitiveTypeKey,
   SupportedTypeDefinition & {
     beet: BeetExports | BeetSolanaExports
   }
