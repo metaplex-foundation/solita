@@ -198,7 +198,7 @@ test('accounts: one field with custom serializers', async (t) => {
     {
       serializers,
       rxs: [
-        /import \* as customSerializer from '(\.\.\/){3}custom\/serializer\.ts/i,
+        /import \* as customSerializer from '(\.\.\/){3}custom\/serializer'/i,
         /const resolvedSerialize = typeof serializer\.serialize === 'function'/,
         /\? serializer\.serialize\.bind\(serializer\)/,
         /\: auctionHouseBeet\.serialize\.bind\(auctionHouseBeet\)/i,

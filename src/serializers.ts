@@ -36,12 +36,17 @@ export class CustomSerializers {
     builtinSerializer: string
   ): SerializerSnippets {
     const p = this.serializerPathFor(typeName, modulePath)
+    const mdl = (() => {
+      if (p == null) return null
+      const ext = path.extname(p)
+      return ext.length > 0 ? p.slice(0, -ext.length) : p
+    })()
 
     const importSnippet =
-      p == null ? '' : `import * as customSerializer from '${p}';\n`
+      mdl == null ? '' : `import * as customSerializer from '${mdl}';\n`
 
     const resolveFunctionsSnippet =
-      p == null
+      mdl == null
         ? [
             `const resolvedSerialize = ${builtinSerializer}.serialize.bind(${builtinSerializer})`,
             `const resolvedDeserialize = ${builtinSerializer}.deserialize.bind(${builtinSerializer})`,
