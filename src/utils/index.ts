@@ -1,10 +1,11 @@
-import { PathLike, promises as fs } from 'fs'
+import { PathLike, promises as fs, accessSync } from 'fs'
 import path from 'path'
 import { sha256 } from 'js-sha256'
 import camelcase from 'camelcase'
 import { snakeCase } from 'snake-case'
 import { IdlTypeArray } from '../types'
 import { TypeMapper } from '../type-mapper'
+import { R_OK, W_OK } from 'constants'
 
 export * from './logs'
 
@@ -45,9 +46,22 @@ async function cleanDir(dir: PathLike) {
   return Promise.all(unlinks)
 }
 
-export async function canAccess(p: PathLike) {
+export async function canAccess(p: PathLike, mode: number = R_OK | W_OK) {
   try {
-    await fs.access(p)
+    await fs.access(p, mode)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+/**
+ * Ensures that a file or directory is accessible to the current user.
+ * @private
+ */
+export function canAccessSync(p: PathLike, mode: number = R_OK | W_OK) {
+  try {
+    accessSync(p, mode)
     return true
   } catch (_) {
     return false

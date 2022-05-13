@@ -14,6 +14,7 @@
 - [Anchor + Solita Example (Recommended)](#anchor--solita-example-recommended)
   - [Full Example: MPL Candy Machine Solita + Anchor Setup](#full-example-mpl-candy-machine-solita--anchor-setup)
 - [Type Aliases](#type-aliases)
+- [Custom De/Serializers](#custom-deserializers)
 - [Advanced Shank + Solita Example](#advanced-shank--solita-example)
 - [Advanced Anchor + Solita Example](#advanced-anchor--solita-example)
 - [Solita in the Wild](#solita-in-the-wild)
@@ -119,6 +120,36 @@ module.exports = {
   typeAliases: {
     UnixTimestamp: 'i64'
   }
+};
+```
+
+## Custom De/Serializers
+
+For some accounts the generated de/serializers don't work. In those cases a custom
+de/serializer can be specified.
+
+This is as simple as adding a module to your project which exports a either or both of the
+below functions:
+
+```ts
+export function deserialize(buf: Buffer, offset = 0): [<Account>, number] {
+  [..]
+}
+
+export function serialize(instance: <Account>Args, byteSize?: number): [Buffer, number]
+  [..]
+}
+```
+
+Then provide them as `serializers` to `Solita` or via the solita config:
+
+```js
+module.exports = {
+  idlGenerator: 'shank',
+  [ .. ]
+  serializers: {
+    Metadata: './src/custom/metadata-deserializer.ts',
+  },
 };
 ```
 

@@ -2,6 +2,7 @@ import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import test, { Test } from 'tape'
 import { renderAccount } from '../src/render-account'
 import { SerdePackage } from '../src/serdes'
+import { CustomSerializers } from '../src/serializers'
 import { FORCE_FIXABLE_NEVER } from '../src/type-mapper'
 import {
   BEET_SOLANA_PACKAGE,
@@ -16,7 +17,8 @@ import {
 
 const DIAGNOSTIC_ON = false
 
-const ACCOUNT_FILE_DIR = '/root/app/accounts/'
+const ROOT_DIR = '/tmp/root'
+const ACCOUNT_FILE_DIR = `${ROOT_DIR}/src/generated/accounts/account-uno.ts`
 
 async function checkRenderedAccount(
   t: Test,
@@ -26,15 +28,21 @@ async function checkRenderedAccount(
     logImports?: boolean
     logCode?: boolean
     rxs?: RegExp[]
+    serializers?: CustomSerializers
   } = {}
 ) {
-  const { logImports = DIAGNOSTIC_ON, logCode = DIAGNOSTIC_ON } = opts
+  const {
+    logImports = DIAGNOSTIC_ON,
+    logCode = DIAGNOSTIC_ON,
+    serializers = CustomSerializers.empty,
+  } = opts
   const ts = renderAccount(
     account,
     ACCOUNT_FILE_DIR,
     new Map(),
     new Map(),
     new Map(),
+    serializers,
     FORCE_FIXABLE_NEVER,
     (_: string) => null,
     true
@@ -158,6 +166,42 @@ test('accounts: pretty function for different types', async (t) => {
       rxs: [
         /auctionHouseFeeAccount: this.auctionHouseFeeAccount.toBase58\(\)/,
         /const x = <{ toNumber: \(\) => number }>this.someLargeNumber/,
+      ],
+    }
+  )
+  t.end()
+})
+
+test('accounts: one field with custom serializers', async (t) => {
+  const account = <IdlAccount>{
+    name: 'AuctionHouse',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'auctionHouseFeeAccount',
+          type: 'publicKey',
+        },
+      ],
+    },
+  }
+
+  const serializers = CustomSerializers.create(
+    ROOT_DIR,
+    new Map([['AuctionHouse', 'src/custom/serializer.ts']])
+  )
+
+  await checkRenderedAccount(
+    t,
+    account,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      serializers,
+      rxs: [
+        /import \* as customSerializer from '(\.\.\/){3}custom\/serializer'/i,
+        /const resolvedSerialize = typeof serializer\.serialize === 'function'/,
+        /\? serializer\.serialize\.bind\(serializer\)/,
+        /\: auctionHouseBeet\.serialize\.bind\(auctionHouseBeet\)/i,
       ],
     }
   )

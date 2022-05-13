@@ -1,8 +1,8 @@
 import { RustbinConfig } from '@metaplex-foundation/rustbin'
-import { TypeAliases } from '../types'
+import { Serializers, TypeAliases } from '../types'
 export { RustbinConfig }
 
-type SolitaConfigBase = {
+export type SolitaConfigBase = {
   programName: string
   idlDir: string
   sdkDir: string
@@ -10,6 +10,7 @@ type SolitaConfigBase = {
   programDir: string
   rustbin?: RustbinConfig
   typeAliases?: TypeAliases
+  serializers?: Serializers
 }
 
 export type SolitaConfigAnchor = SolitaConfigBase & {

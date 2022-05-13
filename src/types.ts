@@ -17,6 +17,12 @@ import { SerdePackage } from './serdes'
 // Config
 // -----------------
 export type TypeAliases = Record<string, PrimitiveTypeKey>
+/**
+ * Key: account name for which to customize de/serializer
+ * Value: path to module from project root providing `serialize` and/or
+ *        `deserialize` methods
+ */
+export type Serializers = Record<string, string>
 
 // -----------------
 // IDL
