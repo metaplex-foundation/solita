@@ -87,7 +87,8 @@ async function handle(
           idl,
           sdkDir,
           prettierConfig,
-          config.typeAliases
+          config.typeAliases,
+          config.serializers
         )
         resolve()
       })
