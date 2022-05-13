@@ -1,6 +1,7 @@
 import { PathLike } from 'fs'
 import { renderScalarEnums } from './render-enums'
 import { renderDataStruct } from './serdes'
+import { CustomSerializers, SerializerSnippets } from './serializers'
 import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
@@ -32,12 +33,15 @@ class AccountRenderer {
   readonly accountDiscriminatorName: string
   readonly beetName: string
 
+  readonly serializerSnippets: SerializerSnippets
+
   constructor(
     private readonly account: IdlAccount,
     private readonly fullFileDir: PathLike,
     private readonly hasImplicitDiscriminator: boolean,
     private readonly resolveFieldType: ResolveFieldType,
-    private readonly typeMapper: TypeMapper
+    private readonly typeMapper: TypeMapper,
+    private readonly serializers: CustomSerializers
   ) {
     this.upperCamelAccountName = account.name
       .charAt(0)
@@ -53,6 +57,12 @@ class AccountRenderer {
     this.accountDataArgsTypeName = `${this.accountDataClassName}Args`
     this.beetName = `${this.camelAccountName}Beet`
     this.accountDiscriminatorName = `${this.camelAccountName}Discriminator`
+
+    this.serializerSnippets = this.serializers.snippetsFor(
+      this.account.name,
+      this.fullFileDir as string,
+      this.beetName
+    )
   }
 
   private serdeProcess() {
@@ -309,7 +319,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
     buf: Buffer,
     offset = 0
   ): [ ${this.accountDataClassName}, number ]{
-    return ${this.beetName}.deserialize(buf, offset);
+    return ${this.serializerSnippets.deserialize}(buf, offset);
   }
 
   /**
@@ -317,7 +327,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
    * @returns a tuple of the created Buffer and the offset up to which the buffer was written to store it.
    */
   serialize(): [ Buffer, number ] {
-    return ${this.beetName}.serialize(${serializeValue})
+    return ${this.serializerSnippets.serialize}(${serializeValue})
   }
 
   ${byteSizeMethods}
@@ -382,6 +392,7 @@ ${struct}`.trim()
     const accountDataClass = this.renderAccountDataClass(typedFields)
     const beetDecl = this.renderBeet(beetFields)
     return `${imports}
+${this.serializerSnippets.importSnippet}
 
 ${enums}
 
@@ -389,7 +400,9 @@ ${accountDataArgsType}
 
 ${accountDataClass}
 
-${beetDecl}`
+${beetDecl}
+
+${this.serializerSnippets.resolveFunctionsSnippet}`
   }
 }
 
@@ -399,6 +412,7 @@ export function renderAccount(
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
   typeAliases: Map<string, PrimitiveTypeKey>,
+  serializers: CustomSerializers,
   forceFixable: ForceFixable,
   resolveFieldType: ResolveFieldType,
   hasImplicitDiscriminator: boolean
@@ -414,7 +428,8 @@ export function renderAccount(
     fullFileDir,
     hasImplicitDiscriminator,
     resolveFieldType,
-    typeMapper
+    typeMapper,
+    serializers
   )
   return renderer.render()
 }

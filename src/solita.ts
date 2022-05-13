@@ -15,6 +15,7 @@ import {
   isShankIdl,
   SOLANA_WEB3_PACKAGE,
   PrimitiveTypeKey,
+  Serializers,
 } from './types'
 import {
   logDebug,
@@ -26,6 +27,7 @@ import {
 } from './utils'
 import { format, Options } from 'prettier'
 import { Paths } from './paths'
+import { CustomSerializers } from './serializers'
 
 export * from './types'
 
@@ -46,6 +48,8 @@ export class Solita {
   private readonly accountsHaveImplicitDiscriminator: boolean
   private readonly prependGeneratedWarning: boolean
   private readonly typeAliases: Map<string, PrimitiveTypeKey>
+  private readonly serializers: CustomSerializers
+  private readonly projectRoot: string
   private paths: Paths | undefined
   constructor(
     private readonly idl: Idl,
@@ -53,25 +57,34 @@ export class Solita {
       formatCode = false,
       formatOpts = {},
       prependGeneratedWarning = true,
-      typeAliases: aliases = {},
+      typeAliases = {},
+      serializers = {},
+      projectRoot = process.cwd(),
     }: {
       formatCode?: boolean
       formatOpts?: Options
       prependGeneratedWarning?: boolean
       typeAliases?: TypeAliases
+      serializers?: Serializers
+      projectRoot?: string
     } = {}
   ) {
+    this.projectRoot = projectRoot
     this.formatCode = formatCode
     this.formatOpts = { ...DEFAULT_FORMAT_OPTS, ...formatOpts }
     this.prependGeneratedWarning = prependGeneratedWarning
     this.accountsHaveImplicitDiscriminator = !isShankIdl(idl)
-    this.typeAliases = new Map(Object.entries(aliases))
+    this.typeAliases = new Map(Object.entries(typeAliases))
+    this.serializers = CustomSerializers.create(
+      this.projectRoot,
+      new Map(Object.entries(serializers))
+    )
   }
 
   // -----------------
   // Extract
   // -----------------
-  accountFilesByType() {
+  private accountFilesByType() {
     assert(this.paths != null, 'should have set paths')
     return new Map(
       this.idl.accounts?.map((x) => [
@@ -81,14 +94,14 @@ export class Solita {
     )
   }
 
-  customFilesByType() {
+  private customFilesByType() {
     assert(this.paths != null, 'should have set paths')
     return new Map(
       this.idl.types?.map((x) => [x.name, this.paths!.typeFile(x.name)]) ?? []
     )
   }
 
-  resolveFieldType = (typeName: string) => {
+  private resolveFieldType = (typeName: string) => {
     for (const acc of this.idl.accounts ?? []) {
       if (acc.name === typeName) return acc.type
     }
@@ -223,6 +236,7 @@ export class Solita {
         accountFiles,
         customFiles,
         this.typeAliases,
+        this.serializers,
         forceFixable,
         this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator
@@ -364,7 +378,7 @@ export class Solita {
   // Main Index File
   // -----------------
 
-  async writeMainIndex(reexports: string[]) {
+  private async writeMainIndex(reexports: string[]) {
     assert(this.paths != null, 'should have set paths')
 
     const programAddress = this.idl.metadata.address
