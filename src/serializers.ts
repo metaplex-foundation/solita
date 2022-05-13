@@ -47,10 +47,7 @@ export class CustomSerializers {
 
     const resolveFunctionsSnippet =
       mdl == null
-        ? [
-            `const resolvedSerialize = ${builtinSerializer}.serialize.bind(${builtinSerializer})`,
-            `const resolvedDeserialize = ${builtinSerializer}.deserialize.bind(${builtinSerializer})`,
-          ].join('\n')
+        ? ''
         : `
 const serializer = customSerializer as unknown as {
   serialize: typeof ${builtinSerializer}.serialize;
@@ -68,8 +65,12 @@ const resolvedDeserialize = typeof serializer.deserialize === 'function'
     return {
       importSnippet,
       resolveFunctionsSnippet,
-      serialize: 'resolvedSerialize',
-      deserialize: 'resolvedDeserialize',
+      serialize:
+        mdl == null ? `${builtinSerializer}.serialize` : 'resolvedSerialize',
+      deserialize:
+        mdl == null
+          ? `${builtinSerializer}.deserialize`
+          : 'resolvedDeserialize',
     }
   }
 }
