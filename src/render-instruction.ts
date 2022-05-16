@@ -317,7 +317,7 @@ ${enums}
 ${ixArgType}
 ${argsStructType}
 ${accountsType}
-const ${this.instructionDiscriminatorName} = ${instructionDisc};
+export const ${this.instructionDiscriminatorName} = ${instructionDisc};
 
 /**
  * Creates a _${this.upperCamelIxName}_ instruction.

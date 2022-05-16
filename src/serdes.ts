@@ -155,7 +155,7 @@ export function renderDataStruct({
     // -----------------
     // Beet Args Struct (Instruction)
     // -----------------
-    return `const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${structType}>(
+    return `export const ${structVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${structType}>(
   [
     ${discriminatorDecl}
     ${fieldDecls}
