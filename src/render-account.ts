@@ -236,7 +236,7 @@ export type ${this.accountDataArgsTypeName} = {
       Array.from(accountDiscriminator(this.account.name))
     )
 
-    return `const ${this.accountDiscriminatorName} = ${accountDisc}`
+    return `export const ${this.accountDiscriminatorName} = ${accountDisc}`
   }
 
   private renderAccountDataClass(fields: { name: string; tsType: string }[]) {
