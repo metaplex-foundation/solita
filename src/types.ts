@@ -70,9 +70,20 @@ export type IdlEnumVariant = {
   name: string
 }
 
-export type IdlTypeEnum = {
+export type IdlDataEnumVariant = {
+  name: string
+  fields: IdlField[]
+}
+
+export type IdlTypeEnum = IdlTypeScalarEnum | IdlTypeDataEnum
+export type IdlTypeScalarEnum = {
   kind: 'enum'
   variants: IdlEnumVariant[]
+}
+
+export type IdlTypeDataEnum = {
+  kind: 'enum'
+  variants: IdlDataEnumVariant[]
 }
 
 export type IdlDefinedType = {
@@ -193,6 +204,19 @@ export function isIdlTypeEnum(
   ty: IdlType | IdlDefinedType | IdlTypeEnum
 ): ty is IdlTypeEnum {
   return (ty as IdlTypeEnum).variants != null
+}
+
+export function isIdlTypeDataEnum(ty: IdlTypeEnum): ty is IdlTypeDataEnum {
+  const scalar = ty as IdlTypeDataEnum
+  return (
+    scalar.variants != null &&
+    scalar.variants.length > 0 &&
+    scalar.variants[0].fields != null
+  )
+}
+
+export function isIdlTypeScalarEnum(ty: IdlTypeEnum): ty is IdlTypeScalarEnum {
+  return !isIdlTypeDataEnum(ty)
 }
 
 export function isIdlDefinedType(
