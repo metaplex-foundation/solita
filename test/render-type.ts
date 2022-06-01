@@ -2,7 +2,7 @@ import test, { Test } from 'tape'
 import { renderType } from '../src/render-type'
 import { SerdePackage } from '../src/serdes'
 import { FORCE_FIXABLE_NEVER } from '../src/type-mapper'
-import { BEET_PACKAGE, IdlDefinedTypeDefinition } from '../src/types'
+import { BEET_PACKAGE, IdlDefinedTypeDefinition, IdlField } from '../src/types'
 import {
   analyzeCode,
   verifyImports,
@@ -34,7 +34,7 @@ async function checkRenderedType(
   const analyzed = await analyzeCode(ts.code)
   if (opts.logCode) {
     console.log(
-      `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`
+      `--------- <TypeScript> --------\n${ts.code}\n--------- </TypeScript> --------`
     )
   }
   verifyImports(t, analyzed, imports, { logImports: opts.logImports })
@@ -118,4 +118,50 @@ test('types: with four fields, one referring to other defined type', async (t) =
 
   await checkRenderedType(t, ty, [BEET_PACKAGE])
   t.end()
+})
+
+test.only('types: enum with inline data', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CollectionInfo',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'V1',
+          fields: [
+            {
+              name: 'symbol',
+              type: 'string',
+            },
+            {
+              name: 'verified_creators',
+              type: {
+                vec: 'publicKey',
+              },
+            },
+            {
+              name: 'whitelist_root',
+              type: {
+                array: ['u8', 32],
+              },
+            },
+          ],
+        },
+        {
+          name: 'V2',
+          fields: [
+            {
+              name: 'collection_mint',
+              type: 'publicKey',
+            },
+          ],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: true,
+    logImports: true,
+  })
 })
