@@ -37,7 +37,7 @@ export function renderTypeDataEnumBeet(args: {
     ? 'FixableBeetArgsStruct'
     : 'BeetArgsStruct'
 
-  return `export const ${beetVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${enumRecordName}>(${renderedBeets})
+  return `export const ${beetVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${enumRecordName}>([ ${renderedBeets} ])
 `
 }
 
@@ -99,6 +99,7 @@ export function renderDataEnumRecord(
  * This type is used to derive the {@link ${typeName}} type as well as the de/serializer.
  * However don't refer to it in your code but use the {@link ${typeName}} type instead.
  *
+ * @category userTypes
  * @category enums
  * @category generated
  * @private
@@ -114,6 +115,7 @@ export type ${typeName}Record = {
  * switch/if statements.
  * Additionally \`is${typeName}*\` type guards are exposed below to narrow to a specific variant.
  *
+ * @category userTypes
  * @category enums
  * @category generated
  */
