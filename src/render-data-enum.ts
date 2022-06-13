@@ -37,7 +37,9 @@ export function renderTypeDataEnumBeet(args: {
     ? 'FixableBeetArgsStruct'
     : 'BeetArgsStruct'
 
-  return `export const ${beetVarName} = new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${enumRecordName}>([ ${renderedBeets} ])
+  return `export const ${beetVarName} = ${BEET_EXPORT_NAME}.dataEnum<${enumRecordName}>([
+  ${renderedBeets} 
+]) as ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>
 `
 }
 
