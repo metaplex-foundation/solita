@@ -6,7 +6,9 @@ import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
   IdlAccount,
+  isIdlTypeDataEnum,
   isIdlTypeDefined,
+  isIdlTypeEnum,
   PrimitiveTypeKey,
   ResolveFieldType,
   SOLANA_WEB3_PACKAGE,
@@ -104,10 +106,8 @@ class AccountRenderer {
         return x
       })()`
       }
-      if (
-        isIdlTypeDefined(f.type) &&
-        this.resolveFieldType(f.type.defined)?.kind === 'enum'
-      ) {
+      // TODO(thlorenz): Improve rendering of data enums
+      if (isIdlTypeDefined(f.type) && isIdlTypeEnum(f.type)) {
         const tsType = this.typeMapper.map(f.type, f.name)
         const variant = `${tsType}[this.${f.name}`
         return `${f.name}: '${f.type.defined}.' + ${variant}]`
