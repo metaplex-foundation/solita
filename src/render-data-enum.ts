@@ -1,3 +1,4 @@
+import camelcase from 'camelcase'
 import { TypeMapper } from './type-mapper'
 import { BEET_EXPORT_NAME, IdlDataEnumVariant, IdlTypeDataEnum } from './types'
 
@@ -15,7 +16,7 @@ export function renderTypeDataEnumBeet(args: {
 
   const renderedVariants = dataEnum.variants.map((variant) => {
     const tm = typeMapper.clone()
-    const { beet } = renderVariant(tm, enumRecordName, variant)
+    const beet = renderVariant(tm, enumRecordName, variant)
     for (const used of tm.serdePackagesUsed) {
       typeMapper.serdePackagesUsed.add(used)
     }
@@ -48,7 +49,8 @@ function renderVariant(
   const mappedFields = typeMapper.mapSerdeFields(variant.fields)
   const fieldDecls = mappedFields
     .map((f) => {
-      return `  ['${f.name}', ${f.type}]`
+      const fieldName = camelcase(f.name)
+      return `  ['${fieldName}', ${f.type}]`
     })
     .join(',\n    ')
 
@@ -68,7 +70,7 @@ function renderVariant(
     '${typeName}'
   )]`
 
-  return { beet }
+  return beet
 }
 
 export function renderDataEnumRecord(
@@ -79,7 +81,8 @@ export function renderDataEnumRecord(
   const renderedVariants = variants.map((variant) => {
     const fields = variant.fields.map((f) => {
       const typescriptType = typeMapper.map(f.type, f.name)
-      return `${f.name}: ${typescriptType}`
+      const fieldName = camelcase(f.name)
+      return `${fieldName}: ${typescriptType}`
     })
     return `  ${variant.name}: { ${fields.join(', ')} }`
   })
