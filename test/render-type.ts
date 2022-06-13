@@ -2,7 +2,13 @@ import test, { Test } from 'tape'
 import { renderType } from '../src/render-type'
 import { SerdePackage } from '../src/serdes'
 import { FORCE_FIXABLE_NEVER } from '../src/type-mapper'
-import { BEET_PACKAGE, IdlDefinedTypeDefinition, IdlField } from '../src/types'
+import {
+  BEET_PACKAGE,
+  BEET_SOLANA_PACKAGE,
+  IdlDefinedTypeDefinition,
+  IdlField,
+  SOLANA_WEB3_PACKAGE,
+} from '../src/types'
 import {
   analyzeCode,
   verifyImports,
@@ -29,14 +35,14 @@ async function checkRenderedType(
     new Map(),
     FORCE_FIXABLE_NEVER
   )
-  verifySyntacticCorrectness(t, ts.code)
-
-  const analyzed = await analyzeCode(ts.code)
   if (opts.logCode) {
     console.log(
       `--------- <TypeScript> --------\n${ts.code}\n--------- </TypeScript> --------`
     )
   }
+  verifySyntacticCorrectness(t, ts.code)
+
+  const analyzed = await analyzeCode(ts.code)
   verifyImports(t, analyzed, imports, { logImports: opts.logImports })
 }
 
@@ -120,7 +126,7 @@ test('types: with four fields, one referring to other defined type', async (t) =
   t.end()
 })
 
-test.only('types: enum with inline data', async (t) => {
+test('types: enum with inline data', async (t) => {
   const ty = <IdlDefinedTypeDefinition>{
     name: 'CollectionInfo',
     type: {
@@ -160,8 +166,13 @@ test.only('types: enum with inline data', async (t) => {
     },
   }
 
-  await checkRenderedType(t, ty, [BEET_PACKAGE], {
-    logCode: true,
-    logImports: true,
-  })
+  await checkRenderedType(
+    t,
+    ty,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      logCode: false,
+      logImports: false,
+    }
+  )
 })
