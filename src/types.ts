@@ -48,6 +48,7 @@ export type IdlType =
   | IdlTypeVec
   | IdlTypeArray
   | IdlTypeEnum
+  | IdlTypeDataEnum
 
 // User defined type.
 export type IdlTypeDefined = {
@@ -217,8 +218,10 @@ export function isIdlTypeDataEnum(
   )
 }
 
-export function isIdlTypeScalarEnum(ty: IdlTypeEnum): ty is IdlTypeScalarEnum {
-  return !isIdlTypeDataEnum(ty)
+export function isIdlTypeScalarEnum(
+  ty: IdlType | IdlDefinedType | IdlTypeEnum
+): ty is IdlTypeScalarEnum {
+  return isIdlTypeEnum(ty) && !isIdlTypeDataEnum(ty)
 }
 
 export function isIdlDefinedType(

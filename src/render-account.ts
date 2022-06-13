@@ -9,6 +9,7 @@ import {
   isIdlTypeDataEnum,
   isIdlTypeDefined,
   isIdlTypeEnum,
+  isIdlTypeScalarEnum,
   PrimitiveTypeKey,
   ResolveFieldType,
   SOLANA_WEB3_PACKAGE,
@@ -106,11 +107,17 @@ class AccountRenderer {
         return x
       })()`
       }
+
       // TODO(thlorenz): Improve rendering of data enums
-      if (isIdlTypeDefined(f.type) && isIdlTypeEnum(f.type)) {
-        const tsType = this.typeMapper.map(f.type, f.name)
-        const variant = `${tsType}[this.${f.name}`
-        return `${f.name}: '${f.type.defined}.' + ${variant}]`
+
+      if (isIdlTypeDefined(f.type)) {
+        const resolved = this.resolveFieldType(f.type.defined)
+
+        if (resolved != null && isIdlTypeScalarEnum(resolved)) {
+          const tsType = this.typeMapper.map(f.type, f.name)
+          const variant = `${tsType}[this.${f.name}`
+          return `${f.name}: '${f.type.defined}.' + ${variant}]`
+        }
       }
 
       return `${f.name}: this.${f.name}`

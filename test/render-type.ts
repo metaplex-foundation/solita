@@ -6,7 +6,6 @@ import {
   BEET_PACKAGE,
   BEET_SOLANA_PACKAGE,
   IdlDefinedTypeDefinition,
-  IdlField,
   SOLANA_WEB3_PACKAGE,
 } from '../src/types'
 import {

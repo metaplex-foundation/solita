@@ -16,6 +16,9 @@ import {
   SOLANA_WEB3_PACKAGE,
   PrimitiveTypeKey,
   Serializers,
+  IdlTypeDataEnum,
+  IdlTypeEnum,
+  IdlDefinedType,
 } from './types'
 import {
   logDebug,
@@ -101,7 +104,9 @@ export class Solita {
     )
   }
 
-  private resolveFieldType = (typeName: string) => {
+  private resolveFieldType = (
+    typeName: string
+  ): IdlDefinedType | IdlTypeEnum | IdlTypeDataEnum | null => {
     for (const acc of this.idl.accounts ?? []) {
       if (acc.name === typeName) return acc.type
     }
