@@ -8,7 +8,6 @@ import {
   IdlAccount,
   isIdlTypeDataEnum,
   isIdlTypeDefined,
-  isIdlTypeEnum,
   isIdlTypeScalarEnum,
   PrimitiveTypeKey,
   ResolveFieldType,
@@ -108,8 +107,6 @@ class AccountRenderer {
       })()`
       }
 
-      // TODO(thlorenz): Improve rendering of data enums
-
       if (isIdlTypeDefined(f.type)) {
         const resolved = this.resolveFieldType(f.type.defined)
 
@@ -117,6 +114,10 @@ class AccountRenderer {
           const tsType = this.typeMapper.map(f.type, f.name)
           const variant = `${tsType}[this.${f.name}`
           return `${f.name}: '${f.type.defined}.' + ${variant}]`
+        }
+        if (resolved != null && isIdlTypeDataEnum(resolved)) {
+          // TODO(thlorenz): Improve rendering of data enums to include other fields
+          return `${f.name}: this.${f.name}.__kind`
         }
       }
 
