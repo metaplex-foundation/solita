@@ -1,0 +1,142 @@
+{
+  "version": "0.1.0",
+  "name": "solvent",
+  "instructions": [
+    {
+      "name": "createBucket",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "solventAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "authority-seed"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bucketState",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "Mint",
+                "path": "droplet_mint"
+              },
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "bucket-seed-v3"
+              }
+            ]
+          }
+        },
+        {
+          "name": "dropletMint",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "collectionInfo",
+          "type": {
+            "defined": "CollectionInfo"
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BucketStateV3",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "dropletMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "collectionInfo",
+            "type": {
+              "defined": "CollectionInfo"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "CollectionInfo",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "V1",
+            "fields": [
+              {
+                "name": "symbol",
+                "type": "string"
+              },
+              {
+                "name": "verified_creators",
+                "type": {
+                  "vec": "publicKey"
+                }
+              },
+              {
+                "name": "whitelist_root",
+                "type": {
+                  "array": ["u8", 32]
+                }
+              }
+            ]
+          },
+          {
+            "name": "V2",
+            "fields": [
+              {
+                "name": "collection_mint",
+                "type": "publicKey"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

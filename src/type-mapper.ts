@@ -74,6 +74,16 @@ export class TypeMapper {
     this.scalarEnumsUsed.clear()
   }
 
+  clone() {
+    return new TypeMapper(
+      this.accountTypesPaths,
+      this.customTypesPaths,
+      this.typeAliases,
+      this.forceFixable,
+      this.primaryTypeMap
+    )
+  }
+
   private updateUsedFixableSerde(ty: SupportedTypeDefinition) {
     this.usedFixableSerde = this.usedFixableSerde || ty.isFixable
   }
