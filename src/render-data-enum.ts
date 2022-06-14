@@ -33,13 +33,11 @@ export function renderTypeDataEnumBeet(args: {
     .join(',\n')
 
   const enumIsFixable = renderedVariants.some((x) => x.usedFixableSerde)
-  const beetArgsStructType = enumIsFixable
-    ? 'FixableBeetArgsStruct'
-    : 'BeetArgsStruct'
+  const beetType = enumIsFixable ? 'FixableBeet' : 'FixedSizeBeet'
 
   return `export const ${beetVarName} = ${BEET_EXPORT_NAME}.dataEnum<${enumRecordName}>([
   ${renderedBeets} 
-]) as ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>
+]) as ${BEET_EXPORT_NAME}.${beetType}<${typeName}>
 `
 }
 
