@@ -134,7 +134,7 @@ export function renderDataStruct({
 
   let structType =
     fields.length === 0
-      ? extraFields.join('\n    ')
+      ? `{ ${extraFields.join('\n    ')} }`
       : extraFields.length === 0
       ? argsTypename
       : `${argsTypename} & {

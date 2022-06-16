@@ -38,14 +38,14 @@ async function checkRenderedIx(
     new Map(),
     FORCE_FIXABLE_NEVER
   )
-  verifySyntacticCorrectness(t, ts)
-
-  const analyzed = await analyzeCode(ts)
   if (logCode) {
     console.log(
       `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`
     )
   }
+  verifySyntacticCorrectness(t, ts)
+
+  const analyzed = await analyzeCode(ts)
   verifyImports(t, analyzed, imports, { logImports })
   if (opts.rxs != null) {
     for (const rx of opts.rxs) {
