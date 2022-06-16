@@ -28,7 +28,9 @@ async function checkRenderedAccount(
     logImports?: boolean
     logCode?: boolean
     rxs?: RegExp[]
+    nonrxs?: RegExp[]
     serializers?: CustomSerializers
+    hasImplicitDiscriminator?: boolean
   } = {}
 ) {
   const {
@@ -45,7 +47,7 @@ async function checkRenderedAccount(
     serializers,
     FORCE_FIXABLE_NEVER,
     (_: string) => null,
-    true
+    opts.hasImplicitDiscriminator ?? true
   )
 
   if (logCode) {
@@ -61,6 +63,11 @@ async function checkRenderedAccount(
   if (opts.rxs != null) {
     for (const rx of opts.rxs) {
       t.match(ts, rx, `TypeScript matches: ${rx.toString()}`)
+    }
+  }
+  if (opts.nonrxs != null) {
+    for (const rx of opts.nonrxs) {
+      t.doesNotMatch(ts, rx, `TypeScript does not match: ${rx.toString()}`)
     }
   }
 }
@@ -205,5 +212,161 @@ test('accounts: one field with custom serializers', async (t) => {
       ],
     }
   )
+  t.end()
+})
+
+// -----------------
+// Padding
+// -----------------
+test('accounts: one account with two fields, one has padding attr', async (t) => {
+  const account = <IdlAccount>{
+    name: 'StructAccountWithPadding',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'count',
+          type: 'u8',
+        },
+        {
+          name: 'padding',
+          type: {
+            array: ['u8', 3],
+          },
+          attrs: ['padding'],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      /readonly count\: number/,
+      /count\: this\.count/,
+      /args\.count/,
+      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 3\)/,
+      /padding\: Array\(3\).fill\(0\),/,
+    ],
+    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+  })
+  t.end()
+})
+
+test('accounts: one account with two fields without implicit discriminator, one has padding attr', async (t) => {
+  const account = <IdlAccount>{
+    name: 'StructAccountWithPadding',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'count',
+          type: 'u8',
+        },
+        {
+          name: 'padding',
+          type: {
+            array: ['u8', 3],
+          },
+          attrs: ['padding'],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      /readonly count\: number/,
+      /args\.count/,
+      /count\: this\.count/,
+      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 3\)/,
+      /padding\: Array\(3\).fill\(0\),/,
+    ],
+    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+    hasImplicitDiscriminator: false,
+  })
+  t.end()
+})
+
+test('accounts: one account with three fields, middle one has padding attr', async (t) => {
+  const account = <IdlAccount>{
+    name: 'StructAccountWithPadding',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'count',
+          type: 'u8',
+        },
+        {
+          name: 'padding',
+          type: {
+            array: ['u8', 5],
+          },
+          attrs: ['padding'],
+        },
+        {
+          name: 'largerCount',
+          type: 'u64',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      /readonly count\: number/,
+      /readonly largerCount\: beet.bignum/,
+      /args\.count/,
+      /args\.largerCount/,
+      /count\: this\.count/,
+      /largerCount\: /,
+      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 5\)/,
+      /padding\: Array\(5\).fill\(0\),/,
+    ],
+    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+  })
+  t.end()
+})
+
+test('accounts: one account with three fields, middle one has padding attr without implicitDiscriminator', async (t) => {
+  const account = <IdlAccount>{
+    name: 'StructAccountWithPadding',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'count',
+          type: 'u8',
+        },
+        {
+          name: 'padding',
+          type: {
+            array: ['u8', 5],
+          },
+          attrs: ['padding'],
+        },
+        {
+          name: 'largerCount',
+          type: 'u64',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: true,
+    rxs: [
+      /readonly count\: number/,
+      /readonly largerCount\: beet.bignum/,
+      /args\.count/,
+      /args\.largerCount/,
+      /count\: this\.count/,
+      /largerCount\: /,
+      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 5\)/,
+      /padding\: Array\(5\).fill\(0\),/,
+    ],
+    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+    hasImplicitDiscriminator: false,
+  })
   t.end()
 })
