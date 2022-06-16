@@ -5,6 +5,7 @@ import { CustomSerializers, SerializerSnippets } from './serializers'
 import { ForceFixable, TypeMapper } from './type-mapper'
 import {
   BEET_PACKAGE,
+  hasPaddingAttr,
   IdlAccount,
   isIdlTypeDataEnum,
   isIdlTypeDefined,
@@ -77,26 +78,28 @@ class AccountRenderer {
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
       const tsType = this.typeMapper.map(f.type, f.name)
-      return { name: f.name, tsType }
+      return { name: f.name, tsType, isPadding: hasPaddingAttr(f) }
     })
   }
 
   private getPrettyFields() {
-    return this.account.type.fields.map((f) => {
-      if (f.type === 'publicKey') {
-        return `${f.name}: this.${f.name}.toBase58()`
-      }
-      if (
-        f.type === 'u64' ||
-        f.type === 'u128' ||
-        f.type === 'u256' ||
-        f.type === 'u512' ||
-        f.type === 'i64' ||
-        f.type === 'i128' ||
-        f.type === 'i256' ||
-        f.type === 'i512'
-      ) {
-        return `${f.name}: (() => {
+    return this.account.type.fields
+      .filter((f) => !hasPaddingAttr(f))
+      .map((f) => {
+        if (f.type === 'publicKey') {
+          return `${f.name}: this.${f.name}.toBase58()`
+        }
+        if (
+          f.type === 'u64' ||
+          f.type === 'u128' ||
+          f.type === 'u256' ||
+          f.type === 'u512' ||
+          f.type === 'i64' ||
+          f.type === 'i128' ||
+          f.type === 'i256' ||
+          f.type === 'i512'
+        ) {
+          return `${f.name}: (() => {
         const x = <{ toNumber: () => number }>this.${f.name}
         if (typeof x.toNumber === 'function') {
           try {
@@ -105,24 +108,24 @@ class AccountRenderer {
         }
         return x
       })()`
-      }
-
-      if (isIdlTypeDefined(f.type)) {
-        const resolved = this.resolveFieldType(f.type.defined)
-
-        if (resolved != null && isIdlTypeScalarEnum(resolved)) {
-          const tsType = this.typeMapper.map(f.type, f.name)
-          const variant = `${tsType}[this.${f.name}`
-          return `${f.name}: '${f.type.defined}.' + ${variant}]`
         }
-        if (resolved != null && isIdlTypeDataEnum(resolved)) {
-          // TODO(thlorenz): Improve rendering of data enums to include other fields
-          return `${f.name}: this.${f.name}.__kind`
-        }
-      }
 
-      return `${f.name}: this.${f.name}`
-    })
+        if (isIdlTypeDefined(f.type)) {
+          const resolved = this.resolveFieldType(f.type.defined)
+
+          if (resolved != null && isIdlTypeScalarEnum(resolved)) {
+            const tsType = this.typeMapper.map(f.type, f.name)
+            const variant = `${tsType}[this.${f.name}`
+            return `${f.name}: '${f.type.defined}.' + ${variant}]`
+          }
+          if (resolved != null && isIdlTypeDataEnum(resolved)) {
+            // TODO(thlorenz): Improve rendering of data enums to include other fields
+            return `${f.name}: this.${f.name}.__kind`
+          }
+        }
+
+        return `${f.name}: this.${f.name}`
+      })
   }
 
   // -----------------
@@ -140,9 +143,10 @@ class AccountRenderer {
   // Account Args
   // -----------------
   private renderAccountDataArgsType(
-    fields: { name: string; tsType: string }[]
+    fields: { name: string; tsType: string; isPadding: boolean }[]
   ) {
     const renderedFields = fields
+      .filter((f) => !f.isPadding)
       .map((f) => colonSeparatedTypedField(f))
       .join('\n  ')
 
@@ -247,12 +251,16 @@ export type ${this.accountDataArgsTypeName} = {
     return `export const ${this.accountDiscriminatorName} = ${accountDisc}`
   }
 
-  private renderAccountDataClass(fields: { name: string; tsType: string }[]) {
+  private renderAccountDataClass(
+    fields: { name: string; tsType: string; isPadding: boolean }[]
+  ) {
     const constructorArgs = fields
+      .filter((f) => !f.isPadding)
       .map((f) => colonSeparatedTypedField(f, 'readonly '))
       .join(',\n    ')
 
     const constructorParams = fields
+      .filter((f) => !f.isPadding)
       .map((f) => `args.${f.name}`)
       .join(',\n      ')
 

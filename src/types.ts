@@ -30,7 +30,9 @@ export type Serializers = Record<string, string>
 export type IdlField = {
   name: string
   type: IdlType
+  attrs?: string[]
 }
+export const IDL_FIELD_ATTR_PADDING = 'padding'
 
 export type IdlInstructionAccount = {
   name: string
@@ -244,6 +246,10 @@ export function isIdlInstructionAccountWithDesc(
   ty: IdlInstructionAccount
 ): ty is IdlInstructionAccountWithDesc {
   return typeof (ty as IdlInstructionAccountWithDesc).desc === 'string'
+}
+
+export function hasPaddingAttr(field: IdlField): boolean {
+  return field.attrs != null && field.attrs.includes(IDL_FIELD_ATTR_PADDING)
 }
 
 // -----------------
