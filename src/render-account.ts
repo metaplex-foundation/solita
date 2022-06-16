@@ -9,7 +9,6 @@ import {
   BEET_PACKAGE,
   hasPaddingAttr,
   IdlAccount,
-  isIdlTypeArray,
   isIdlTypeDataEnum,
   isIdlTypeDefined,
   isIdlTypeScalarEnum,
@@ -422,6 +421,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       discriminatorName,
       discriminatorField,
       discriminatorType,
+      paddingField: this.paddingField,
       isFixable: this.typeMapper.usedFixableSerde,
     })
     return `

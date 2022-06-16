@@ -105,11 +105,13 @@ export function renderDataStruct({
   discriminatorField,
   discriminatorName,
   discriminatorType,
+  paddingField,
   isFixable,
 }: {
   discriminatorName?: string
   discriminatorField?: TypeMappedSerdeField
   discriminatorType?: string
+  paddingField?: { name: string; size: number }
   fields: TypeMappedSerdeField[]
   structVarName: string
   className?: string
@@ -120,15 +122,23 @@ export function renderDataStruct({
   const discriminatorDecl = renderField(discriminatorField, true)
   discriminatorType = discriminatorType ?? 'number[]'
 
+  const extraFields = []
+  if (discriminatorName != null) {
+    extraFields.push(`${discriminatorName}: ${discriminatorType}`)
+  }
+  if (paddingField != null) {
+    extraFields.push(
+      `${paddingField.name}: number[] /* size: ${paddingField.size} */`
+    )
+  }
+
   let structType =
     fields.length === 0
-      ? discriminatorName == null
-        ? ''
-        : `{ ${discriminatorName}: ${discriminatorType}; }`
-      : discriminatorName == null
+      ? extraFields.join('\n    ')
+      : extraFields.length === 0
       ? argsTypename
       : `${argsTypename} & {
-    ${discriminatorName}: ${discriminatorType};
+      ${extraFields.join('\n      ')}
   }
 `
 
