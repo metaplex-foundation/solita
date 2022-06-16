@@ -53,6 +53,7 @@ export class Solita {
   private readonly typeAliases: Map<string, PrimitiveTypeKey>
   private readonly serializers: CustomSerializers
   private readonly projectRoot: string
+  private readonly hasInstructions: boolean
   private paths: Paths | undefined
   constructor(
     private readonly idl: Idl,
@@ -82,6 +83,7 @@ export class Solita {
       this.projectRoot,
       new Map(Object.entries(serializers))
     )
+    this.hasInstructions = idl.instructions.length > 0
   }
 
   // -----------------
@@ -284,8 +286,12 @@ export class Solita {
   async renderAndWriteTo(outputDir: PathLike) {
     this.paths = new Paths(outputDir)
     const { instructions, accounts, types, errors } = this.renderCode()
-    const reexports = ['instructions']
-    await this.writeInstructions(instructions)
+    const reexports = []
+
+    if (this.hasInstructions) {
+      reexports.push('instructions')
+      await this.writeInstructions(instructions)
+    }
 
     if (Object.keys(accounts).length !== 0) {
       reexports.push('accounts')
