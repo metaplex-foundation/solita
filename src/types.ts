@@ -12,6 +12,7 @@ import {
   BeetSolanaTypeMapKey,
 } from '@metaplex-foundation/beet-solana'
 import { SerdePackage } from './serdes'
+import { strict as assert } from 'assert'
 
 // -----------------
 // Config
@@ -197,6 +198,11 @@ export function isIdlTypeVec(ty: IdlType): ty is IdlTypeVec {
 
 export function isIdlTypeArray(ty: IdlType): ty is IdlTypeArray {
   return (ty as IdlTypeArray).array != null
+}
+
+export function asIdlTypeArray(ty: IdlType): IdlTypeArray {
+  assert(isIdlTypeArray(ty))
+  return ty
 }
 
 export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
