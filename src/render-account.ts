@@ -3,8 +3,11 @@ import { renderScalarEnums } from './render-enums'
 import { renderDataStruct } from './serdes'
 import { CustomSerializers, SerializerSnippets } from './serializers'
 import { ForceFixable, TypeMapper } from './type-mapper'
+import { strict as assert } from 'assert'
 import {
+  asIdlTypeArray,
   BEET_PACKAGE,
+  hasPaddingAttr,
   IdlAccount,
   isIdlTypeDataEnum,
   isIdlTypeDefined,
@@ -34,6 +37,7 @@ class AccountRenderer {
   readonly accountDataArgsTypeName: string
   readonly accountDiscriminatorName: string
   readonly beetName: string
+  readonly paddingField?: { name: string; size: number }
 
   readonly serializerSnippets: SerializerSnippets
 
@@ -65,6 +69,25 @@ class AccountRenderer {
       this.fullFileDir as string,
       this.beetName
     )
+    this.paddingField = this.getPaddingField()
+  }
+
+  private getPaddingField() {
+    const paddingField = this.account.type.fields.filter((f) =>
+      hasPaddingAttr(f)
+    )
+    if (paddingField.length === 0) return
+
+    assert.equal(
+      paddingField.length,
+      1,
+      'only one field of an account can be padding'
+    )
+    const field = paddingField[0]
+    const ty = asIdlTypeArray(field.type)
+    const [inner, size] = ty.array
+    assert.equal(inner, 'u8', 'padding field must be u8[]')
+    return { name: field.name, size }
   }
 
   private serdeProcess() {
@@ -77,26 +100,28 @@ class AccountRenderer {
   private getTypedFields() {
     return this.account.type.fields.map((f) => {
       const tsType = this.typeMapper.map(f.type, f.name)
-      return { name: f.name, tsType }
+      return { name: f.name, tsType, isPadding: hasPaddingAttr(f) }
     })
   }
 
   private getPrettyFields() {
-    return this.account.type.fields.map((f) => {
-      if (f.type === 'publicKey') {
-        return `${f.name}: this.${f.name}.toBase58()`
-      }
-      if (
-        f.type === 'u64' ||
-        f.type === 'u128' ||
-        f.type === 'u256' ||
-        f.type === 'u512' ||
-        f.type === 'i64' ||
-        f.type === 'i128' ||
-        f.type === 'i256' ||
-        f.type === 'i512'
-      ) {
-        return `${f.name}: (() => {
+    return this.account.type.fields
+      .filter((f) => !hasPaddingAttr(f))
+      .map((f) => {
+        if (f.type === 'publicKey') {
+          return `${f.name}: this.${f.name}.toBase58()`
+        }
+        if (
+          f.type === 'u64' ||
+          f.type === 'u128' ||
+          f.type === 'u256' ||
+          f.type === 'u512' ||
+          f.type === 'i64' ||
+          f.type === 'i128' ||
+          f.type === 'i256' ||
+          f.type === 'i512'
+        ) {
+          return `${f.name}: (() => {
         const x = <{ toNumber: () => number }>this.${f.name}
         if (typeof x.toNumber === 'function') {
           try {
@@ -105,24 +130,24 @@ class AccountRenderer {
         }
         return x
       })()`
-      }
-
-      if (isIdlTypeDefined(f.type)) {
-        const resolved = this.resolveFieldType(f.type.defined)
-
-        if (resolved != null && isIdlTypeScalarEnum(resolved)) {
-          const tsType = this.typeMapper.map(f.type, f.name)
-          const variant = `${tsType}[this.${f.name}`
-          return `${f.name}: '${f.type.defined}.' + ${variant}]`
         }
-        if (resolved != null && isIdlTypeDataEnum(resolved)) {
-          // TODO(thlorenz): Improve rendering of data enums to include other fields
-          return `${f.name}: this.${f.name}.__kind`
-        }
-      }
 
-      return `${f.name}: this.${f.name}`
-    })
+        if (isIdlTypeDefined(f.type)) {
+          const resolved = this.resolveFieldType(f.type.defined)
+
+          if (resolved != null && isIdlTypeScalarEnum(resolved)) {
+            const tsType = this.typeMapper.map(f.type, f.name)
+            const variant = `${tsType}[this.${f.name}`
+            return `${f.name}: '${f.type.defined}.' + ${variant}]`
+          }
+          if (resolved != null && isIdlTypeDataEnum(resolved)) {
+            // TODO(thlorenz): Improve rendering of data enums to include other fields
+            return `${f.name}: this.${f.name}.__kind`
+          }
+        }
+
+        return `${f.name}: this.${f.name}`
+      })
   }
 
   // -----------------
@@ -140,9 +165,10 @@ class AccountRenderer {
   // Account Args
   // -----------------
   private renderAccountDataArgsType(
-    fields: { name: string; tsType: string }[]
+    fields: { name: string; tsType: string; isPadding: boolean }[]
   ) {
     const renderedFields = fields
+      .filter((f) => !f.isPadding)
       .map((f) => colonSeparatedTypedField(f))
       .join('\n  ')
 
@@ -247,25 +273,41 @@ export type ${this.accountDataArgsTypeName} = {
     return `export const ${this.accountDiscriminatorName} = ${accountDisc}`
   }
 
-  private renderAccountDataClass(fields: { name: string; tsType: string }[]) {
+  private renderSerializeValue() {
+    const serializeValues = []
+    if (this.hasImplicitDiscriminator) {
+      serializeValues.push(
+        `accountDiscriminator: ${this.accountDiscriminatorName}`
+      )
+    }
+    if (this.paddingField != null) {
+      serializeValues.push(`padding: Array(${this.paddingField.size}).fill(0)`)
+    }
+    return serializeValues.length > 0
+      ? `{ 
+      ${serializeValues.join(',\n      ')},
+      ...this
+    }`
+      : 'this'
+  }
+
+  private renderAccountDataClass(
+    fields: { name: string; tsType: string; isPadding: boolean }[]
+  ) {
     const constructorArgs = fields
+      .filter((f) => !f.isPadding)
       .map((f) => colonSeparatedTypedField(f, 'readonly '))
       .join(',\n    ')
 
     const constructorParams = fields
+      .filter((f) => !f.isPadding)
       .map((f) => `args.${f.name}`)
       .join(',\n      ')
 
     const prettyFields = this.getPrettyFields().join(',\n      ')
     const byteSizeMethods = this.renderByteSizeMethods()
     const accountDiscriminatorVar = this.renderAccountDiscriminatorVar()
-
-    const serializeValue = this.hasImplicitDiscriminator
-      ? `{ 
-      accountDiscriminator: ${this.accountDiscriminatorName},
-      ...this
-    }`
-      : 'this'
+    const serializeValue = this.renderSerializeValue()
 
     return `
 ${accountDiscriminatorVar};
@@ -379,6 +421,7 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
       discriminatorName,
       discriminatorField,
       discriminatorType,
+      paddingField: this.paddingField,
       isFixable: this.typeMapper.usedFixableSerde,
     })
     return `

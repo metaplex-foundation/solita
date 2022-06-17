@@ -12,6 +12,7 @@ import {
   BeetSolanaTypeMapKey,
 } from '@metaplex-foundation/beet-solana'
 import { SerdePackage } from './serdes'
+import { strict as assert } from 'assert'
 
 // -----------------
 // Config
@@ -30,7 +31,9 @@ export type Serializers = Record<string, string>
 export type IdlField = {
   name: string
   type: IdlType
+  attrs?: string[]
 }
+export const IDL_FIELD_ATTR_PADDING = 'padding'
 
 export type IdlInstructionAccount = {
   name: string
@@ -197,6 +200,11 @@ export function isIdlTypeArray(ty: IdlType): ty is IdlTypeArray {
   return (ty as IdlTypeArray).array != null
 }
 
+export function asIdlTypeArray(ty: IdlType): IdlTypeArray {
+  assert(isIdlTypeArray(ty))
+  return ty
+}
+
 export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
   return (ty as IdlTypeDefined).defined != null
 }
@@ -244,6 +252,10 @@ export function isIdlInstructionAccountWithDesc(
   ty: IdlInstructionAccount
 ): ty is IdlInstructionAccountWithDesc {
   return typeof (ty as IdlInstructionAccountWithDesc).desc === 'string'
+}
+
+export function hasPaddingAttr(field: IdlField): boolean {
+  return field.attrs != null && field.attrs.includes(IDL_FIELD_ATTR_PADDING)
 }
 
 // -----------------
