@@ -269,3 +269,6 @@ export const BEET_EXPORT_NAME = 'beet'
 export const BEET_SOLANA_EXPORT_NAME = 'beetSolana'
 export const SOLANA_WEB3_EXPORT_NAME = 'web3'
 export const SOLANA_SPL_TOKEN_EXPORT_NAME = 'splToken'
+
+export const PROGRAM_ID_PACKAGE = '<program-id>'
+export const PROGRAM_ID_EXPORT_NAME = '<program-id-export>'

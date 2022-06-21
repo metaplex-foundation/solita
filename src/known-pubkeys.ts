@@ -1,4 +1,6 @@
 import {
+  PROGRAM_ID_EXPORT_NAME,
+  PROGRAM_ID_PACKAGE,
   SOLANA_SPL_TOKEN_EXPORT_NAME,
   SOLANA_SPL_TOKEN_PACKAGE,
   SOLANA_WEB3_EXPORT_NAME,
@@ -9,9 +11,11 @@ import { UnreachableCaseError } from './utils'
 export type PubkeysPackage =
   | typeof SOLANA_WEB3_PACKAGE
   | typeof SOLANA_SPL_TOKEN_PACKAGE
+  | typeof PROGRAM_ID_PACKAGE
 export type PubkeysPackageExportName =
   | typeof SOLANA_WEB3_EXPORT_NAME
   | typeof SOLANA_SPL_TOKEN_EXPORT_NAME
+  | typeof PROGRAM_ID_EXPORT_NAME
 
 const knownPubkeysMap: Map<
   string,
@@ -30,6 +34,7 @@ const knownPubkeysMap: Map<
     { exp: 'SystemProgram.programId', pack: SOLANA_WEB3_PACKAGE },
   ],
   ['rent', { exp: 'SYSVAR_RENT_PUBKEY', pack: SOLANA_WEB3_PACKAGE }],
+  ['programId', { exp: PROGRAM_ID_EXPORT_NAME, pack: PROGRAM_ID_PACKAGE }],
 ])
 
 function pubkeysPackageExportName(
@@ -40,6 +45,8 @@ function pubkeysPackageExportName(
       return SOLANA_SPL_TOKEN_EXPORT_NAME
     case SOLANA_WEB3_PACKAGE:
       return SOLANA_WEB3_EXPORT_NAME
+    case PROGRAM_ID_PACKAGE:
+      return PROGRAM_ID_EXPORT_NAME
     default:
       throw new UnreachableCaseError(pack)
   }
@@ -53,6 +60,15 @@ export type ResolvedKnownPubkey = {
 
 export function isKnownPubkey(id: string) {
   return knownPubkeysMap.has(id)
+}
+export function isProgramIdPubkey(id: string) {
+  return id == 'programId'
+}
+export function isProgramIdKnownPubkey(knownPubkey: ResolvedKnownPubkey) {
+  return (
+    knownPubkey.exp === PROGRAM_ID_EXPORT_NAME &&
+    knownPubkey.pack === PROGRAM_ID_PACKAGE
+  )
 }
 
 export function resolveKnownPubkey(id: string): ResolvedKnownPubkey | null {

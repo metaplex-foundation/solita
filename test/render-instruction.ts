@@ -25,10 +25,18 @@ async function checkRenderedIx(
   opts: {
     logImports?: boolean
     logCode?: boolean
+    verify?: boolean
+    lineNumbers?: boolean
     rxs?: RegExp[]
+    nonrxs?: RegExp[]
   } = {}
 ) {
-  const { logImports = DIAGNOSTIC_ON, logCode = DIAGNOSTIC_ON } = opts
+  const {
+    logImports = DIAGNOSTIC_ON,
+    logCode = DIAGNOSTIC_ON,
+    verify = true,
+    lineNumbers = true,
+  } = opts
   const ts = renderInstruction(
     ix,
     INSTRUCTION_FILE_DIR,
@@ -39,17 +47,29 @@ async function checkRenderedIx(
     FORCE_FIXABLE_NEVER
   )
   if (logCode) {
+    const renderTs = lineNumbers
+      ? ts
+          .split('\n')
+          .map((x, idx) => `${(idx + 1).toString().padStart(3, ' ')}: ${x}`)
+          .join('\n')
+      : ts
     console.log(
-      `--------- <TypeScript> --------\n${ts}\n--------- </TypeScript> --------`
+      `--------- <TypeScript> --------\n${renderTs}\n--------- </TypeScript> --------`
     )
   }
-  verifySyntacticCorrectness(t, ts)
-
-  const analyzed = await analyzeCode(ts)
-  verifyImports(t, analyzed, imports, { logImports })
-  if (opts.rxs != null) {
-    for (const rx of opts.rxs) {
-      t.match(ts, rx, `TypeScript matches ${rx.toString()}`)
+  if (verify) {
+    verifySyntacticCorrectness(t, ts)
+    const analyzed = await analyzeCode(ts)
+    verifyImports(t, analyzed, imports, { logImports })
+    if (opts.rxs != null) {
+      for (const rx of opts.rxs) {
+        t.match(ts, rx, `TypeScript matches ${rx.toString()}`)
+      }
+    }
+    if (opts.nonrxs != null) {
+      for (const rx of opts.nonrxs) {
+        t.doesNotMatch(ts, rx, `TypeScript does not match: ${rx.toString()}`)
+      }
     }
   }
 }
@@ -67,7 +87,6 @@ test('ix: empty args', async (t) => {
     args: [],
   }
   await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
-  t.end()
 })
 
 // TODO(thlorenz): This still requires an accounts arg and destructures nothing from it
@@ -100,7 +119,6 @@ test('ix: one arg', async (t) => {
     ],
   }
   await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
-  t.end()
 })
 
 test('ix: two args', async (t) => {
@@ -129,7 +147,6 @@ test('ix: two args', async (t) => {
     BEET_SOLANA_PACKAGE,
     SOLANA_WEB3_PACKAGE,
   ])
-  t.end()
 })
 
 test('ix: two accounts and two args', async (t) => {
@@ -158,12 +175,12 @@ test('ix: two accounts and two args', async (t) => {
       },
     ],
   }
-  await checkRenderedIx(t, ix, [
-    BEET_PACKAGE,
-    BEET_SOLANA_PACKAGE,
-    SOLANA_WEB3_PACKAGE,
-  ])
-  t.end()
+  await checkRenderedIx(
+    t,
+    ix,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    { logCode: true }
+  )
 })
 
 test('ix: three accounts, two optional', async (t) => {
@@ -207,7 +224,6 @@ test('ix: three accounts, two optional', async (t) => {
       /if \(useAuthorityRecord == null\).+throw new Error/,
     ],
   })
-  t.end()
 })
 
 test('ix: accounts render comments with and without desc', async (t) => {
@@ -232,6 +248,67 @@ test('ix: accounts render comments with and without desc', async (t) => {
     rxs: [
       /@property .+signer.+ withoutDesc/,
       /@property .+writable.+ withDesc Use Authority Record PDA If present the program Assumes a delegated use authority/,
+    ],
+  })
+})
+
+// -----------------
+// Known Accounts
+// -----------------
+test('ix: empty args one system program account', async (t) => {
+  const ix = {
+    name: 'empyArgsWithSystemProgram',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'systemProgram',
+        isMut: false,
+        isSigner: false,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      /programId\?\: web3\.PublicKey/,
+      /programId = new web3\.PublicKey\('testprogram'\)/,
+    ],
+    nonrxs: [/pubkey\: programId/],
+  })
+})
+
+test('ix: with args one system program account and programId', async (t) => {
+  const ix = {
+    name: 'empyArgsWithSystemProgram',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'systemProgram',
+        isMut: false,
+        isSigner: false,
+      },
+      {
+        name: 'programId',
+        isMut: false,
+        isSigner: false,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: false,
+    rxs: [
+      /programId\?\: web3\.PublicKey/,
+      /programId = new web3\.PublicKey\('testprogram'\)/,
+      /pubkey\: programId/,
     ],
   })
 })
