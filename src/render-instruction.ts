@@ -15,6 +15,7 @@ import { ForceFixable, TypeMapper } from './type-mapper'
 import { renderDataStruct } from './serdes'
 import {
   isKnownPubkey,
+  renderKnownPubkeyAccess,
   ResolvedKnownPubkey,
   resolveKnownPubkey,
 } from './known-pubkeys'
@@ -133,9 +134,13 @@ ${typeMapperImports.join('\n')}`.trim()
     })
 
     const requiredKeys = requireds
-      .map(({ name, isMut, isSigner }) => {
+      .map(({ name, isMut, isSigner, knownPubkey }) => {
+        const pubkey =
+          knownPubkey == null
+            ? `accounts.${name}`
+            : `accounts.${name} ?? ${renderKnownPubkeyAccess(knownPubkey)}`
         return `{
-      pubkey: accounts.${name},
+      pubkey: ${pubkey},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     }`
@@ -146,7 +151,7 @@ ${typeMapperImports.join('\n')}`.trim()
     const optionalKeys =
       optionals.length > 0
         ? optionals
-            .map(({ name, isMut, isSigner }, idx) => {
+            .map(({ name, isMut, isSigner, knownPubkey }, idx) => {
               const requiredOptionals = optionals.slice(0, idx)
               const requiredChecks = requiredOptionals
                 .map((x) => `accounts.${x.name} == null`)
@@ -158,11 +163,17 @@ ${typeMapperImports.join('\n')}`.trim()
                       .map((x) => `\\'accounts.${x.name}\\'`)
                       .join(', ')} need(s) to be provided as well.') }`
                   : ''
+              const pubkey =
+                knownPubkey == null
+                  ? `accounts.${name}`
+                  : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+                      knownPubkey
+                    )}`
               return `
   if (accounts.${name} != null) {
     ${checkRequireds}
     keys.push({
-      pubkey: accounts.${name},
+      pubkey: ${pubkey},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     })
