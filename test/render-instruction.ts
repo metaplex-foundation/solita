@@ -34,9 +34,10 @@ async function checkRenderedIx(
   const {
     logImports = DIAGNOSTIC_ON,
     logCode = DIAGNOSTIC_ON,
-    verify = true,
     lineNumbers = true,
   } = opts
+  const { verify = !logCode } = opts
+
   const ts = renderInstruction(
     ix,
     INSTRUCTION_FILE_DIR,
@@ -86,18 +87,22 @@ test('ix: empty args', async (t) => {
     ],
     args: [],
   }
-  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: false,
+    rxs: [/programId = new web3\.PublicKey/],
+  })
 })
 
-// TODO(thlorenz): This still requires an accounts arg and destructures nothing from it
-// However having no accounts is very uncommon and thus this can be fixed later
-test.skip('ix: empty args and empty accounts', async (t) => {
+test('ix: empty args and empty accounts', async (t) => {
   const ix = {
     name: 'empyArgs',
     accounts: [],
     args: [],
   }
-  await checkRenderedIx(t, ix, [])
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: false,
+    rxs: [/programId = new web3\.PublicKey/],
+  })
   t.end()
 })
 
@@ -179,7 +184,7 @@ test('ix: two accounts and two args', async (t) => {
     t,
     ix,
     [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
-    { logCode: true }
+    { logCode: fals }
   )
 })
 
@@ -217,11 +222,11 @@ test('ix: three accounts, two optional', async (t) => {
       /burner\?\: web3\.PublicKey/,
       // Ensuring that the accounts are only added if the relevant pubkey is
       // provided
-      /if \(useAuthorityRecord != null\)/,
-      /if \(burner != null\)/,
+      /if \(accounts.useAuthorityRecord != null\)/,
+      /if \(accounts.burner != null\)/,
       // Additionally verifying that either the first or both optional pubkeys are
       // provided, but not only the second optional pubkey
-      /if \(useAuthorityRecord == null\).+throw new Error/,
+      /if \(accounts.useAuthorityRecord == null\).+throw new Error/,
     ],
   })
 })
@@ -273,11 +278,8 @@ test('ix: empty args one system program account', async (t) => {
     args: [],
   }
   await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
-    rxs: [
-      /programId\?\: web3\.PublicKey/,
-      /programId = new web3\.PublicKey\('testprogram'\)/,
-    ],
-    nonrxs: [/pubkey\: programId/],
+    rxs: [/programId = new web3\.PublicKey\('testprogram'\)/],
+    nonrxs: [/pubkey\: accounts\.programId/],
   })
 })
 
@@ -306,9 +308,8 @@ test('ix: with args one system program account and programId', async (t) => {
   await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
     logCode: false,
     rxs: [
-      /programId\?\: web3\.PublicKey/,
       /programId = new web3\.PublicKey\('testprogram'\)/,
-      /pubkey\: programId/,
+      /pubkey\: accounts\.programId/,
     ],
   })
 })
