@@ -79,9 +79,13 @@ export function resolveKnownPubkey(id: string): ResolvedKnownPubkey | null {
   return { ...item, packExportName }
 }
 
-export function renderKnownPubkeyAccess({
-  exp,
-  packExportName,
-}: ResolvedKnownPubkey) {
+export function renderKnownPubkeyAccess(
+  knownPubkey: ResolvedKnownPubkey,
+  programIdPubkey: string
+) {
+  if (isProgramIdKnownPubkey(knownPubkey)) {
+    return programIdPubkey
+  }
+  const { exp, packExportName } = knownPubkey
   return `${packExportName}.${exp}`
 }

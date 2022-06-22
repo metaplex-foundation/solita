@@ -184,7 +184,7 @@ test('ix: two accounts and two args', async (t) => {
     t,
     ix,
     [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
-    { logCode: fals }
+    { logCode: false }
   )
 })
 
@@ -278,7 +278,11 @@ test('ix: empty args one system program account', async (t) => {
     args: [],
   }
   await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
-    rxs: [/programId = new web3\.PublicKey\('testprogram'\)/],
+    logCode: false,
+    rxs: [
+      /programId = new web3\.PublicKey\('testprogram'\)/,
+      /pubkey\: accounts\.systemProgram \?\? web3\.SystemProgram\.programId/,
+    ],
     nonrxs: [/pubkey\: accounts\.programId/],
   })
 })
@@ -311,5 +315,38 @@ test('ix: with args one system program account and programId', async (t) => {
       /programId = new web3\.PublicKey\('testprogram'\)/,
       /pubkey\: accounts\.programId/,
     ],
+  })
+})
+
+test('ix: empty args one system program account + one optional rent account', async (t) => {
+  const ix = {
+    name: 'empyArgsWithSystemProgram',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'systemProgram',
+        isMut: false,
+        isSigner: false,
+      },
+      {
+        name: 'rent',
+        isMut: false,
+        isSigner: false,
+        optional: true,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: false,
+    rxs: [
+      /programId = new web3\.PublicKey\('testprogram'\)/,
+      /pubkey\: accounts.rent,/,
+    ],
+    nonrxs: [/pubkey\: accounts\.programId/],
   })
 })

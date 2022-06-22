@@ -37,6 +37,7 @@ class InstructionRenderer {
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
   private readonly instructionDiscriminator: InstructionDiscriminator
+  private readonly programIdPubkey: string
 
   constructor(
     readonly ix: IdlInstruction,
@@ -61,6 +62,7 @@ class InstructionRenderer {
       'instructionDiscriminator',
       typeMapper
     )
+    this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
   }
 
   // -----------------
@@ -138,7 +140,10 @@ ${typeMapperImports.join('\n')}`.trim()
         const pubkey =
           knownPubkey == null
             ? `accounts.${name}`
-            : `accounts.${name} ?? ${renderKnownPubkeyAccess(knownPubkey)}`
+            : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+                knownPubkey,
+                this.programIdPubkey
+              )}`
         return `{
       pubkey: ${pubkey},
       isWritable: ${isMut.toString()},
@@ -147,11 +152,10 @@ ${typeMapperImports.join('\n')}`.trim()
       })
       .join(',\n    ')
 
-    // TODO (thlorenz): Test to handle optional known accounts like rent
     const optionalKeys =
       optionals.length > 0
         ? optionals
-            .map(({ name, isMut, isSigner, knownPubkey }, idx) => {
+            .map(({ name, isMut, isSigner }, idx) => {
               const requiredOptionals = optionals.slice(0, idx)
               const requiredChecks = requiredOptionals
                 .map((x) => `accounts.${x.name} == null`)
@@ -163,17 +167,13 @@ ${typeMapperImports.join('\n')}`.trim()
                       .map((x) => `\\'accounts.${x.name}\\'`)
                       .join(', ')} need(s) to be provided as well.') }`
                   : ''
-              const pubkey =
-                knownPubkey == null
-                  ? `accounts.${name}`
-                  : `accounts.${name} ?? ${renderKnownPubkeyAccess(
-                      knownPubkey
-                    )}`
+              // NOTE: we purposely don't add the default resolution here since the intent is to
+              // only pass that account when it is provided
               return `
   if (accounts.${name} != null) {
     ${checkRequireds}
     keys.push({
-      pubkey: ${pubkey},
+      pubkey: accounts.${name},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     })
@@ -307,7 +307,7 @@ ${struct} `.trim()
             '...args',
             ', ',
           ]
-    const programIdArg = `${comma}programId = new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
+    const programIdArg = `${comma}programId = ${this.programIdPubkey}`
 
     return `${imports}
 
