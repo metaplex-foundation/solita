@@ -13,6 +13,7 @@ import {
 } from '@metaplex-foundation/beet-solana'
 import { SerdePackage } from './serdes'
 import { strict as assert } from 'assert'
+import { ResolvedKnownPubkey } from './known-pubkeys'
 
 // -----------------
 // Config
@@ -256,6 +257,14 @@ export function isIdlInstructionAccountWithDesc(
 
 export function hasPaddingAttr(field: IdlField): boolean {
   return field.attrs != null && field.attrs.includes(IDL_FIELD_ATTR_PADDING)
+}
+
+// -----------------
+// Internal Types
+// -----------------
+export type ProcessedAccountKey = IdlInstructionAccount & {
+  knownPubkey?: ResolvedKnownPubkey
+  optional: boolean
 }
 
 // -----------------

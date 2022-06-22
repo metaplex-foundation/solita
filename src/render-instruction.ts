@@ -2,13 +2,13 @@ import {
   IdlInstruction,
   IdlInstructionArg,
   SOLANA_WEB3_EXPORT_NAME,
-  IdlInstructionAccount,
   SOLANA_SPL_TOKEN_PACKAGE,
   SOLANA_SPL_TOKEN_EXPORT_NAME,
   TypeMappedSerdeField,
   SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
   PrimitiveTypeKey,
+  ProcessedAccountKey,
 } from './types'
 import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -16,18 +16,12 @@ import { renderDataStruct } from './serdes'
 import {
   isKnownPubkey,
   renderKnownPubkeyAccess,
-  ResolvedKnownPubkey,
   resolveKnownPubkey,
 } from './known-pubkeys'
 import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import { renderScalarEnums } from './render-enums'
 import { InstructionDiscriminator } from './instruction-discriminator'
 import { PathLike } from 'fs'
-
-type ProcessedAccountKey = IdlInstructionAccount & {
-  knownPubkey?: ResolvedKnownPubkey
-  optional: boolean
-}
 
 class InstructionRenderer {
   readonly upperCamelIxName: string
