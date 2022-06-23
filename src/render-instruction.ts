@@ -37,6 +37,7 @@ class InstructionRenderer {
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
   private readonly instructionDiscriminator: InstructionDiscriminator
+  private readonly programIdPubkey: string
 
   constructor(
     readonly ix: IdlInstruction,
@@ -61,6 +62,7 @@ class InstructionRenderer {
       'instructionDiscriminator',
       typeMapper
     )
+    this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
   }
 
   // -----------------
@@ -135,10 +137,15 @@ ${typeMapperImports.join('\n')}`.trim()
 
     const requiredKeys = requireds
       .map(({ name, isMut, isSigner, knownPubkey }) => {
-        const access =
-          knownPubkey == null ? name : renderKnownPubkeyAccess(knownPubkey)
+        const pubkey =
+          knownPubkey == null
+            ? `accounts.${name}`
+            : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+                knownPubkey,
+                this.programIdPubkey
+              )}`
         return `{
-      pubkey: ${access},
+      pubkey: ${pubkey},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     }`
@@ -148,27 +155,25 @@ ${typeMapperImports.join('\n')}`.trim()
     const optionalKeys =
       optionals.length > 0
         ? optionals
-            .map(({ name, isMut, isSigner, knownPubkey }, idx) => {
-              const access =
-                knownPubkey == null
-                  ? name
-                  : renderKnownPubkeyAccess(knownPubkey)
+            .map(({ name, isMut, isSigner }, idx) => {
               const requiredOptionals = optionals.slice(0, idx)
               const requiredChecks = requiredOptionals
-                .map((x) => `${x.name} == null`)
+                .map((x) => `accounts.${x.name} == null`)
                 .join(' || ')
               const checkRequireds =
                 requiredChecks.length > 0
                   ? `if (${requiredChecks}) { throw new Error('When providing \\'${name}\\' then ` +
                     `${requiredOptionals
-                      .map((x) => `\\'${x.name}\\'`)
+                      .map((x) => `\\'accounts.${x.name}\\'`)
                       .join(', ')} need(s) to be provided as well.') }`
                   : ''
+              // NOTE: we purposely don't add the default resolution here since the intent is to
+              // only pass that account when it is provided
               return `
-  if (${name} != null) {
+  if (accounts.${name} != null) {
     ${checkRequireds}
     keys.push({
-      pubkey: ${access},
+      pubkey: accounts.${name},
       isWritable: ${isMut.toString()},
       isSigner: ${isSigner.toString()},
     })
@@ -184,8 +189,10 @@ ${typeMapperImports.join('\n')}`.trim()
     if (processedKeys.length === 0) return ''
     const web3 = SOLANA_WEB3_EXPORT_NAME
     const fields = processedKeys
-      .filter((x) => x.knownPubkey == null)
       .map((x) => {
+        if (x.knownPubkey != null) {
+          return `${x.name}?: ${web3}.PublicKey`
+        }
         const optional = x.optional ? '?' : ''
         return `${x.name}${optional}: ${web3}.PublicKey`
       })
@@ -202,13 +209,13 @@ ${typeMapperImports.join('\n')}`.trim()
         const optional = x.optional ? ' (optional) ' : ' '
         const desc = isIdlInstructionAccountWithDesc(x) ? x.desc : ''
         return (
-          `* @property [${attrs.join(', ')}] ` + `${x.name}${optional}${desc}`
+          `* @property [${attrs.join(', ')}] ` + `${x.name}${optional}${desc} `
         )
       })
 
     const properties =
       propertyComments.length > 0
-        ? `\n *\n  ${propertyComments.join('\n')}`
+        ? `\n *\n  ${propertyComments.join('\n')} `
         : ''
 
     const docs = `
@@ -220,10 +227,10 @@ ${typeMapperImports.join('\n')}`.trim()
   */
 `.trim()
     return `${docs}
-export type ${this.accountsTypename} = {
+          export type ${this.accountsTypename} = {
   ${fields}
-}
-`
+        }
+        `
   }
 
   private renderAccountsParamDoc(processedKeys: ProcessedAccountKey[]) {
@@ -234,19 +241,7 @@ export type ${this.accountsTypename} = {
 
   private renderAccountsArg(processedKeys: ProcessedAccountKey[]) {
     if (processedKeys.length === 0) return ''
-    return `accounts: ${this.accountsTypename},\n`
-  }
-
-  private renderAccountsDestructure(processedKeys: ProcessedAccountKey[]) {
-    if (processedKeys.length === 0) return ''
-    const params = processedKeys
-      .filter((x) => x.knownPubkey == null)
-      .map((x) => `${x.name}`)
-      .join(',\n    ')
-    return `const {
-    ${params}
-  } = accounts;
-`
+    return `accounts: ${this.accountsTypename}, \n`
   }
 
   // -----------------
@@ -276,7 +271,7 @@ export type ${this.accountsTypename} = {
  * @category ${this.upperCamelIxName}
  * @category generated
  */
-${struct}`.trim()
+${struct} `.trim()
   }
 
   render() {
@@ -292,7 +287,6 @@ ${struct}`.trim()
     const keys = this.renderIxAccountKeys(processedKeys)
     const accountsParamDoc = this.renderAccountsParamDoc(processedKeys)
     const accountsArg = this.renderAccountsArg(processedKeys)
-    const accountsDestructure = this.renderAccountsDestructure(processedKeys)
     const instructionDisc = this.instructionDiscriminator.renderValue()
     const enums = renderScalarEnums(this.typeMapper.scalarEnumsUsed).join('\n')
 
@@ -303,42 +297,45 @@ ${struct}`.trim()
       createInstructionArgsComment,
       createInstructionArgs,
       createInstructionArgsSpread,
+      comma,
     ] =
       this.ix.args.length === 0
-        ? ['', '', '']
+        ? ['', '', '', '']
         : [
-            `\n * @param args to provide as instruction data to the program\n  *`,
-            `args: ${this.argsTypename}`,
+            `\n * @param args to provide as instruction data to the program\n * `,
+            `args: ${this.argsTypename} `,
             '...args',
+            ', ',
           ]
+    const programIdArg = `${comma}programId = ${this.programIdPubkey}`
+
     return `${imports}
 
 ${enums}
 ${ixArgType}
 ${argsStructType}
 ${accountsType}
-export const ${this.instructionDiscriminatorName} = ${instructionDisc};
+    export const ${this.instructionDiscriminatorName} = ${instructionDisc};
 
-/**
- * Creates a _${this.upperCamelIxName}_ instruction.
-${accountsParamDoc}${createInstructionArgsComment}
- * @category Instructions
- * @category ${this.upperCamelIxName}
- * @category generated
- */
-export function create${this.upperCamelIxName}Instruction(
-  ${accountsArg}${createInstructionArgs}
-) {
-  ${accountsDestructure}
-  const [data ] = ${this.structArgName}.serialize({ 
-    instructionDiscriminator: ${this.instructionDiscriminatorName},
+    /**
+     * Creates a _${this.upperCamelIxName}_ instruction.
+    ${accountsParamDoc}${createInstructionArgsComment}
+     * @category Instructions
+     * @category ${this.upperCamelIxName}
+     * @category generated
+     */
+    export function create${this.upperCamelIxName}Instruction(
+      ${accountsArg}${createInstructionArgs}${programIdArg}
+    ) {
+      const [data] = ${this.structArgName}.serialize({
+        instructionDiscriminator: ${this.instructionDiscriminatorName},
     ${createInstructionArgsSpread}
-  });
-  const keys: ${web3}.AccountMeta[] = ${keys}
-  const ix = new ${web3}.TransactionInstruction({
-    programId: new ${web3}.PublicKey('${this.programId}'),
-    keys,
-    data
+    });
+    const keys: ${web3}.AccountMeta[] = ${keys}
+    const ix = new ${web3}.TransactionInstruction({
+      programId,
+      keys,
+      data
   });
   return ix; 
 }
