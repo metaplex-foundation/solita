@@ -22,6 +22,7 @@ import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import { renderScalarEnums } from './render-enums'
 import { InstructionDiscriminator } from './instruction-discriminator'
 import { PathLike } from 'fs'
+import { InstructionWithSignersRenderer } from './render-instruction-with-signers'
 
 class InstructionRenderer {
   readonly upperCamelIxName: string
@@ -303,6 +304,17 @@ ${struct} `.trim()
           ]
     const programIdArg = `${comma}programId = ${this.programIdPubkey}`
 
+    const createInstructionMethod = `create${this.upperCamelIxName}Instruction`
+    const instructionWithSignersRenderer = new InstructionWithSignersRenderer(
+      processedKeys,
+      this.argsTypename,
+      this.upperCamelIxName,
+      this.camelIxName,
+      createInstructionMethod
+    )
+
+    const instructionsWithSigner = instructionWithSignersRenderer.render()
+
     return `${imports}
 
 ${enums}
@@ -318,7 +330,7 @@ ${accountsType}
      * @category ${this.upperCamelIxName}
      * @category generated
      */
-    export function create${this.upperCamelIxName}Instruction(
+    export function ${createInstructionMethod}(
       ${accountsArg}${createInstructionArgs}${programIdArg}
     ) {
       const [data] = ${this.structArgName}.serialize({
@@ -333,6 +345,10 @@ ${accountsType}
   });
   return ix; 
 }
+// --------------
+// Instructions With Signer API
+// --------------
+${instructionsWithSigner}
 `
   }
 }
