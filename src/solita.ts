@@ -245,6 +245,7 @@ export class Solita {
         this.typeAliases,
         this.serializers,
         forceFixable,
+        programId,
         this.resolveFieldType,
         this.accountsHaveImplicitDiscriminator
       )

@@ -7,6 +7,8 @@ import { strict as assert } from 'assert'
 import {
   asIdlTypeArray,
   BEET_PACKAGE,
+  BEET_SOLANA_EXPORT_NAME,
+  BEET_SOLANA_PACKAGE,
   hasPaddingAttr,
   IdlAccount,
   isIdlTypeDataEnum,
@@ -14,6 +16,7 @@ import {
   isIdlTypeScalarEnum,
   PrimitiveTypeKey,
   ResolveFieldType,
+  SOLANA_WEB3_EXPORT_NAME,
   SOLANA_WEB3_PACKAGE,
   TypeMappedSerdeField,
 } from './types'
@@ -40,12 +43,14 @@ class AccountRenderer {
   readonly paddingField?: { name: string; size: number }
 
   readonly serializerSnippets: SerializerSnippets
+  private readonly programIdPubkey: string
 
   constructor(
     private readonly account: IdlAccount,
     private readonly fullFileDir: PathLike,
     private readonly hasImplicitDiscriminator: boolean,
     private readonly resolveFieldType: ResolveFieldType,
+    private readonly programId: string,
     private readonly typeMapper: TypeMapper,
     private readonly serializers: CustomSerializers
   ) {
@@ -70,6 +75,8 @@ class AccountRenderer {
       this.beetName
     )
     this.paddingField = this.getPaddingField()
+
+    this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
   }
 
   private getPaddingField() {
@@ -156,7 +163,7 @@ class AccountRenderer {
   private renderImports() {
     const imports = this.typeMapper.importsUsed(
       this.fullFileDir.toString(),
-      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE])
+      new Set([SOLANA_WEB3_PACKAGE, BEET_PACKAGE, BEET_SOLANA_PACKAGE])
     )
     return imports.join('\n')
   }
@@ -362,6 +369,16 @@ export class ${this.accountDataClassName} implements ${this.accountDataArgsTypeN
 
 
   /**
+   * Provides a {@link ${SOLANA_WEB3_EXPORT_NAME}.Connection.getProgramAccounts} config builder,
+   * to fetch accounts matching filters that can be specified via that builder.
+   *
+   * @param programId - the program that owns the accounts we are filtering
+   */
+  static gpaBuilder(programId: web3.PublicKey = ${this.programIdPubkey}) {
+    return ${BEET_SOLANA_EXPORT_NAME}.GpaBuilder.fromStruct(programId, ${this.beetName})
+  }
+
+  /**
    * Deserializes the {@link ${this.accountDataClassName}} from the provided data Buffer.
    * @returns a tuple of the account data and the offset up to which the buffer was read to obtain it.
    */
@@ -465,6 +482,7 @@ export function renderAccount(
   typeAliases: Map<string, PrimitiveTypeKey>,
   serializers: CustomSerializers,
   forceFixable: ForceFixable,
+  programId: string,
   resolveFieldType: ResolveFieldType,
   hasImplicitDiscriminator: boolean
 ) {
@@ -479,6 +497,7 @@ export function renderAccount(
     fullFileDir,
     hasImplicitDiscriminator,
     resolveFieldType,
+    programId,
     typeMapper,
     serializers
   )

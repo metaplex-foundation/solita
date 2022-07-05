@@ -14,6 +14,7 @@ import {
   verifyImports,
   verifySyntacticCorrectness,
 } from './utils/verify-code'
+const PROGRAM_ID = 'testprogram'
 
 const DIAGNOSTIC_ON = false
 
@@ -46,6 +47,7 @@ async function checkRenderedAccount(
     new Map(),
     serializers,
     FORCE_FIXABLE_NEVER,
+    PROGRAM_ID,
     (_: string) => null,
     opts.hasImplicitDiscriminator ?? true
   )
@@ -239,16 +241,21 @@ test('accounts: one account with two fields, one has padding attr', async (t) =>
     },
   }
 
-  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
-    rxs: [
-      /readonly count\: number/,
-      /count\: this\.count/,
-      /args\.count/,
-      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 3\)/,
-      /padding\: Array\(3\).fill\(0\),/,
-    ],
-    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
-  })
+  await checkRenderedAccount(
+    t,
+    account,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      rxs: [
+        /readonly count\: number/,
+        /count\: this\.count/,
+        /args\.count/,
+        /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 3\)/,
+        /padding\: Array\(3\).fill\(0\),/,
+      ],
+      nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+    }
+  )
   t.end()
 })
 
@@ -273,17 +280,22 @@ test('accounts: one account with two fields without implicit discriminator, one 
     },
   }
 
-  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
-    rxs: [
-      /readonly count\: number/,
-      /args\.count/,
-      /count\: this\.count/,
-      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 3\)/,
-      /padding\: Array\(3\).fill\(0\),/,
-    ],
-    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
-    hasImplicitDiscriminator: false,
-  })
+  await checkRenderedAccount(
+    t,
+    account,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      rxs: [
+        /readonly count\: number/,
+        /args\.count/,
+        /count\: this\.count/,
+        /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 3\)/,
+        /padding\: Array\(3\).fill\(0\),/,
+      ],
+      nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+      hasImplicitDiscriminator: false,
+    }
+  )
   t.end()
 })
 
@@ -312,19 +324,24 @@ test('accounts: one account with three fields, middle one has padding attr', asy
     },
   }
 
-  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
-    rxs: [
-      /readonly count\: number/,
-      /readonly largerCount\: beet.bignum/,
-      /args\.count/,
-      /args\.largerCount/,
-      /count\: this\.count/,
-      /largerCount\: /,
-      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 5\)/,
-      /padding\: Array\(5\).fill\(0\),/,
-    ],
-    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
-  })
+  await checkRenderedAccount(
+    t,
+    account,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      rxs: [
+        /readonly count\: number/,
+        /readonly largerCount\: beet.bignum/,
+        /args\.count/,
+        /args\.largerCount/,
+        /count\: this\.count/,
+        /largerCount\: /,
+        /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 5\)/,
+        /padding\: Array\(5\).fill\(0\),/,
+      ],
+      nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+    }
+  )
   t.end()
 })
 
@@ -353,20 +370,25 @@ test('accounts: one account with three fields, middle one has padding attr witho
     },
   }
 
-  await checkRenderedAccount(t, account, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
-    logCode: true,
-    rxs: [
-      /readonly count\: number/,
-      /readonly largerCount\: beet.bignum/,
-      /args\.count/,
-      /args\.largerCount/,
-      /count\: this\.count/,
-      /largerCount\: /,
-      /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 5\)/,
-      /padding\: Array\(5\).fill\(0\),/,
-    ],
-    nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
-    hasImplicitDiscriminator: false,
-  })
+  await checkRenderedAccount(
+    t,
+    account,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      logCode: false,
+      rxs: [
+        /readonly count\: number/,
+        /readonly largerCount\: beet.bignum/,
+        /args\.count/,
+        /args\.largerCount/,
+        /count\: this\.count/,
+        /largerCount\: /,
+        /'padding', beet\.uniformFixedSizeArray\(beet\.u8, 5\)/,
+        /padding\: Array\(5\).fill\(0\),/,
+      ],
+      nonrxs: [/readonly padding/, /padding\: this\.padding/, /args\.padding/],
+      hasImplicitDiscriminator: false,
+    }
+  )
   t.end()
 })
