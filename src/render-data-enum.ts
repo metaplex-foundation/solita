@@ -32,8 +32,10 @@ export function renderTypeDataEnumBeet(args: {
     .map((variant) => variant.beet)
     .join(',\n')
 
-  const enumIsFixable = renderedVariants.some((x) => x.usedFixableSerde)
-  const beetType = enumIsFixable ? 'FixableBeet' : 'FixedSizeBeet'
+  // The size of a data enum is considered non-deterministic even though exceptions
+  // exist, i.e. when they have a single variant
+  const beetType = 'FixableBeet'
+  typeMapper.usedFixableSerde = true
 
   return `export const ${beetVarName} = ${BEET_EXPORT_NAME}.dataEnum<${enumRecordName}>([
   ${renderedBeets} 
