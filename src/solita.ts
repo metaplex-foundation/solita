@@ -31,6 +31,7 @@ import {
 import { format, Options } from 'prettier'
 import { Paths } from './paths'
 import { CustomSerializers } from './serializers'
+import { renderAccountProviders } from './render-account-providers'
 
 export * from './types'
 
@@ -346,9 +347,11 @@ export class Solita {
       await fs.writeFile(this.paths.accountFile(name), code, 'utf8')
     }
     logDebug('Writing index.ts exporting all accounts')
+    const accountProvidersCode = renderAccountProviders(this.idl.accounts)
     const indexCode = this.renderImportIndex(
       Object.keys(accounts).sort(),
-      'accounts'
+      'accounts',
+      accountProvidersCode
     )
     await fs.writeFile(this.paths.accountFile('index'), indexCode, 'utf8')
   }
@@ -430,8 +433,15 @@ ${programIdConsts}
     await fs.writeFile(path.join(this.paths.root, `index.ts`), code, 'utf8')
   }
 
-  private renderImportIndex(modules: string[], label: string) {
+  private renderImportIndex(
+    modules: string[],
+    label: string,
+    extraContent?: string
+  ) {
     let code = modules.map((x) => `export * from './${x}';`).join('\n')
+    if (extraContent != null) {
+      code += `\n\n${extraContent}`
+    }
     if (this.formatCode) {
       try {
         code = format(code, this.formatOpts)
