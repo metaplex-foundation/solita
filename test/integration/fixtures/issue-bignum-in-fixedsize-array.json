@@ -2086,7 +2086,12 @@
       "name": "AggregatorAddJobParams",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "batchSize",
+            "type": "u32"
+          }
+        ]
       }
     },
     {
@@ -2151,7 +2156,12 @@
       "name": "AggregatorLockParams",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "batchSize",
+            "type": "u32"
+          }
+        ]
       }
     },
     {
@@ -2250,7 +2260,12 @@
       "name": "AggregatorSetAuthorityParams",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "batchSize",
+            "type": "u32"
+          }
+        ]
       }
     },
     {
@@ -2269,7 +2284,12 @@
       "name": "AggregatorSetHistoryBufferParams",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "batchSize",
+            "type": "u32"
+          }
+        ]
       }
     },
     {
@@ -2300,7 +2320,12 @@
       "name": "AggregatorSetQueueParams",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "batchSize",
+            "type": "u32"
+          }
+        ]
       }
     },
     {
@@ -2471,7 +2496,12 @@
       "name": "LeaseSetAuthorityParams",
       "type": {
         "kind": "struct",
-        "fields": []
+        "fields": [
+          {
+            "name": "batchSize",
+            "type": "u32"
+          }
+        ]
       }
     },
     {
