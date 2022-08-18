@@ -179,6 +179,9 @@ export class TypeMapper {
   }
 
   private mapEnumType(ty: IdlTypeEnum, name: string) {
+    if (name === NO_NAME_PROVIDED && ty.name != null) {
+      name = ty.name
+    }
     assert.notEqual(
       name,
       NO_NAME_PROVIDED,
@@ -296,6 +299,9 @@ export class TypeMapper {
   }
 
   private mapEnumSerde(ty: IdlTypeEnum, name: string) {
+    if (name === NO_NAME_PROVIDED && ty.name != null) {
+      name = ty.name
+    }
     assert.notEqual(
       name,
       NO_NAME_PROVIDED,

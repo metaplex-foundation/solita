@@ -83,11 +83,13 @@ export type IdlDataEnumVariant = {
 export type IdlTypeEnum = IdlTypeScalarEnum | IdlTypeDataEnum
 export type IdlTypeScalarEnum = {
   kind: 'enum'
+  name?: string
   variants: IdlEnumVariant[]
 }
 
 export type IdlTypeDataEnum = {
   kind: 'enum'
+  name?: string
   variants: IdlDataEnumVariant[]
 }
 
