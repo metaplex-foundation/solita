@@ -17,14 +17,7 @@ export function renderTypeDataEnumBeet(args: {
   const renderedVariants = dataEnum.variants.map((variant) => {
     const tm = typeMapper.clone()
     const beet = renderVariant(tm, enumRecordName, variant)
-    for (const used of tm.serdePackagesUsed) {
-      typeMapper.serdePackagesUsed.add(used)
-    }
-    for (const [key, val] of tm.scalarEnumsUsed) {
-      typeMapper.scalarEnumsUsed.set(key, val)
-    }
-    typeMapper.usedFixableSerde =
-      typeMapper.usedFixableSerde || tm.usedFixableSerde
+    typeMapper.syncUp(tm)
     return { beet, usedFixableSerde: tm.usedFixableSerde }
   })
 

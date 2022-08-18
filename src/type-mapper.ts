@@ -7,11 +7,13 @@ import {
   IdlTypeDefined,
   IdlTypeEnum,
   IdlTypeOption,
+  IdlTypeTuple,
   IdlTypeVec,
   isIdlTypeArray,
   isIdlTypeDefined,
   isIdlTypeEnum,
   isIdlTypeOption,
+  isIdlTypeTuple,
   isIdlTypeVec,
   PrimaryTypeMap,
   PrimitiveTypeKey,
@@ -70,8 +72,8 @@ export class TypeMapper {
   clearUsages() {
     this.serdePackagesUsed.clear()
     this.localImportsByPath.clear()
-    this.usedFixableSerde = false
     this.scalarEnumsUsed.clear()
+    this.usedFixableSerde = false
   }
 
   clone() {
@@ -82,6 +84,24 @@ export class TypeMapper {
       this.forceFixable,
       this.primaryTypeMap
     )
+  }
+
+  /**
+   * When using a cloned typemapper temporarily in order to track usages for a
+   * subset of mappings we need to sync the main mapper to include the updates
+   * captured by the sub mapper. This is what this method does.
+   */
+  syncUp(tm: TypeMapper) {
+    for (const used of tm.serdePackagesUsed) {
+      this.serdePackagesUsed.add(used)
+    }
+    for (const [key, val] of tm.localImportsByPath) {
+      this.localImportsByPath.set(key, val)
+    }
+    for (const [key, val] of tm.scalarEnumsUsed) {
+      this.scalarEnumsUsed.set(key, val)
+    }
+    this.usedFixableSerde = this.usedFixableSerde || tm.usedFixableSerde
   }
 
   private updateUsedFixableSerde(ty: SupportedTypeDefinition) {
@@ -142,6 +162,15 @@ export class TypeMapper {
     return `${inner}[] /* size: ${size} */`
   }
 
+  private mapTupleType(ty: IdlTypeTuple, name: string) {
+    const innerTypes = []
+    for (const inner of ty.tuple) {
+      innerTypes.push(this.map(inner, name))
+    }
+    const inners = innerTypes.join(', ')
+    return `[${inners}]`
+  }
+
   private mapDefinedType(ty: IdlTypeDefined) {
     const fullFileDir = this.definedTypesImport(ty)
     const imports = getOrCreate(this.localImportsByPath, fullFileDir, new Set())
@@ -160,6 +189,8 @@ export class TypeMapper {
   }
 
   map(ty: IdlType, name: string = NO_NAME_PROVIDED): string {
+    assert(ty != null, `Type for ${name} needs to be defined`)
+
     if (typeof ty === 'string') {
       return this.mapPrimitiveType(ty, name)
     }
@@ -180,6 +211,10 @@ export class TypeMapper {
     }
     if (isIdlTypeEnum(ty)) {
       return this.mapEnumType(ty, name)
+    }
+
+    if (isIdlTypeTuple(ty)) {
+      return this.mapTupleType(ty, name)
     }
 
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
@@ -274,7 +309,31 @@ export class TypeMapper {
     return `${exp}.fixedScalarEnum(${name})`
   }
 
+  private mapTupleSerde(ty: IdlTypeTuple, name: string) {
+    const tuplePackage = BEET_PACKAGE
+    const exp = serdePackageExportName(BEET_PACKAGE)
+    this.serdePackagesUsed.add(tuplePackage)
+
+    const innerSerdes = []
+    const innerMapper = this.clone()
+    for (const inner of ty.tuple) {
+      innerSerdes.push(innerMapper.mapSerde(inner, name))
+    }
+    this.syncUp(innerMapper)
+    const inners = innerSerdes.join(', ')
+
+    if (innerMapper.usedFixableSerde) {
+      const tuple = this.primaryTypeMap['Tuple']
+      return `${exp}.${tuple.beet}([${inners}])`
+    } else {
+      const fixedTuple = this.primaryTypeMap['FixedSizeTuple']
+      return `${exp}.${fixedTuple.beet}([${inners}])`
+    }
+  }
+
   mapSerde(ty: IdlType, name: string = NO_NAME_PROVIDED): string {
+    assert(ty != null, `Type for ${name} needs to be defined`)
+
     if (this.forceFixable(ty)) {
       this.usedFixableSerde = true
     }
@@ -299,6 +358,10 @@ export class TypeMapper {
       return alias == null
         ? this.mapDefinedSerde(ty)
         : this.mapPrimitiveSerde(alias, name)
+    }
+
+    if (isIdlTypeTuple(ty)) {
+      return this.mapTupleSerde(ty, name)
     }
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
