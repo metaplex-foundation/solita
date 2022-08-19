@@ -75,9 +75,18 @@ export type IdlEnumVariant = {
   name: string
 }
 
-export type IdlDataEnumVariant = {
+export type IdlDataEnumVariant =
+  | IdlDataEnumVariantWithNamedFields
+  | IdlDataEnumVariantWithUnnamedFields
+
+export type IdlDataEnumVariantWithNamedFields = {
   name: string
   fields: IdlField[]
+}
+
+export type IdlDataEnumVariantWithUnnamedFields = {
+  name: string
+  fields: IdlType[]
 }
 
 export type IdlTypeEnum = IdlTypeScalarEnum | IdlTypeDataEnum
@@ -220,6 +229,9 @@ export function isIdlTypeEnum(
   return (ty as IdlTypeEnum).variants != null
 }
 
+// -----------------
+// Enums
+// -----------------
 export function isIdlTypeDataEnum(
   ty: IdlType | IdlDefinedType | IdlTypeEnum
 ): ty is IdlTypeDataEnum {
@@ -235,6 +247,18 @@ export function isIdlTypeScalarEnum(
   ty: IdlType | IdlDefinedType | IdlTypeEnum
 ): ty is IdlTypeScalarEnum {
   return isIdlTypeEnum(ty) && !isIdlTypeDataEnum(ty)
+}
+
+export function isDataEnumVariantWithNamedFields(
+  ty: IdlDataEnumVariant
+): ty is IdlDataEnumVariantWithNamedFields {
+  return (ty as IdlDataEnumVariantWithNamedFields).fields[0].name != null
+}
+
+export function isDataEnumVariantWithUnnamedFields(
+  ty: IdlDataEnumVariant
+): ty is IdlDataEnumVariantWithUnnamedFields {
+  return !isDataEnumVariantWithNamedFields(ty)
 }
 
 export function isIdlTypeTuple(ty: IdlType): ty is IdlTypeTuple {

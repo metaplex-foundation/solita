@@ -1,6 +1,11 @@
 import camelcase from 'camelcase'
 import { TypeMapper } from './type-mapper'
-import { BEET_EXPORT_NAME, IdlDataEnumVariant, IdlTypeDataEnum } from './types'
+import {
+  BEET_EXPORT_NAME,
+  IdlDataEnumVariant,
+  IdlTypeDataEnum,
+  isDataEnumVariantWithNamedFields,
+} from './types'
 
 /**
  * Renders union type and related methods for Rust data enum.
@@ -41,21 +46,22 @@ function renderVariant(
   enumRecordName: string,
   variant: IdlDataEnumVariant
 ) {
-  const mappedFields = typeMapper.mapSerdeFields(variant.fields)
-  const fieldDecls = mappedFields
-    .map((f) => {
-      const fieldName = camelcase(f.name)
-      return `  ['${fieldName}', ${f.type}]`
-    })
-    .join(',\n    ')
-
-  const beetArgsStructType = typeMapper.usedFixableSerde
-    ? 'FixableBeetArgsStruct'
-    : 'BeetArgsStruct'
-
   const typeName = `${enumRecordName}["${variant.name}"]`
+  if (isDataEnumVariantWithNamedFields(variant)) {
+    // Variant with named fields is represented as a struct
+    const mappedFields = typeMapper.mapSerdeFields(variant.fields)
+    const fieldDecls = mappedFields
+      .map((f) => {
+        const fieldName = camelcase(f.name)
+        return `  ['${fieldName}', ${f.type}]`
+      })
+      .join(',\n    ')
 
-  const beet = `
+    const beetArgsStructType = typeMapper.usedFixableSerde
+      ? 'FixableBeetArgsStruct'
+      : 'BeetArgsStruct'
+
+    const beet = `
   [ 
     '${variant.name}',
     new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>(
@@ -65,7 +71,18 @@ function renderVariant(
     '${typeName}'
   )]`
 
-  return beet
+    return beet
+  } else {
+    // Variant with unnamed fields is represented as a tuple
+    const fieldDecls = typeMapper.mapSerde({ tuple: variant.fields })
+    const beet = `[ 
+    '${variant.name}',
+    ${fieldDecls},
+    '${typeName}'
+  ]`
+
+    return beet
+  }
 }
 
 export function renderDataEnumRecord(
@@ -74,12 +91,20 @@ export function renderDataEnumRecord(
   variants: IdlDataEnumVariant[]
 ) {
   const renderedVariants = variants.map((variant) => {
-    const fields = variant.fields.map((f) => {
-      const typescriptType = typeMapper.map(f.type, f.name)
-      const fieldName = camelcase(f.name)
-      return `${fieldName}: ${typescriptType}`
-    })
-    return `  ${variant.name}: { ${fields.join(', ')} }`
+    let fields
+    if (isDataEnumVariantWithNamedFields(variant)) {
+      fields = variant.fields.map((f) => {
+        const typescriptType = typeMapper.map(f.type, f.name)
+        const fieldName = camelcase(f.name)
+        return `${fieldName}: ${typescriptType}`
+      })
+      return `  ${variant.name}: { ${fields.join(', ')} }`
+    } else {
+      fields = variant.fields.map((type, idx) => {
+        return typeMapper.map(type, `${variant.name}[${idx}]`)
+      })
+      return `  ${variant.name}: [ ${fields.join(', ')} ]`
+    }
   })
 
   const renderedGuards = variants.map((variant) => {
