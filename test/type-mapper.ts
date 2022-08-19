@@ -10,6 +10,7 @@ import {
   SOLANA_WEB3_PACKAGE,
 } from '../src/types'
 import { SerdePackage } from '../src/serdes'
+import { deepInspect } from './utils/helpers'
 
 const SOME_FILE_DIR = '/root/app/'
 
@@ -780,11 +781,60 @@ test('type-mapper: tuples top level', (t) => {
           tuple,
         }
         const serde = tm.mapSerde(type)
-        t.equal(serde, expectedSerde, `${serde} maps to ${expectedSerde} serde`)
+        t.equal(serde, expectedSerde, `${tuple} maps to ${expectedSerde} serde`)
       }
       t.ok(tm.usedFixableSerde, 'used fixable serde')
       t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
     }
     t.end()
   })
+})
+
+test('type-mapper: tuples nested', (t) => {
+  const cases = [
+    [
+      { vec: { tuple: ['i64', 'u16'] } },
+      '[beet.bignum, number][]',
+      'beet.array(beet.fixedSizeTuple([beet.i64, beet.u16]))',
+    ],
+    [
+      { vec: { tuple: ['string', 'u8'] } },
+      '[string, number][]',
+      'beet.array(beet.tuple([beet.utf8String, beet.u8]))',
+    ],
+    [
+      { option: { tuple: ['u8', 'i8', 'u16', 'i128'] } },
+      'beet.COption<[number, number, number, beet.bignum]>',
+      'beet.coption(beet.fixedSizeTuple([beet.u8, beet.i8, beet.u16, beet.i128]))',
+    ],
+  ]
+  const tm = new TypeMapper()
+  {
+    // TypeScript types
+    for (const [type, typesScriptType] of cases) {
+      const ty = tm.map(<IdlType>type)
+      t.equal(
+        ty,
+        typesScriptType,
+        `(${deepInspect(type)}) maps to '${ty}' TypeScript type`
+      )
+    }
+    t.notOk(tm.usedFixableSerde, 'did not use fixable serde')
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
+  }
+  tm.clearUsages()
+  {
+    // Serdes
+    for (const [type, _, expectedSerde] of cases) {
+      const serde = tm.mapSerde(<IdlType>type)
+      t.equal(
+        serde,
+        expectedSerde,
+        `${deepInspect(type)} maps to ${expectedSerde} serde`
+      )
+    }
+    t.ok(tm.usedFixableSerde, 'used fixable serde')
+    t.equal(tm.localImportsByPath.size, 0, 'used no local imports')
+  }
+  t.end()
 })
