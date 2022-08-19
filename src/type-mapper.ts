@@ -329,10 +329,10 @@ export class TypeMapper {
     const inners = innerSerdes.join(', ')
 
     if (innerMapper.usedFixableSerde) {
-      const tuple = this.primaryTypeMap['Tuple']
+      const tuple = this.primaryTypeMap.Tuple
       return `${exp}.${tuple.beet}([${inners}])`
     } else {
-      const fixedTuple = this.primaryTypeMap['FixedSizeTuple']
+      const fixedTuple = this.primaryTypeMap.FixedSizeTuple
       return `${exp}.${fixedTuple.beet}([${inners}])`
     }
   }
