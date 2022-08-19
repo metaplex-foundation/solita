@@ -52,6 +52,7 @@ export type IdlType =
   | IdlTypeArray
   | IdlTypeEnum
   | IdlTypeDataEnum
+  | IdlTypeTuple
 
 // User defined type.
 export type IdlTypeDefined = {
@@ -82,12 +83,18 @@ export type IdlDataEnumVariant = {
 export type IdlTypeEnum = IdlTypeScalarEnum | IdlTypeDataEnum
 export type IdlTypeScalarEnum = {
   kind: 'enum'
+  name?: string
   variants: IdlEnumVariant[]
 }
 
 export type IdlTypeDataEnum = {
   kind: 'enum'
+  name?: string
   variants: IdlDataEnumVariant[]
+}
+
+export type IdlTypeTuple = {
+  tuple: IdlType[]
 }
 
 export type IdlDefinedType = {
@@ -162,12 +169,10 @@ export type ShankMetadata = Idl['metadata'] & { origin: 'shank' }
 // De/Serializers + Extensions
 // -----------------
 export type PrimitiveTypeKey = BeetTypeMapKey | BeetSolanaTypeMapKey
-export type PrimaryTypeMap = Record<
-  PrimitiveTypeKey,
-  SupportedTypeDefinition & {
-    beet: BeetExports | BeetSolanaExports
-  }
->
+export type PrimaryType = SupportedTypeDefinition & {
+  beet: BeetExports | BeetSolanaExports
+}
+export type PrimaryTypeMap = Record<PrimitiveTypeKey, PrimaryType>
 export type ProcessedSerde = {
   name: string
   sourcePack: SerdePackage
@@ -230,6 +235,10 @@ export function isIdlTypeScalarEnum(
   ty: IdlType | IdlDefinedType | IdlTypeEnum
 ): ty is IdlTypeScalarEnum {
   return isIdlTypeEnum(ty) && !isIdlTypeDataEnum(ty)
+}
+
+export function isIdlTypeTuple(ty: IdlType): ty is IdlTypeTuple {
+  return (ty as IdlTypeTuple).tuple != null
 }
 
 export function isIdlDefinedType(
