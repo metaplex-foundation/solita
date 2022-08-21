@@ -175,3 +175,57 @@ test('types: enum with inline data', async (t) => {
     }
   )
 })
+
+test('types: data enum with unnamed fields variant', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Change',
+          fields: ['u32', 'u32'],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})
+
+test('types: data enum with unnamed and named fields variants', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Unnamed',
+          fields: ['u32', 'u32'],
+        },
+        {
+          name: 'Named',
+          fields: [
+            {
+              name: 'collection_mint',
+              type: 'publicKey',
+            },
+          ],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(
+    t,
+    ty,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      logCode: false,
+      logImports: false,
+    }
+  )
+})
