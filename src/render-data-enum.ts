@@ -75,10 +75,15 @@ function renderVariant(
   } else {
     // Variant with unnamed fields is represented as a tuple
     const fieldDecls = typeMapper.mapSerde({ tuple: variant.fields })
+    const beetArgsStructType = typeMapper.usedFixableSerde
+      ? 'FixableBeetArgsStruct'
+      : 'BeetArgsStruct'
+
     const beet = `[ 
-    '${variant.name}',
-    ${fieldDecls},
-    '${typeName}'
+    '${variant.name}', 
+    new ${BEET_EXPORT_NAME}.${beetArgsStructType}<${typeName}>(
+    [[ 'fields', ${fieldDecls} ]],
+    '${typeName}')
   ]`
 
     return beet
@@ -103,7 +108,7 @@ export function renderDataEnumRecord(
       fields = variant.fields.map((type, idx) => {
         return typeMapper.map(type, `${variant.name}[${idx}]`)
       })
-      return `  ${variant.name}: [ ${fields.join(', ')} ]`
+      return `  ${variant.name}: { fields: [ ${fields.join(', ')} ] }`
     }
   })
 
