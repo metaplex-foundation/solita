@@ -229,3 +229,53 @@ test('types: data enum with unnamed and named fields variants', async (t) => {
     }
   )
 })
+
+test('types: enum with only scalar variants', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Uno',
+        },
+        {
+          name: 'Dos',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: true,
+    logImports: false,
+  })
+})
+
+test('types: enum data and scalar variants', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Data',
+          fields: [
+            {
+              name: 'dataField',
+              type: 'u16',
+            },
+          ],
+        },
+        {
+          name: 'Scalar',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})

@@ -78,6 +78,8 @@ export type IdlEnumVariant = {
 export type IdlDataEnumVariant =
   | IdlDataEnumVariantWithNamedFields
   | IdlDataEnumVariantWithUnnamedFields
+  // Rust allows mixing data variants with scalar variants
+  | IdlEnumVariant
 
 export type IdlDataEnumVariantWithNamedFields = {
   name: string
@@ -239,7 +241,9 @@ export function isIdlTypeDataEnum(
   return (
     dataEnum.variants != null &&
     dataEnum.variants.length > 0 &&
-    dataEnum.variants[0].fields != null
+    // if only one variant has data then we have to treat the entire enum as a data enum
+    // since we can no longer represent it as a TypeScript enum
+    dataEnum.variants.some(isDataEnumVariant)
   )
 }
 
@@ -249,10 +253,27 @@ export function isIdlTypeScalarEnum(
   return isIdlTypeEnum(ty) && !isIdlTypeDataEnum(ty)
 }
 
+export function isDataEnumVariant(
+  ty: IdlDataEnumVariant
+): ty is
+  | IdlDataEnumVariantWithNamedFields
+  | IdlDataEnumVariantWithUnnamedFields {
+  return (
+    (
+      ty as
+        | IdlDataEnumVariantWithNamedFields
+        | IdlDataEnumVariantWithUnnamedFields
+    ).fields != null
+  )
+}
+
 export function isDataEnumVariantWithNamedFields(
   ty: IdlDataEnumVariant
 ): ty is IdlDataEnumVariantWithNamedFields {
-  return (ty as IdlDataEnumVariantWithNamedFields).fields[0].name != null
+  return (
+    isDataEnumVariant(ty) &&
+    (ty as IdlDataEnumVariantWithNamedFields).fields[0].name != null
+  )
 }
 
 export function isDataEnumVariantWithUnnamedFields(

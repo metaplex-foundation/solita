@@ -4,6 +4,7 @@ import {
   BEET_EXPORT_NAME,
   IdlDataEnumVariant,
   IdlTypeDataEnum,
+  isDataEnumVariant,
   isDataEnumVariantWithNamedFields,
 } from './types'
 
@@ -72,7 +73,7 @@ function renderVariant(
   )]`
 
     return beet
-  } else {
+  } else if (isDataEnumVariant(variant)) {
     // Variant with unnamed fields is represented as a tuple
     const fieldDecls = typeMapper.mapSerde({ tuple: variant.fields })
     const beetArgsStructType = typeMapper.usedFixableSerde
@@ -85,6 +86,11 @@ function renderVariant(
     [[ 'fields', ${fieldDecls} ]],
     '${typeName}')
   ]`
+
+    return beet
+  } else {
+    // Scalar Variant that's part of a Data Enum
+    const beet = `[ '${variant.name}', ${BEET_EXPORT_NAME}.unit ]`
 
     return beet
   }
@@ -104,11 +110,13 @@ export function renderDataEnumRecord(
         return `${fieldName}: ${typescriptType}`
       })
       return `  ${variant.name}: { ${fields.join(', ')} }`
-    } else {
+    } else if (isDataEnumVariant(variant)) {
       fields = variant.fields.map((type, idx) => {
         return typeMapper.map(type, `${variant.name}[${idx}]`)
       })
       return `  ${variant.name}: { fields: [ ${fields.join(', ')} ] }`
+    } else {
+      return `  ${variant.name}: void /* scalar enum variant */`
     }
   })
 
