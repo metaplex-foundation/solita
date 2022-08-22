@@ -96,10 +96,12 @@ export class TypeMapper {
       this.serdePackagesUsed.add(used)
     }
     for (const [key, val] of tm.localImportsByPath) {
-      this.localImportsByPath.set(key, val)
+      const thisVal = this.localImportsByPath.get(key) ?? new Set()
+      this.localImportsByPath.set(key, new Set([...thisVal, ...val]))
     }
     for (const [key, val] of tm.scalarEnumsUsed) {
-      this.scalarEnumsUsed.set(key, val)
+      const thisVal = this.scalarEnumsUsed.get(key) ?? []
+      this.scalarEnumsUsed.set(key, Array.from(new Set([...thisVal, ...val])))
     }
     this.usedFixableSerde = this.usedFixableSerde || tm.usedFixableSerde
   }

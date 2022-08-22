@@ -30,7 +30,11 @@ async function checkRenderedType(
     ty,
     TYPE_FILE_DIR,
     new Map(),
-    new Map([['Creator', '/module/of/creator.ts']]),
+    new Map([
+      ['InitPackSetArgs', '/module/of/init-pack-set-args.ts'],
+      ['AddCardToPackArgs', '/module/of/add-cart-to-pack-args.ts'],
+      ['Creator', '/module/of/creator.ts'],
+    ]),
     new Map(),
     FORCE_FIXABLE_NEVER
   )
@@ -174,4 +178,140 @@ test('types: enum with inline data', async (t) => {
       logImports: false,
     }
   )
+})
+
+test('types: data enum with unnamed fields variant', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Change',
+          fields: ['u32', 'u32'],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})
+
+test('types: data enum with unnamed and named fields variants', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Unnamed',
+          fields: ['u32', 'u32'],
+        },
+        {
+          name: 'Named',
+          fields: [
+            {
+              name: 'collection_mint',
+              type: 'publicKey',
+            },
+          ],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(
+    t,
+    ty,
+    [BEET_PACKAGE, BEET_SOLANA_PACKAGE, SOLANA_WEB3_PACKAGE],
+    {
+      logCode: false,
+      logImports: false,
+    }
+  )
+})
+
+test('types: enum with only scalar variants', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Uno',
+        },
+        {
+          name: 'Dos',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: true,
+    logImports: false,
+  })
+})
+
+test('types: enum data and scalar variants', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'Data',
+          fields: [
+            {
+              name: 'dataField',
+              type: 'u16',
+            },
+          ],
+        },
+        {
+          name: 'Scalar',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})
+
+test('types: data enum with custom types', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'InitPack',
+          fields: [
+            {
+              defined: 'InitPackSetArgs',
+            },
+          ],
+        },
+        {
+          name: 'AddCardToPack',
+          fields: [
+            {
+              defined: 'AddCardToPackArgs',
+            },
+          ],
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
 })

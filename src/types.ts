@@ -75,9 +75,20 @@ export type IdlEnumVariant = {
   name: string
 }
 
-export type IdlDataEnumVariant = {
+export type IdlDataEnumVariant =
+  | IdlDataEnumVariantWithNamedFields
+  | IdlDataEnumVariantWithUnnamedFields
+  // Rust allows mixing data variants with scalar variants
+  | IdlEnumVariant
+
+export type IdlDataEnumVariantWithNamedFields = {
   name: string
   fields: IdlField[]
+}
+
+export type IdlDataEnumVariantWithUnnamedFields = {
+  name: string
+  fields: IdlType[]
 }
 
 export type IdlTypeEnum = IdlTypeScalarEnum | IdlTypeDataEnum
@@ -220,6 +231,9 @@ export function isIdlTypeEnum(
   return (ty as IdlTypeEnum).variants != null
 }
 
+// -----------------
+// Enums
+// -----------------
 export function isIdlTypeDataEnum(
   ty: IdlType | IdlDefinedType | IdlTypeEnum
 ): ty is IdlTypeDataEnum {
@@ -227,7 +241,9 @@ export function isIdlTypeDataEnum(
   return (
     dataEnum.variants != null &&
     dataEnum.variants.length > 0 &&
-    dataEnum.variants[0].fields != null
+    // if only one variant has data then we have to treat the entire enum as a data enum
+    // since we can no longer represent it as a TypeScript enum
+    dataEnum.variants.some(isDataEnumVariant)
   )
 }
 
@@ -235,6 +251,35 @@ export function isIdlTypeScalarEnum(
   ty: IdlType | IdlDefinedType | IdlTypeEnum
 ): ty is IdlTypeScalarEnum {
   return isIdlTypeEnum(ty) && !isIdlTypeDataEnum(ty)
+}
+
+export function isDataEnumVariant(
+  ty: IdlDataEnumVariant
+): ty is
+  | IdlDataEnumVariantWithNamedFields
+  | IdlDataEnumVariantWithUnnamedFields {
+  return (
+    (
+      ty as
+        | IdlDataEnumVariantWithNamedFields
+        | IdlDataEnumVariantWithUnnamedFields
+    ).fields != null
+  )
+}
+
+export function isDataEnumVariantWithNamedFields(
+  ty: IdlDataEnumVariant
+): ty is IdlDataEnumVariantWithNamedFields {
+  return (
+    isDataEnumVariant(ty) &&
+    (ty as IdlDataEnumVariantWithNamedFields).fields[0].name != null
+  )
+}
+
+export function isDataEnumVariantWithUnnamedFields(
+  ty: IdlDataEnumVariant
+): ty is IdlDataEnumVariantWithUnnamedFields {
+  return !isDataEnumVariantWithNamedFields(ty)
 }
 
 export function isIdlTypeTuple(ty: IdlType): ty is IdlTypeTuple {

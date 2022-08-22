@@ -1,0 +1,232 @@
+{
+  "version": "0.1.0",
+  "name": "feat-mixed-enums+custom-types",
+  "instructions": [],
+  "types": [
+    {
+      "name": "NFTPacksInstruction",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "InitPack",
+            "fields": [
+              {
+                "defined": "InitPackSetArgs"
+              }
+            ]
+          },
+          {
+            "name": "AddCardToPack",
+            "fields": [
+              {
+                "defined": "AddCardToPackArgs"
+              }
+            ]
+          },
+          {
+            "name": "AddVoucherToPack"
+          },
+          {
+            "name": "Activate"
+          },
+          {
+            "name": "Deactivate"
+          },
+          {
+            "name": "ClosePack"
+          },
+          {
+            "name": "ClaimPack",
+            "fields": [
+              {
+                "defined": "ClaimPackArgs"
+              }
+            ]
+          },
+          {
+            "name": "TransferPackAuthority"
+          },
+          {
+            "name": "DeletePack"
+          },
+          {
+            "name": "DeletePackCard"
+          },
+          {
+            "name": "DeletePackVoucher"
+          },
+          {
+            "name": "EditPack",
+            "fields": [
+              {
+                "defined": "EditPackSetArgs"
+              }
+            ]
+          },
+          {
+            "name": "RequestCardForRedeem",
+            "fields": [
+              {
+                "defined": "RequestCardToRedeemArgs"
+              }
+            ]
+          },
+          {
+            "name": "CleanUp"
+          },
+          {
+            "name": "DeletePackConfig"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddCardToPackArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maxSupply",
+            "type": "u32"
+          },
+          {
+            "name": "weight",
+            "type": "u16"
+          },
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitPackSetArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "mutable",
+            "type": "bool"
+          },
+          {
+            "name": "distributionType",
+            "type": {
+              "defined": "PackDistributionType"
+            }
+          },
+          {
+            "name": "allowedAmountToRedeem",
+            "type": "u32"
+          },
+          {
+            "name": "redeemStartDate",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "redeemEndDate",
+            "type": {
+              "option": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimPackArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EditPackSetArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
+              }
+            }
+          },
+          {
+            "name": "description",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "uri",
+            "type": {
+              "option": "string"
+            }
+          },
+          {
+            "name": "mutable",
+            "type": {
+              "option": "bool"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RequestCardToRedeemArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PackDistributionType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "MaxSupply"
+          },
+          {
+            "name": "Fixed"
+          },
+          {
+            "name": "Unlimited"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu"
+  }
+}

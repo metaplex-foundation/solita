@@ -1,0 +1,29 @@
+{
+  "version": "0.1.0",
+  "name": "feat_tuples",
+  "instructions": [],
+  "types": [
+    {
+      "name": "CleanUpActions",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Change",
+            "fields": ["u32", "u32"]
+          },
+          {
+            "name": "Sort"
+          },
+          {
+            "name": "None"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu"
+  }
+}
