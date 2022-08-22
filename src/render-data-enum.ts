@@ -116,7 +116,7 @@ export function renderDataEnumRecord(
       })
       return `  ${variant.name}: { fields: [ ${fields.join(', ')} ] }`
     } else {
-      return `  ${variant.name}: void /* scalar enum variant */`
+      return `  ${variant.name}: void /* scalar variant */`
     }
   })
 
