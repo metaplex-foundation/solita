@@ -4,14 +4,18 @@ import {
   IdlInstructionArg,
   IdlType,
   IdlTypeArray,
+  IdlTypeBTreeMap,
   IdlTypeDefined,
   IdlTypeEnum,
+  IdlTypeHashMap,
   IdlTypeOption,
   IdlTypeTuple,
   IdlTypeVec,
   isIdlTypeArray,
+  isIdlTypeBTreeMap,
   isIdlTypeDefined,
   isIdlTypeEnum,
+  isIdlTypeHashMap,
   isIdlTypeOption,
   isIdlTypeTuple,
   isIdlTypeVec,
@@ -173,6 +177,19 @@ export class TypeMapper {
     return `[${inners}]`
   }
 
+  private mapBTreeMapType(ty: IdlTypeBTreeMap, name: string) {
+    return this.mapMapType(ty.bTreeMap, name)
+  }
+
+  private mapHashMapType(ty: IdlTypeHashMap, name: string) {
+    return this.mapMapType(ty.hashMap, name)
+  }
+
+  private mapMapType(inners: [IdlType, IdlType], name: string) {
+    const innerTypes = [this.map(inners[0], name), this.map(inners[1], name)]
+    return `Map<${innerTypes[0]}, ${innerTypes[1]}>`
+  }
+
   private mapDefinedType(ty: IdlTypeDefined) {
     const fullFileDir = this.definedTypesImport(ty)
     const imports = getOrCreate(this.localImportsByPath, fullFileDir, new Set())
@@ -221,6 +238,14 @@ export class TypeMapper {
     if (isIdlTypeTuple(ty)) {
       return this.mapTupleType(ty, name)
     }
+
+    if (isIdlTypeHashMap(ty)) {
+      return this.mapHashMapType(ty, name)
+    }
+    if (isIdlTypeBTreeMap(ty)) {
+      return this.mapBTreeMapType(ty, name)
+    }
+    console.log(ty)
 
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
@@ -339,6 +364,29 @@ export class TypeMapper {
     }
   }
 
+  private mapBTreeMapSerde(ty: IdlTypeBTreeMap, name: string) {
+    return this.mapMapSerde(ty.bTreeMap, name)
+  }
+
+  private mapHashMapSerde(ty: IdlTypeHashMap, name: string) {
+    return this.mapMapSerde(ty.hashMap, name)
+  }
+
+  private mapMapSerde(inners: [IdlType, IdlType], name: string) {
+    const mapPackage = BEET_PACKAGE
+    const exp = serdePackageExportName(BEET_PACKAGE)
+    this.serdePackagesUsed.add(mapPackage)
+    this.usedFixableSerde = true
+
+    const [key, val] = [
+      this.mapSerde(inners[0], name),
+      this.mapSerde(inners[1], name),
+    ]
+
+    const map = this.primaryTypeMap.Map
+    return `${exp}.${map.beet}(${key}, ${val})`
+  }
+
   mapSerde(ty: IdlType, name: string = NO_NAME_PROVIDED): string {
     assert(ty != null, `Type for ${name} needs to be defined`)
 
@@ -371,6 +419,14 @@ export class TypeMapper {
     if (isIdlTypeTuple(ty)) {
       return this.mapTupleSerde(ty, name)
     }
+
+    if (isIdlTypeHashMap(ty)) {
+      return this.mapHashMapSerde(ty, name)
+    }
+    if (isIdlTypeBTreeMap(ty)) {
+      return this.mapBTreeMapSerde(ty, name)
+    }
+
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
 
