@@ -30,7 +30,11 @@ async function checkRenderedType(
     ty,
     TYPE_FILE_DIR,
     new Map(),
-    new Map([['Creator', '/module/of/creator.ts']]),
+    new Map([
+      ['InitPackSetArgs', '/module/of/init-pack-set-args.ts'],
+      ['AddCardToPackArgs', '/module/of/add-cart-to-pack-args.ts'],
+      ['Creator', '/module/of/creator.ts'],
+    ]),
     new Map(),
     FORCE_FIXABLE_NEVER
   )
@@ -269,6 +273,38 @@ test('types: enum data and scalar variants', async (t) => {
         },
         {
           name: 'Scalar',
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})
+
+test('types: data enum with custom types', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'CleanUpActions',
+    type: {
+      kind: 'enum',
+      variants: [
+        {
+          name: 'InitPack',
+          fields: [
+            {
+              defined: 'InitPackSetArgs',
+            },
+          ],
+        },
+        {
+          name: 'AddCardToPack',
+          fields: [
+            {
+              defined: 'AddCardToPackArgs',
+            },
+          ],
         },
       ],
     },
