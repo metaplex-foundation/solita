@@ -1,134 +1,706 @@
 {
   "version": "0.1.0",
   "name": "mpl_nft_packs",
-  "instructions": [],
-  "types": [
+  "instructions": [
     {
-      "name": "AddCardToPackArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "maxSupply",
-            "type": "u32"
-          },
-          {
-            "name": "weight",
-            "type": "u16"
-          },
-          {
-            "name": "index",
-            "type": "u32"
+      "name": "InitPack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Rent account"
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Clock account"
+        },
+        {
+          "name": "whitelistedCreator",
+          "isMut": false,
+          "isSigner": false,
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "initPackSetArgs",
+          "type": {
+            "defined": "InitPackSetArgs"
           }
-        ]
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
       }
     },
     {
-      "name": "InitPackSetArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "name",
-            "type": {
-              "array": ["u8", 32]
-            }
-          },
-          {
-            "name": "description",
-            "type": "string"
-          },
-          {
-            "name": "uri",
-            "type": "string"
-          },
-          {
-            "name": "mutable",
-            "type": "bool"
-          },
-          {
-            "name": "distributionType",
-            "type": {
-              "defined": "PackDistributionType"
-            }
-          },
-          {
-            "name": "allowedAmountToRedeem",
-            "type": "u32"
-          },
-          {
-            "name": "redeemStartDate",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "redeemEndDate",
-            "type": {
-              "option": "u64"
-            }
+      "name": "AddCardToPack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "packConfig",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['config', pack]"
+        },
+        {
+          "name": "packCard",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['card', pack, index]"
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "masterEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "masterMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "source",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "program account to hold MasterEdition token"
+        },
+        {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Rent"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "System Program"
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "SPL Token program"
+        }
+      ],
+      "args": [
+        {
+          "name": "addCardToPackArgs",
+          "type": {
+            "defined": "AddCardToPackArgs"
           }
-        ]
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
       }
     },
     {
-      "name": "EditPackSetArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "name",
-            "type": {
-              "option": {
-                "array": ["u8", 32]
-              }
-            }
-          },
-          {
-            "name": "description",
-            "type": {
-              "option": "string"
-            }
-          },
-          {
-            "name": "uri",
-            "type": {
-              "option": "string"
-            }
-          },
-          {
-            "name": "mutable",
-            "type": {
-              "option": "bool"
-            }
-          }
-        ]
+      "name": "AddVoucherToPack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "packVoucher",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['voucher', pack, index]"
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "voucherOwner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "masterEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "masterMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "source",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Rent"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "System Program"
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "SPL Token program"
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
       }
     },
     {
-      "name": "ClaimPackArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "index",
-            "type": "u32"
-          }
-        ]
+      "name": "Activate",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
       }
     },
     {
-      "name": "RequestCardToRedeemArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "index",
-            "type": "u32"
-          }
-        ]
+      "name": "Deactivate",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
       }
     },
+    {
+      "name": "ClosePack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Solana Clock"
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 5
+      }
+    },
+    {
+      "name": "ClaimPack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "provingProcess",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['proving', pack, user_wallet]"
+        },
+        {
+          "name": "userWallet",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "packCard",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['card', pack, index]"
+        },
+        {
+          "name": "userToken",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "User token account to hold new minted edition"
+        },
+        {
+          "name": "newMetadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "newEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "masterEdition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "newMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "newMintAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "metadata",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "editionMarker",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Rent"
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Metaplex Token Metadata Program"
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "SPL Token program"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "System Program"
+        }
+      ],
+      "args": [
+        {
+          "name": "claimPackArgs",
+          "type": {
+            "defined": "ClaimPackArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 6
+      }
+    },
+    {
+      "name": "TransferPackAuthority",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "currentAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newAuthority",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 7
+      }
+    },
+    {
+      "name": "DeletePack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "refunder",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 8
+      }
+    },
+    {
+      "name": "DeletePackCard",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "packCard",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "refunder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "newMasterEditionOwner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "programAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Rent"
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "SPL Token program"
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 9
+      }
+    },
+    {
+      "name": "DeletePackVoucher",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "packVoucher",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "refunder",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 10
+      }
+    },
+    {
+      "name": "EditPack",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "editPackSetArgs",
+          "type": {
+            "defined": "EditPackSetArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 11
+      }
+    },
+    {
+      "name": "RequestCardForRedeem",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "packConfig",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['config', pack]"
+        },
+        {
+          "name": "store",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "edition",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "editionMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "packVoucher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "provingProcess",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['proving', pack, user_wallet]"
+        },
+        {
+          "name": "userWallet",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "recentSlothashes",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Solana Slot Hashes"
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Solana Clock"
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "Rent"
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "System Program"
+        },
+        {
+          "name": "userToken",
+          "isMut": false,
+          "isSigner": false,
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "requestCardToRedeemArgs",
+          "type": {
+            "defined": "RequestCardToRedeemArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 12
+      }
+    },
+    {
+      "name": "CleanUp",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "packConfig",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['config', pack]"
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 13
+      }
+    },
+    {
+      "name": "DeletePackConfig",
+      "accounts": [
+        {
+          "name": "packSet",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "packConfig",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "PDA, ['config', pack]"
+        },
+        {
+          "name": "refunder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 14
+      }
+    }
+  ],
+  "accounts": [
     {
       "name": "PackCard",
       "type": {
@@ -342,81 +914,131 @@
           }
         ]
       }
+    }
+  ],
+  "types": [
+    {
+      "name": "AddCardToPackArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maxSupply",
+            "type": "u32"
+          },
+          {
+            "name": "weight",
+            "type": "u16"
+          },
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
     },
     {
-      "name": "NFTPacksInstruction",
+      "name": "InitPackSetArgs",
       "type": {
-        "kind": "enum",
-        "variants": [
+        "kind": "struct",
+        "fields": [
           {
-            "name": "InitPack",
-            "fields": [
-              {
-                "defined": "InitPackSetArgs"
+            "name": "name",
+            "type": {
+              "array": ["u8", 32]
+            }
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "mutable",
+            "type": "bool"
+          },
+          {
+            "name": "distributionType",
+            "type": {
+              "defined": "PackDistributionType"
+            }
+          },
+          {
+            "name": "allowedAmountToRedeem",
+            "type": "u32"
+          },
+          {
+            "name": "redeemStartDate",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "redeemEndDate",
+            "type": {
+              "option": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "EditPackSetArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": {
+              "option": {
+                "array": ["u8", 32]
               }
-            ]
+            }
           },
           {
-            "name": "AddCardToPack",
-            "fields": [
-              {
-                "defined": "AddCardToPackArgs"
-              }
-            ]
+            "name": "description",
+            "type": {
+              "option": "string"
+            }
           },
           {
-            "name": "AddVoucherToPack"
+            "name": "uri",
+            "type": {
+              "option": "string"
+            }
           },
           {
-            "name": "Activate"
-          },
+            "name": "mutable",
+            "type": {
+              "option": "bool"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimPackArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            "name": "Deactivate"
-          },
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RequestCardToRedeemArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            "name": "ClosePack"
-          },
-          {
-            "name": "ClaimPack",
-            "fields": [
-              {
-                "defined": "ClaimPackArgs"
-              }
-            ]
-          },
-          {
-            "name": "TransferPackAuthority"
-          },
-          {
-            "name": "DeletePack"
-          },
-          {
-            "name": "DeletePackCard"
-          },
-          {
-            "name": "DeletePackVoucher"
-          },
-          {
-            "name": "EditPack",
-            "fields": [
-              {
-                "defined": "EditPackSetArgs"
-              }
-            ]
-          },
-          {
-            "name": "RequestCardForRedeem",
-            "fields": [
-              {
-                "defined": "RequestCardToRedeemArgs"
-              }
-            ]
-          },
-          {
-            "name": "CleanUp"
-          },
-          {
-            "name": "DeletePackConfig"
+            "name": "index",
+            "type": "u32"
           }
         ]
       }
@@ -707,6 +1329,8 @@
   ],
   "metadata": {
     "origin": "shank",
-    "address": "packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu"
+    "address": "packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu",
+    "binaryVersion": "0.0.6",
+    "libVersion": "~0.0.6"
   }
 }
