@@ -10,7 +10,6 @@ import {
 } from '../src/types'
 import {
   analyzeCode,
-  deepLog,
   verifyImports,
   verifySyntacticCorrectness,
 } from './utils/verify-code'
