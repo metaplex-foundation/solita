@@ -315,3 +315,80 @@ test('types: data enum with custom types', async (t) => {
     logImports: false,
   })
 })
+
+// -----------------
+// Maps
+// -----------------
+//
+test('types: BTreeMap<u32, u32>', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'ProvingProcess',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'cardsToRedeem',
+          type: {
+            bTreeMap: ['u32', 'u32'],
+          },
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})
+
+test('types: HashMap<string, AddCardToPackArgs>', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'ProvingProcess',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'map',
+          type: {
+            hashMap: [
+              'string',
+              {
+                defined: 'AddCardToPackArgs',
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: false,
+    logImports: false,
+  })
+})
+
+test('types: Vec<HashMap<string, u32>>', async (t) => {
+  const ty = <IdlDefinedTypeDefinition>{
+    name: 'ProvingProcess',
+    type: {
+      kind: 'struct',
+      fields: [
+        {
+          name: 'maps',
+          type: {
+            vec: {
+              hashMap: ['string', 'u32'],
+            },
+          },
+        },
+      ],
+    },
+  }
+
+  await checkRenderedType(t, ty, [BEET_PACKAGE], {
+    logCode: true,
+    logImports: false,
+  })
+})

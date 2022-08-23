@@ -53,6 +53,7 @@ export type IdlType =
   | IdlTypeEnum
   | IdlTypeDataEnum
   | IdlTypeTuple
+  | IdlTypeMap
 
 // User defined type.
 export type IdlTypeDefined = {
@@ -71,6 +72,9 @@ export type IdlTypeArray = {
   array: [idlType: IdlType, size: number]
 }
 
+// -----------------
+// Enums
+// -----------------
 export type IdlEnumVariant = {
   name: string
 }
@@ -108,6 +112,20 @@ export type IdlTypeTuple = {
   tuple: IdlType[]
 }
 
+// -----------------
+// Maps
+// -----------------
+export type IdlTypeMap = IdlTypeHashMap | IdlTypeBTreeMap
+export type IdlTypeHashMap = {
+  hashMap: [IdlType, IdlType]
+}
+export type IdlTypeBTreeMap = {
+  bTreeMap: [IdlType, IdlType]
+}
+
+// -----------------
+// Defined
+// -----------------
 export type IdlDefinedType = {
   kind: 'struct' | 'enum'
   fields: IdlField[]
@@ -118,6 +136,9 @@ export type IdlDefinedTypeDefinition = {
   type: IdlDefinedType | IdlTypeEnum | IdlTypeDataEnum
 }
 
+// -----------------
+// Instruction
+// -----------------
 export type IdlInstructionArg = {
   name: string
   type: IdlType
@@ -129,6 +150,9 @@ export type IdlInstruction = {
   args: IdlInstructionArg[]
 }
 
+// -----------------
+// Account
+// -----------------
 export type IdlAccountType = {
   kind: 'struct' | 'enum'
   fields: IdlField[]
@@ -284,6 +308,18 @@ export function isDataEnumVariantWithUnnamedFields(
 
 export function isIdlTypeTuple(ty: IdlType): ty is IdlTypeTuple {
   return (ty as IdlTypeTuple).tuple != null
+}
+
+export function isIdlTypeHashMap(ty: IdlType): ty is IdlTypeHashMap {
+  return (ty as IdlTypeHashMap).hashMap != null
+}
+
+export function isIdlTypeBTreeMap(ty: IdlType): ty is IdlTypeBTreeMap {
+  return (ty as IdlTypeBTreeMap).bTreeMap != null
+}
+
+export function isIdlTypeMap(ty: IdlType): ty is IdlTypeMap {
+  return isIdlTypeHashMap(ty) || isIdlTypeBTreeMap(ty)
 }
 
 export function isIdlDefinedType(
