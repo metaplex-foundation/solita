@@ -38,6 +38,7 @@ export async function enhanceIdl(
       `Unknown IDL generator ${config.idlGenerator}`
     )
   }
-  await fs.writeFile(idlPath, JSON.stringify(idl, null, 2))
-  return idl
+  const finalIdl = config.idlHook == null ? idl : config.idlHook(idl)
+  await fs.writeFile(idlPath, JSON.stringify(finalIdl, null, 2))
+  return finalIdl
 }
