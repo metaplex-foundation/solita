@@ -5,6 +5,8 @@
 import {
   BeetExports,
   BeetTypeMapKey,
+  numbersTypeMap,
+  NumbersTypeMapKey,
   SupportedTypeDefinition,
 } from '@metaplex-foundation/beet'
 import {
@@ -369,6 +371,31 @@ export function isIdlInstructionAccountWithDesc(
 // -----------------
 export function hasPaddingAttr(field: IdlField): boolean {
   return field.attrs != null && field.attrs.includes(IDL_FIELD_ATTR_PADDING)
+}
+
+// -----------------
+// Primitivies
+// -----------------
+// NOTE: part of this could be moved to beet
+export type PrimitiveType = Exclude<NumbersTypeMapKey, typeof BIGNUM>
+export const BIGNUM = [
+  'u64',
+  'u128',
+  'u256',
+  'u512',
+  'i64',
+  'i128',
+  'i256',
+  'i512',
+] as const
+export type Bignum = typeof BIGNUM[number]
+export function isNumberLikeType(ty: IdlType): ty is NumbersTypeMapKey {
+  return (
+    typeof ty === 'string' && numbersTypeMap[ty as NumbersTypeMapKey] != null
+  )
+}
+export function isPrimitiveType(ty: IdlType): ty is PrimitiveType {
+  return isNumberLikeType(ty) && !BIGNUM.includes(ty as Bignum)
 }
 
 // -----------------
