@@ -126,14 +126,14 @@ export type IdlTypeBTreeMap = {
 // -----------------
 // Defined
 // -----------------
-export type IdlDefinedType = {
+export type IdlFieldsType = {
   kind: 'struct' | 'enum'
   fields: IdlField[]
 }
 
 export type IdlDefinedTypeDefinition = {
   name: string
-  type: IdlDefinedType | IdlTypeEnum | IdlTypeDataEnum
+  type: IdlFieldsType | IdlTypeEnum | IdlTypeDataEnum
 }
 
 // -----------------
@@ -250,7 +250,7 @@ export function isIdlTypeDefined(ty: IdlType): ty is IdlTypeDefined {
 }
 
 export function isIdlTypeEnum(
-  ty: IdlType | IdlDefinedType | IdlTypeEnum
+  ty: IdlType | IdlFieldsType | IdlTypeEnum
 ): ty is IdlTypeEnum {
   return (ty as IdlTypeEnum).variants != null
 }
@@ -259,7 +259,7 @@ export function isIdlTypeEnum(
 // Enums
 // -----------------
 export function isIdlTypeDataEnum(
-  ty: IdlType | IdlDefinedType | IdlTypeEnum
+  ty: IdlType | IdlFieldsType | IdlTypeEnum
 ): ty is IdlTypeDataEnum {
   const dataEnum = ty as IdlTypeDataEnum
   return (
@@ -272,7 +272,7 @@ export function isIdlTypeDataEnum(
 }
 
 export function isIdlTypeScalarEnum(
-  ty: IdlType | IdlDefinedType | IdlTypeEnum
+  ty: IdlType | IdlFieldsType | IdlTypeEnum
 ): ty is IdlTypeScalarEnum {
   return isIdlTypeEnum(ty) && !isIdlTypeDataEnum(ty)
 }
@@ -306,10 +306,16 @@ export function isDataEnumVariantWithUnnamedFields(
   return !isDataEnumVariantWithNamedFields(ty)
 }
 
+// -----------------
+// Tuple
+// -----------------
 export function isIdlTypeTuple(ty: IdlType): ty is IdlTypeTuple {
   return (ty as IdlTypeTuple).tuple != null
 }
 
+// -----------------
+// Maps
+// -----------------
 export function isIdlTypeHashMap(ty: IdlType): ty is IdlTypeHashMap {
   return (ty as IdlTypeHashMap).hashMap != null
 }
@@ -322,12 +328,26 @@ export function isIdlTypeMap(ty: IdlType): ty is IdlTypeMap {
   return isIdlTypeHashMap(ty) || isIdlTypeBTreeMap(ty)
 }
 
-export function isIdlDefinedType(
-  ty: IdlType | IdlDefinedType
-): ty is IdlDefinedType {
-  return (ty as IdlDefinedType).fields != null
+export function isIdlFieldsType(
+  ty: IdlType | IdlFieldsType
+): ty is IdlFieldsType {
+  return (ty as IdlFieldsType).fields != null
 }
 
+// -----------------
+// Struct/Enum
+// -----------------
+
+export function isFieldsType(
+  ty: IdlFieldsType | IdlTypeEnum | IdlTypeDataEnum
+): ty is IdlFieldsType {
+  const dety = ty as IdlFieldsType
+  return dety.kind === 'enum' || dety.kind === 'struct'
+}
+
+// -----------------
+// Idl
+// -----------------
 export function isShankIdl(ty: Idl): ty is ShankIdl {
   return (ty as ShankIdl).metadata?.origin === 'shank'
 }
@@ -344,6 +364,9 @@ export function isIdlInstructionAccountWithDesc(
   return typeof (ty as IdlInstructionAccountWithDesc).desc === 'string'
 }
 
+// -----------------
+// Padding
+// -----------------
 export function hasPaddingAttr(field: IdlField): boolean {
   return field.attrs != null && field.attrs.includes(IDL_FIELD_ATTR_PADDING)
 }
