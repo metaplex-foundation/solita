@@ -330,10 +330,18 @@ export function isIdlTypeMap(ty: IdlType): ty is IdlTypeMap {
   return isIdlTypeHashMap(ty) || isIdlTypeBTreeMap(ty)
 }
 
+// -----------------
+// Fields
+// -----------------
 export function isIdlFieldsType(
   ty: IdlType | IdlFieldsType
 ): ty is IdlFieldsType {
   return (ty as IdlFieldsType).fields != null
+}
+
+export function isIdlFieldType(ty: IdlType | IdlField): ty is IdlField {
+  const fieldTy = ty as IdlField
+  return fieldTy.type != null && fieldTy.name != null
 }
 
 // -----------------
