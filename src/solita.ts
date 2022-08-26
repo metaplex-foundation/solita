@@ -9,7 +9,7 @@ import {
   TypeAliases,
   Idl,
   IdlType,
-  isIdlDefinedType,
+  isIdlFieldsType,
   isIdlTypeDefined,
   isIdlTypeEnum,
   isShankIdl,
@@ -18,7 +18,7 @@ import {
   Serializers,
   IdlTypeDataEnum,
   IdlTypeEnum,
-  IdlDefinedType,
+  IdlFieldsType,
 } from './types'
 import {
   logDebug,
@@ -32,6 +32,7 @@ import { format, Options } from 'prettier'
 import { Paths } from './paths'
 import { CustomSerializers } from './serializers'
 import { renderAccountProviders } from './render-account-providers'
+import { transformDefinition } from './transform-type'
 
 export * from './types'
 
@@ -109,7 +110,7 @@ export class Solita {
 
   private resolveFieldType = (
     typeName: string
-  ): IdlDefinedType | IdlTypeEnum | IdlTypeDataEnum | null => {
+  ): IdlFieldsType | IdlTypeEnum | IdlTypeDataEnum | null => {
     for (const acc of this.idl.accounts ?? []) {
       if (acc.name === typeName) return acc.type
     }
@@ -146,7 +147,11 @@ export class Solita {
     const types: Record<string, string> = {}
     logDebug('Rendering %d types', this.idl.types?.length ?? 0)
     if (this.idl.types != null) {
-      for (const ty of this.idl.types) {
+      for (let i = 0; i < this.idl.types.length; i++) {
+        this.idl.types[i] = transformDefinition(this.idl.types[i])
+      }
+
+      for (let ty of this.idl.types) {
         // Here we detect if the type itself is fixable solely based on its
         // primitive field types
         let isFixable = determineTypeIsFixable(
@@ -164,7 +169,7 @@ export class Solita {
       for (const ty of this.idl.types) {
         logDebug(`Rendering type ${ty.name}`)
         logTrace('kind: %s', ty.type.kind)
-        if (isIdlDefinedType(ty.type)) {
+        if (isIdlFieldsType(ty.type)) {
           logTrace('fields: %O', ty.type.fields)
         } else {
           if (isIdlTypeEnum(ty.type)) {

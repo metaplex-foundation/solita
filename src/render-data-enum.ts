@@ -3,9 +3,12 @@ import { TypeMapper } from './type-mapper'
 import {
   BEET_EXPORT_NAME,
   IdlDataEnumVariant,
+  IdlType,
   IdlTypeDataEnum,
+  IdlTypeTuple,
   isDataEnumVariant,
   isDataEnumVariantWithNamedFields,
+  isIdlFieldType,
 } from './types'
 
 /**
@@ -75,7 +78,8 @@ function renderVariant(
     return beet
   } else if (isDataEnumVariant(variant)) {
     // Variant with unnamed fields is represented as a tuple
-    const fieldDecls = typeMapper.mapSerde({ tuple: variant.fields })
+    const tuple: IdlTypeTuple = { tuple: variant.fields as IdlType[] }
+    const fieldDecls = typeMapper.mapSerde(tuple)
     const beetArgsStructType = typeMapper.usedFixableSerde
       ? 'FixableBeetArgsStruct'
       : 'BeetArgsStruct'
@@ -112,7 +116,8 @@ export function renderDataEnumRecord(
       return `  ${variant.name}: { ${fields.join(', ')} }`
     } else if (isDataEnumVariant(variant)) {
       fields = variant.fields.map((type, idx) => {
-        return typeMapper.map(type, `${variant.name}[${idx}]`)
+        const ty = isIdlFieldType(type) ? type.type : type
+        return typeMapper.map(ty, `${variant.name}[${idx}]`)
       })
       return `  ${variant.name}: { fields: [ ${fields.join(', ')} ] }`
     } else {

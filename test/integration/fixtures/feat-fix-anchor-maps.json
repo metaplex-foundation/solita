@@ -1,0 +1,49 @@
+{
+  "version": "0.1.0",
+  "name": "feat_fix_anchor_maps",
+  "instructions": [],
+  "types": [
+    {
+      "name": "MapsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hashMapStringU64",
+            "type": {
+              "defined": "HashMap<String,u64>"
+            }
+          },
+          {
+            "name": "hashMapCustomType",
+            "type": {
+              "defined": "HashMap<String,DataItem>"
+            }
+          },
+          {
+            "name": "bTreeMapU8I128",
+            "type": {
+              "defined": "BTreeMap<u8,i128>"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DataItem",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "uuid",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "packFeFNZzMfD9aVWL7QbGz1WcU7R9zpf6pvNsw2BLu"
+  }
+}

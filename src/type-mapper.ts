@@ -19,6 +19,8 @@ import {
   isIdlTypeOption,
   isIdlTypeTuple,
   isIdlTypeVec,
+  isNumberLikeType,
+  isPrimitiveType,
   PrimaryTypeMap,
   PrimitiveTypeKey,
   TypeMappedSerdeField,
@@ -187,7 +189,16 @@ export class TypeMapper {
 
   private mapMapType(inners: [IdlType, IdlType], name: string) {
     const innerTypes = [this.map(inners[0], name), this.map(inners[1], name)]
-    return `Map<${innerTypes[0]}, ${innerTypes[1]}>`
+
+    // Overcoming TypeScript issues related to `toFixedFromValue` which considers `bignum`
+    // incompat with `Partial<bignum>`.
+    // If this can be fixed in beet instead we won't need this overspecification anymore.
+    const innerTy1 =
+      !isNumberLikeType(inners[1]) || isPrimitiveType(inners[1])
+        ? innerTypes[1]
+        : `Partial<${innerTypes[1]}>`
+
+    return `Map<${innerTypes[0]}, ${innerTy1}>`
   }
 
   private mapDefinedType(ty: IdlTypeDefined) {
