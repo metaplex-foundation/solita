@@ -12,6 +12,7 @@ import {
   IdlTypeHashMap,
   IdlTypeBTreeMap,
 } from './types'
+import { logWarn } from './utils'
 
 const mapRx = /^(Hash|BTree)Map<([^,\s]+)\s?,([^>\s]+)\s?>/
 
@@ -41,6 +42,10 @@ function transformType(ty: IdlType) {
     const match = ty.defined.match(mapRx)
     if (match == null) return ty
 
+    logWarn(
+      `Discovered an incorrectly defined map '${ty.defined}' as part of the IDL.
+Solita will attempt to fix this type, but you should inform the authors of the tool that generated the IDL about this issue`
+    )
     const [_, mapTy, inner1, inner2] = match
 
     const innerTy1 = resolveType(inner1)
