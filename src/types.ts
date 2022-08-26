@@ -344,7 +344,10 @@ export function isFieldsType(
   ty: IdlFieldsType | IdlTypeEnum | IdlTypeDataEnum
 ): ty is IdlFieldsType {
   const dety = ty as IdlFieldsType
-  return dety.kind === 'enum' || dety.kind === 'struct'
+  return (
+    (dety.kind === 'enum' || dety.kind === 'struct') &&
+    Array.isArray(dety.fields)
+  )
 }
 
 // -----------------
