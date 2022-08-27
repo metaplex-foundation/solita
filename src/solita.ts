@@ -32,7 +32,7 @@ import { format, Options } from 'prettier'
 import { Paths } from './paths'
 import { CustomSerializers } from './serializers'
 import { renderAccountProviders } from './render-account-providers'
-import { transformDefinition } from './transform-type'
+import { adaptIdl, transformDefinition } from './transform-type'
 
 export * from './types'
 
@@ -146,11 +146,9 @@ export class Solita {
     // -----------------
     const types: Record<string, string> = {}
     logDebug('Rendering %d types', this.idl.types?.length ?? 0)
-    if (this.idl.types != null) {
-      for (let i = 0; i < this.idl.types.length; i++) {
-        this.idl.types[i] = transformDefinition(this.idl.types[i])
-      }
+    adaptIdl(this.idl)
 
+    if (this.idl.types != null) {
       for (let ty of this.idl.types) {
         // Here we detect if the type itself is fixable solely based on its
         // primitive field types

@@ -11,6 +11,8 @@ import {
   isIdlTypeDefined,
   IdlTypeHashMap,
   IdlTypeBTreeMap,
+  Idl,
+  isShankIdl,
 } from './types'
 import { logWarn } from './utils'
 
@@ -29,7 +31,17 @@ const mapRx = /^(Hash|BTree)Map<([^,\s]+)\s?,([^>\s]+)\s?>/
  * Whenever more cases of incorrect types are encountered this transformer needs
  * to be updated to handle them.
  */
-export function transformDefinition(def: IdlDefinedTypeDefinition) {
+export function adaptIdl(idl: Idl) {
+  if (isShankIdl(idl)) return
+
+  if (idl.types != null) {
+    for (let i = 0; i < idl.types.length; i++) {
+      idl.types[i] = transformDefinition(idl.types[i])
+    }
+  }
+}
+
+function transformDefinition(def: IdlDefinedTypeDefinition) {
   const ty = def.type
   if (isFieldsType(ty)) {
     def.type = transformFields(ty)
