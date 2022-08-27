@@ -32,7 +32,7 @@ import { format, Options } from 'prettier'
 import { Paths } from './paths'
 import { CustomSerializers } from './serializers'
 import { renderAccountProviders } from './render-account-providers'
-import { transformDefinition } from './transform-type'
+import { adaptIdl } from './transform-type'
 
 export * from './types'
 
@@ -45,6 +45,15 @@ const DEFAULT_FORMAT_OPTS: Options = {
   arrowParens: 'always',
   printWidth: 80,
   parser: 'typescript',
+}
+
+export type SolitaOpts = {
+  formatCode?: boolean
+  formatOpts?: Options
+  prependGeneratedWarning?: boolean
+  typeAliases?: TypeAliases
+  serializers?: Serializers
+  projectRoot?: string
 }
 
 export class Solita {
@@ -66,14 +75,7 @@ export class Solita {
       typeAliases = {},
       serializers = {},
       projectRoot = process.cwd(),
-    }: {
-      formatCode?: boolean
-      formatOpts?: Options
-      prependGeneratedWarning?: boolean
-      typeAliases?: TypeAliases
-      serializers?: Serializers
-      projectRoot?: string
-    } = {}
+    }: SolitaOpts = {}
   ) {
     this.projectRoot = projectRoot
     this.formatCode = formatCode
@@ -146,11 +148,9 @@ export class Solita {
     // -----------------
     const types: Record<string, string> = {}
     logDebug('Rendering %d types', this.idl.types?.length ?? 0)
-    if (this.idl.types != null) {
-      for (let i = 0; i < this.idl.types.length; i++) {
-        this.idl.types[i] = transformDefinition(this.idl.types[i])
-      }
+    adaptIdl(this.idl)
 
+    if (this.idl.types != null) {
       for (let ty of this.idl.types) {
         // Here we detect if the type itself is fixable solely based on its
         // primitive field types

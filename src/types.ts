@@ -180,8 +180,11 @@ export type Idl = {
   types?: IdlDefinedTypeDefinition[]
   metadata: {
     address: string
+    origin?: IdlOrigin
   }
 }
+
+export type IdlOrigin = 'shank' | 'anchor'
 
 // -----------------
 // Shank Idl Extensions
