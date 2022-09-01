@@ -8,7 +8,8 @@ export function generateTypeScriptSDK(
   sdkDir: string,
   prettierConfig?: PrettierOptions,
   typeAliases?: TypeAliases,
-  serializers?: Serializers
+  serializers?: Serializers,
+  anchorRemainingAccounts?: boolean
 ) {
   logInfo('Generating TypeScript SDK to %s', sdkDir)
   const gen = new Solita(idl, {
@@ -16,6 +17,7 @@ export function generateTypeScriptSDK(
     formatOpts: prettierConfig,
     typeAliases,
     serializers,
+    anchorRemainingAccounts,
   })
   return gen.renderAndWriteTo(sdkDir)
 }

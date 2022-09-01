@@ -103,6 +103,11 @@ Run it each time you make a change to your program to generate the TypeScript SD
 Since we're writing the _anchor_ binary to `.crates/` you should add that folder to your
 `.gitignore`.
 
+
+**NOTE**: that for _anchor_ generated IDL an optional `anchorRemainingAccounts` property is
+added to each set of instruction accounts. If your programs are not using those you can
+specifically turn that off by setting `anchorRemainingAccounts: false`.
+
 ### Full Example: MPL Candy Machine Solita + Anchor Setup
   
 - [annotated anchor program](https://github.com/metaplex-foundation/metaplex-program-library/blob/5f0c0656ff250f7a70643c06306962186f37ef5d/candy-machine/program/src/lib.rs) 
