@@ -380,3 +380,40 @@ test('ix: one arg rendering remaining accounts', async (t) => {
     anchorRemainingAccounts: true,
   })
 })
+
+test('ix: empty args rendering remaining accounts', async (t) => {
+  const ix = {
+    name: 'empyArgs',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: false,
+    rxs: [
+      /programId = new web3\.PublicKey/,
+      /anchorRemainingAccounts\?\: web3\.AccountMeta\[\]/,
+    ],
+    anchorRemainingAccounts: true,
+  })
+})
+
+test('ix: empty args and empty accounts', async (t) => {
+  const ix = {
+    name: 'empyArgs',
+    accounts: [],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: false,
+    rxs: [/programId = new web3\.PublicKey/],
+    nonrxs: [/anchorRemainingAccounts\?\: web3\.AccountMeta\[\]/],
+    anchorRemainingAccounts: true,
+  })
+  t.end()
+})
