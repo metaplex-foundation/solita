@@ -136,15 +136,16 @@ ${typeMapperImports.join('\n')}`.trim()
       return true
     })
 
-    const anchorRemainingAccounts = this.renderAnchorRemainingAccounts
-      ? `
+    const anchorRemainingAccounts =
+      this.renderAnchorRemainingAccounts && processedKeys.length > 0
+        ? `
   if (accounts.anchorRemainingAccounts != null) {
     for (const acc of accounts.anchorRemainingAccounts) {
       keys.push(acc)
     }
   }
 `
-      : ''
+        : ''
 
     const requiredKeys = requireds
       .map(({ name, isMut, isSigner, knownPubkey }) => {
