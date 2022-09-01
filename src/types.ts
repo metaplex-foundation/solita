@@ -368,6 +368,11 @@ export function isShankIdl(ty: Idl): ty is ShankIdl {
   return (ty as ShankIdl).metadata?.origin === 'shank'
 }
 
+export function isAnchorIdl(ty: Idl): ty is ShankIdl {
+  // This needs to change once we support more than two IDL generators
+  return !isShankIdl(ty)
+}
+
 export function isShankIdlInstruction(
   ty: IdlInstruction
 ): ty is ShankIdlInstruction {

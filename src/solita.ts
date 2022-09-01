@@ -19,6 +19,7 @@ import {
   IdlTypeDataEnum,
   IdlTypeEnum,
   IdlFieldsType,
+  isAnchorIdl,
 } from './types'
 import {
   logDebug,
@@ -54,6 +55,7 @@ export type SolitaOpts = {
   typeAliases?: TypeAliases
   serializers?: Serializers
   projectRoot?: string
+  anchorRemainingAccounts?: boolean
 }
 
 export class Solita {
@@ -65,6 +67,7 @@ export class Solita {
   private readonly serializers: CustomSerializers
   private readonly projectRoot: string
   private readonly hasInstructions: boolean
+  private readonly anchorRemainingAccounts: boolean
   private paths: Paths | undefined
   constructor(
     private readonly idl: Idl,
@@ -75,6 +78,7 @@ export class Solita {
       typeAliases = {},
       serializers = {},
       projectRoot = process.cwd(),
+      anchorRemainingAccounts,
     }: SolitaOpts = {}
   ) {
     this.projectRoot = projectRoot
@@ -88,6 +92,10 @@ export class Solita {
       new Map(Object.entries(serializers))
     )
     this.hasInstructions = idl.instructions.length > 0
+
+    // Unless remaining accounts are specifically turned off, we support them
+    // for anchor programs
+    this.anchorRemainingAccounts = anchorRemainingAccounts ?? isAnchorIdl(idl)
   }
 
   // -----------------
@@ -220,7 +228,8 @@ export class Solita {
         accountFiles,
         customFiles,
         this.typeAliases,
-        forceFixable
+        forceFixable,
+        this.anchorRemainingAccounts
       )
       if (this.prependGeneratedWarning) {
         code = prependGeneratedWarning(code)
