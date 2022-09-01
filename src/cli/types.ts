@@ -17,6 +17,7 @@ export type SolitaConfigBase = {
 export type SolitaConfigAnchor = SolitaConfigBase & {
   idlGenerator: 'anchor'
   programId: string
+  anchorRemainingAccounts?: boolean
 }
 
 export type SolitaConfigShank = SolitaConfigBase & {

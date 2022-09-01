@@ -31,7 +31,14 @@ export function handleAnchor(
     ...config.rustbin,
   }
 
-  return handle(config, rustbinConfig, spawnArgs, spawnOpts, prettierConfig)
+  return handle(
+    config,
+    rustbinConfig,
+    spawnArgs,
+    spawnOpts,
+    prettierConfig,
+    config.anchorRemainingAccounts
+  )
 }
 
 export function handleShank(
@@ -52,7 +59,14 @@ export function handleShank(
     dryRun: false,
   }
 
-  return handle(config, rustbinConfig, spawnArgs, spawnOpts, prettierConfig)
+  return handle(
+    config,
+    rustbinConfig,
+    spawnArgs,
+    spawnOpts,
+    prettierConfig,
+    false
+  )
 }
 
 async function handle(
@@ -60,7 +74,8 @@ async function handle(
   rustbinConfig: RustbinConfig,
   spawnArgs: string[],
   spawnOpts: SpawnOptionsWithoutStdio,
-  prettierConfig?: PrettierOptions
+  prettierConfig?: PrettierOptions,
+  anchorRemainingAccounts?: boolean
 ) {
   const { programName, idlDir, sdkDir } = config
 
@@ -88,7 +103,8 @@ async function handle(
           sdkDir,
           prettierConfig,
           config.typeAliases,
-          config.serializers
+          config.serializers,
+          anchorRemainingAccounts
         )
         resolve()
       })

@@ -43,7 +43,8 @@ class InstructionRenderer {
     readonly ix: IdlInstruction,
     readonly fullFileDir: PathLike,
     readonly programId: string,
-    private readonly typeMapper: TypeMapper
+    private readonly typeMapper: TypeMapper,
+    private readonly renderAnchorRemainingAccounts: boolean
   ) {
     this.upperCamelIxName = ix.name
       .charAt(0)
@@ -135,6 +136,16 @@ ${typeMapperImports.join('\n')}`.trim()
       return true
     })
 
+    const anchorRemainingAccounts = this.renderAnchorRemainingAccounts
+      ? `
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+`
+      : ''
+
     const requiredKeys = requireds
       .map(({ name, isMut, isSigner, knownPubkey }) => {
         const pubkey =
@@ -182,7 +193,7 @@ ${typeMapperImports.join('\n')}`.trim()
             .join('\n') + '\n'
         : ''
 
-    return `[\n    ${requiredKeys}\n  ]\n${optionalKeys}\n`
+    return `[\n    ${requiredKeys}\n  ]\n${optionalKeys}\n${anchorRemainingAccounts}\n`
   }
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
@@ -197,6 +208,10 @@ ${typeMapperImports.join('\n')}`.trim()
         return `${x.name}${optional}: ${web3}.PublicKey`
       })
       .join('\n  ')
+
+    const anchorRemainingAccounts = this.renderAnchorRemainingAccounts
+      ? 'anchorRemainingAccounts?: web3.AccountMeta[]'
+      : ''
 
     const propertyComments = processedKeys
       // known pubkeys are not provided by the user and thus aren't part of the type
@@ -229,6 +244,7 @@ ${typeMapperImports.join('\n')}`.trim()
     return `${docs}
           export type ${this.accountsTypename} = {
   ${fields}
+  ${anchorRemainingAccounts}
         }
         `
   }
@@ -350,7 +366,8 @@ export function renderInstruction(
   accountFilesByType: Map<string, string>,
   customFilesByType: Map<string, string>,
   typeAliases: Map<string, PrimitiveTypeKey>,
-  forceFixable: ForceFixable
+  forceFixable: ForceFixable,
+  renderAnchorRemainingAccounts: boolean
 ) {
   const typeMapper = new TypeMapper(
     accountFilesByType,
@@ -362,7 +379,8 @@ export function renderInstruction(
     ix,
     fullFileDir,
     programId,
-    typeMapper
+    typeMapper,
+    renderAnchorRemainingAccounts
   )
   return renderer.render()
 }

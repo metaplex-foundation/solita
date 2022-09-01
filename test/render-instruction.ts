@@ -29,6 +29,7 @@ async function checkRenderedIx(
     lineNumbers?: boolean
     rxs?: RegExp[]
     nonrxs?: RegExp[]
+    anchorRemainingAccounts?: boolean
   } = {}
 ) {
   const {
@@ -45,7 +46,8 @@ async function checkRenderedIx(
     new Map(),
     new Map(),
     new Map(),
-    FORCE_FIXABLE_NEVER
+    FORCE_FIXABLE_NEVER,
+    opts.anchorRemainingAccounts ?? false
   )
   if (logCode) {
     const renderTs = lineNumbers
@@ -123,7 +125,9 @@ test('ix: one arg', async (t) => {
       },
     ],
   }
-  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE])
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    nonrxs: [/anchorRemainingAccounts\?\: web3\.AccountMeta\[\]/],
+  })
 })
 
 test('ix: two args', async (t) => {
@@ -348,5 +352,31 @@ test('ix: empty args one system program account + one optional rent account', as
       /pubkey\: accounts.rent,/,
     ],
     nonrxs: [/pubkey\: accounts\.programId/],
+  })
+})
+
+// -----------------
+// Anchor Remaining Accounts
+// -----------------
+test('ix: one arg rendering remaining accounts', async (t) => {
+  const ix = <IdlInstruction>{
+    name: 'oneArg',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+    ],
+    args: [
+      {
+        name: 'amount',
+        type: 'u64',
+      },
+    ],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [/anchorRemainingAccounts\?\: web3\.AccountMeta\[\]/],
+    anchorRemainingAccounts: true,
   })
 })
