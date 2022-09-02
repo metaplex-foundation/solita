@@ -148,7 +148,7 @@ export type IdlInstructionArg = {
 
 export type IdlInstruction = {
   name: string
-  accounts: IdlInstructionAccount[]
+  accounts: IdlInstructionAccount[] | IdlAccountsCollection[]
   args: IdlInstructionArg[]
 }
 
@@ -163,6 +163,11 @@ export type IdlAccountType = {
 export type IdlAccount = {
   name: string
   type: IdlAccountType
+}
+
+export type IdlAccountsCollection = {
+  name: string
+  accounts: IdlInstructionAccount[]
 }
 
 export type IdlError = {

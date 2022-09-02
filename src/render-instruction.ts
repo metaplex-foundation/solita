@@ -1,6 +1,7 @@
 import {
   IdlInstruction,
   IdlInstructionArg,
+  IdlAccountsCollection,
   SOLANA_WEB3_EXPORT_NAME,
   IdlInstructionAccount,
   SOLANA_SPL_TOKEN_PACKAGE,
@@ -116,13 +117,38 @@ ${typeMapperImports.join('\n')}`.trim()
   // Accounts
   // -----------------
   private processIxAccounts(): ProcessedAccountKey[] {
-    return this.ix.accounts.map((acc) => {
-      const knownPubkey = resolveKnownPubkey(acc.name)
-      const optional = acc.optional ?? false
-      return knownPubkey == null
-        ? { ...acc, optional }
-        : { ...acc, knownPubkey, optional }
+    let processedAccountsKey: ProcessedAccountKey[] = []
+    this.ix.accounts.map((acc: IdlInstructionAccount | IdlAccountsCollection) => {
+      if(this.isAccountsCollection(acc)){
+        acc.accounts.map((ac) => {
+          // as there are cases where the collection of the accounts is reused on the same ix, is needed to change the name of the account
+          ac.name += acc.name.charAt(0).toUpperCase().concat(acc.name.slice(1))
+          const knownPubkey = resolveKnownPubkey(ac.name)
+          const optional = ac.optional ?? false
+          if (knownPubkey == null) {
+            processedAccountsKey.push({ ...ac, optional })
+          }
+          else{
+            processedAccountsKey.push({ ...ac, knownPubkey, optional })
+          }
+        })
+      }
+      else {
+        const knownPubkey = resolveKnownPubkey(acc.name)
+        const optional = acc.optional ?? false
+        if (knownPubkey == null) {
+          processedAccountsKey.push({ ...acc, optional })
+        }
+        else{
+          processedAccountsKey.push({ ...acc, knownPubkey, optional })
+        }
+      }
     })
+    return processedAccountsKey
+  }
+
+  protected isAccountsCollection(account: IdlInstructionAccount | IdlAccountsCollection): account is IdlAccountsCollection {
+    return (account as IdlAccountsCollection).accounts !== undefined
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
