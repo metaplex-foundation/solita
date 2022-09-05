@@ -2,13 +2,17 @@ import {
   IdlInstruction,
   IdlInstructionArg,
   SOLANA_WEB3_EXPORT_NAME,
-  IdlInstructionAccount,
   SOLANA_SPL_TOKEN_PACKAGE,
   SOLANA_SPL_TOKEN_EXPORT_NAME,
   TypeMappedSerdeField,
   SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
   PrimitiveTypeKey,
+  isIdlPdaConst,
+  isIdlPdaExcludeAccount,
+  ProcessedAccountKey,
+  isProcessedAccountKeyWithPda,
+  isIdlPdaEligible,
 } from './types'
 import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -16,18 +20,17 @@ import { renderDataStruct } from './serdes'
 import {
   isKnownPubkey,
   renderKnownPubkeyAccess,
-  ResolvedKnownPubkey,
   resolveKnownPubkey,
 } from './known-pubkeys'
 import { BEET_PACKAGE } from '@metaplex-foundation/beet'
 import { renderScalarEnums } from './render-enums'
 import { InstructionDiscriminator } from './instruction-discriminator'
 import { PathLike } from 'fs'
-
-type ProcessedAccountKey = IdlInstructionAccount & {
-  knownPubkey?: ResolvedKnownPubkey
-  optional: boolean
-}
+import {
+  getIdlPdaConstValue,
+  isIdlPdaAccountEligible,
+  renderPdaPubkey,
+} from './pda-pubkeys'
 
 class InstructionRenderer {
   readonly upperCamelIxName: string
@@ -116,13 +119,34 @@ ${typeMapperImports.join('\n')}`.trim()
   // Accounts
   // -----------------
   private processIxAccounts(): ProcessedAccountKey[] {
-    return this.ix.accounts.map((acc) => {
+    // in order to capture PDA knowledge we to use two passes
+    let processedKeys = this.ix.accounts.map((acc) => {
       const knownPubkey = resolveKnownPubkey(acc.name)
       const optional = acc.optional ?? false
+      const eligiblePda = false
+      const pda = acc.pda && isIdlPdaEligible(acc.pda) ? acc.pda : undefined
       return knownPubkey == null
-        ? { ...acc, optional }
-        : { ...acc, knownPubkey, optional }
+        ? { ...acc, eligiblePda, optional, pda }
+        : { ...acc, knownPubkey, eligiblePda, optional, pda }
     })
+
+    processedKeys = processedKeys.map((processed) => {
+      let eligiblePda = false
+      if (isProcessedAccountKeyWithPda(processed)) {
+        if (isIdlPdaExcludeAccount(processed.pda)) {
+          eligiblePda = true
+        } else {
+          eligiblePda = isIdlPdaAccountEligible(
+            processed,
+            processedKeys,
+            this.camelIxName
+          )
+        }
+      }
+      return { ...processed, eligiblePda }
+    })
+
+    return processedKeys
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
@@ -147,15 +171,43 @@ ${typeMapperImports.join('\n')}`.trim()
 `
         : ''
 
+    const accountNameToPubkeyValue = new Map<string, string>()
+
+    // first pass to generate all the account values for non-constant PDA accounts and
+    // cache it for later.
+    requireds.forEach(({ pda, name, knownPubkey }) => {
+      if (pda === undefined) {
+        let pubkey: string
+        if (knownPubkey == null) {
+          pubkey = `accounts.${name}`
+        } else {
+          pubkey = `accounts.${name} ?? ${renderKnownPubkeyAccess(
+            knownPubkey,
+            this.programIdPubkey
+          )}`
+        }
+        accountNameToPubkeyValue.set(name, pubkey)
+      } else if (isIdlPdaConst(pda)) {
+        const pubkey = `accounts.${name} ?? new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${getIdlPdaConstValue(
+          pda,
+          this.programId
+        ).toString()}')`
+        accountNameToPubkeyValue.set(name, pubkey)
+      }
+    })
+
     const requiredKeys = requireds
-      .map(({ name, isMut, isSigner, knownPubkey }) => {
-        const pubkey =
-          knownPubkey == null
-            ? `accounts.${name}`
-            : `accounts.${name} ?? ${renderKnownPubkeyAccess(
-                knownPubkey,
-                this.programIdPubkey
-              )}`
+      .map(({ pda, name, isMut, isSigner }) => {
+        let pubkey = accountNameToPubkeyValue.get(name)
+        if (pubkey == undefined) {
+          pubkey = `accounts.${name} ?? ${renderPdaPubkey(
+            pda!, // any way to make this type assertion not needed?
+            this.ix.args,
+            this.ix.accounts,
+            this.programIdPubkey
+          )}`
+        }
+
         return `{
       pubkey: ${pubkey},
       isWritable: ${isMut.toString()},
@@ -205,7 +257,7 @@ ${typeMapperImports.join('\n')}`.trim()
         if (x.knownPubkey != null) {
           return `${x.name}?: ${web3}.PublicKey`
         }
-        const optional = x.optional ? '?' : ''
+        const optional = x.optional || x.eligiblePda ? '?' : ''
         return `${x.name}${optional}: ${web3}.PublicKey`
       })
       .join('\n  ')
