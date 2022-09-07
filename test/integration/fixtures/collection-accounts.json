@@ -1,0 +1,195 @@
+{
+  "version": "0.2.0",
+  "name": "jet",
+  "instructions": [
+    {
+      "name": "mockLiquidateDex",
+      "accounts": [
+        {
+          "name": "sourceMarket",
+          "accounts": [
+            {
+              "name": "market",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "openOrders",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "requestQueue",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "eventQueue",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "bids",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "asks",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "coinVault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "pcVault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultSigner",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "targetMarket",
+          "accounts": [
+            {
+              "name": "market",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "openOrders",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "requestQueue",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "eventQueue",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "bids",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "asks",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "coinVault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "pcVault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "vaultSigner",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        },
+        {
+          "name": "toLiquidate",
+          "accounts": [
+            {
+              "name": "market",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "marketAuthority",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "obligation",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "loanReserve",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "loanReserveVault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "loanNoteMint",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "loanAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "collateralReserve",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "collateralReserveVault",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "depositNoteMint",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "collateralAccount",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "dexSwapTokens",
+              "isMut": true,
+              "isSigner": false
+            },
+            {
+              "name": "dexProgram",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "tokenProgram",
+              "isMut": false,
+              "isSigner": false
+            },
+            {
+              "name": "rent",
+              "isMut": false,
+              "isSigner": false
+            }
+          ]
+        }
+      ],
+      "args": []
+    }
+  ],
+  "metadata": {
+    "address": "test"
+  }
+}

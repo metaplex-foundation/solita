@@ -118,36 +118,35 @@ ${typeMapperImports.join('\n')}`.trim()
   // -----------------
   private processIxAccounts(): ProcessedAccountKey[] {
     let processedAccountsKey: ProcessedAccountKey[] = []
-    this.ix.accounts.map((acc: IdlInstructionAccount | IdlAccountsCollection) => {
-      if(this.isAccountsCollection(acc)){
-        acc.accounts.map((ac) => {
+    for (const acc of this.ix.accounts) {
+      if (this.isAccountsCollection(acc)) {
+        for (const ac of acc.accounts) {
           // as there are cases where the collection of the accounts is reused on the same ix, is needed to change the name of the account
           ac.name += acc.name.charAt(0).toUpperCase().concat(acc.name.slice(1))
           const knownPubkey = resolveKnownPubkey(ac.name)
           const optional = ac.optional ?? false
           if (knownPubkey == null) {
             processedAccountsKey.push({ ...ac, optional })
-          }
-          else{
+          } else {
             processedAccountsKey.push({ ...ac, knownPubkey, optional })
           }
-        })
-      }
-      else {
+        }
+      } else {
         const knownPubkey = resolveKnownPubkey(acc.name)
         const optional = acc.optional ?? false
         if (knownPubkey == null) {
           processedAccountsKey.push({ ...acc, optional })
-        }
-        else{
+        } else {
           processedAccountsKey.push({ ...acc, knownPubkey, optional })
         }
       }
-    })
+    }
     return processedAccountsKey
   }
 
-  protected isAccountsCollection(account: IdlInstructionAccount | IdlAccountsCollection): account is IdlAccountsCollection {
+  private isAccountsCollection(
+    account: IdlInstructionAccount | IdlAccountsCollection
+  ): account is IdlAccountsCollection {
     return (account as IdlAccountsCollection).accounts !== undefined
   }
 

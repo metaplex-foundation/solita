@@ -9,6 +9,7 @@ import fixAnchorMapsJson from './fixtures/feat-fix-anchor-maps.json'
 import mixedEnumsWithCustomTypesJson from './fixtures/feat-mixed-enums+custom-types.json'
 import mixedEnumsJson from './fixtures/feat-mixed-enums.json'
 import tuplesJson from './fixtures/feat-tuples.json'
+import collectionAccountsJson from './fixtures/collection-accounts.json'
 
 // -----------------
 // feat-account-padding
@@ -108,6 +109,21 @@ import tuplesJson from './fixtures/feat-tuples.json'
 
   test('renders type correct SDK for ' + label, async (t) => {
     const idl = tuplesJson as Idl
+    idl.metadata = {
+      ...idl.metadata,
+      address: 'A1BvUFMKzoubnHEFhvhJxXyTfEN6r2DqCZxJFF9hfH3x',
+    }
+    await checkIdl(t, idl, label)
+  })
+}
+// -----------------
+// feat-tuples
+// -----------------
+{
+  const label = 'feat-collections-accounts'
+
+  test('renders type correct SDK for ' + label, async (t) => {
+    const idl = collectionAccountsJson as Idl
     idl.metadata = {
       ...idl.metadata,
       address: 'A1BvUFMKzoubnHEFhvhJxXyTfEN6r2DqCZxJFF9hfH3x',
