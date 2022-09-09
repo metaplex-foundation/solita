@@ -117,7 +117,7 @@ import collectionAccountsJson from './fixtures/collection-accounts.json'
   })
 }
 // -----------------
-// feat-tuples
+// feat-collections-accounts
 // -----------------
 {
   const label = 'feat-collections-accounts'
