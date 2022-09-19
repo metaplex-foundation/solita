@@ -5,17 +5,21 @@ import {
   IdlType,
   IdlTypeArray,
   IdlTypeBTreeMap,
+  IdlTypeBTreeSet,
   IdlTypeDefined,
   IdlTypeEnum,
   IdlTypeHashMap,
+  IdlTypeHashSet,
   IdlTypeOption,
   IdlTypeTuple,
   IdlTypeVec,
   isIdlTypeArray,
   isIdlTypeBTreeMap,
+  isIdlTypeBTreeSet,
   isIdlTypeDefined,
   isIdlTypeEnum,
   isIdlTypeHashMap,
+  isIdlTypeHashSet,
   isIdlTypeOption,
   isIdlTypeTuple,
   isIdlTypeVec,
@@ -201,6 +205,19 @@ export class TypeMapper {
     return `Map<${innerTypes[0]}, ${innerTy1}>`
   }
 
+  private mapBTreeSetType(ty: IdlTypeBTreeSet, name: string) {
+    return this.mapSetType(ty.bTreeSet, name)
+  }
+
+  private mapHashSetType(ty: IdlTypeHashSet, name: string) {
+    return this.mapSetType(ty.hashSet, name)
+  }
+
+  private mapSetType(inner: IdlType, name: string) {
+    const innerType = this.map(inner, name)
+    return `Set<${innerType}>`
+  }
+
   private mapDefinedType(ty: IdlTypeDefined) {
     const fullFileDir = this.definedTypesImport(ty)
     const imports = getOrCreate(this.localImportsByPath, fullFileDir, new Set())
@@ -256,6 +273,14 @@ export class TypeMapper {
     if (isIdlTypeBTreeMap(ty)) {
       return this.mapBTreeMapType(ty, name)
     }
+
+    if (isIdlTypeHashSet(ty)) {
+      return this.mapHashSetType(ty, name)
+    }
+    if (isIdlTypeBTreeSet(ty)) {
+      return this.mapBTreeSetType(ty, name)
+    }
+
     console.log(ty)
 
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
@@ -398,6 +423,26 @@ export class TypeMapper {
     return `${exp}.${map.beet}(${key}, ${val})`
   }
 
+  private mapBTreeSetSerde(ty: IdlTypeBTreeSet, name: string) {
+    return this.mapSetSerde(ty.bTreeSet, name)
+  }
+
+  private mapHashSetSerde(ty: IdlTypeHashSet, name: string) {
+    return this.mapSetSerde(ty.hashSet, name)
+  }
+
+  private mapSetSerde(inner: IdlType, name: string) {
+    const mapPackage = BEET_PACKAGE
+    const exp = serdePackageExportName(BEET_PACKAGE)
+    this.serdePackagesUsed.add(mapPackage)
+    this.usedFixableSerde = true
+
+    const key = this.mapSerde(inner, name)
+
+    const set = this.primaryTypeMap.Set
+    return `${exp}.${set.beet}(${key})`
+  }
+
   mapSerde(ty: IdlType, name: string = NO_NAME_PROVIDED): string {
     assert(ty != null, `Type for ${name} needs to be defined`)
 
@@ -438,6 +483,12 @@ export class TypeMapper {
       return this.mapBTreeMapSerde(ty, name)
     }
 
+    if (isIdlTypeHashSet(ty)) {
+      return this.mapHashSetSerde(ty, name)
+    }
+    if (isIdlTypeBTreeSet(ty)) {
+      return this.mapBTreeSetSerde(ty, name)
+    }
     throw new Error(`Type ${ty} required for ${name} is not yet supported`)
   }
 

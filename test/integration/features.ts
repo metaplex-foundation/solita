@@ -122,7 +122,7 @@ import setsJson from './fixtures/feat-sets.json'
 {
   const label = 'feat-sets'
 
-  test.only('renders type correct SDK for ' + label, async (t) => {
+  test('renders type correct SDK for ' + label, async (t) => {
     const idl = setsJson as Idl
     idl.metadata = {
       ...idl.metadata,
