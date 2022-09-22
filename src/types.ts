@@ -56,6 +56,7 @@ export type IdlType =
   | IdlTypeDataEnum
   | IdlTypeTuple
   | IdlTypeMap
+  | IdlTypeSet
 
 // User defined type.
 export type IdlTypeDefined = {
@@ -123,6 +124,17 @@ export type IdlTypeHashMap = {
 }
 export type IdlTypeBTreeMap = {
   bTreeMap: [IdlType, IdlType]
+}
+
+// -----------------
+// Sets
+// -----------------
+export type IdlTypeSet = IdlTypeHashSet | IdlTypeBTreeSet
+export type IdlTypeHashSet = {
+  hashSet: IdlType
+}
+export type IdlTypeBTreeSet = {
+  bTreeSet: IdlType
 }
 
 // -----------------
@@ -336,6 +348,21 @@ export function isIdlTypeBTreeMap(ty: IdlType): ty is IdlTypeBTreeMap {
 
 export function isIdlTypeMap(ty: IdlType): ty is IdlTypeMap {
   return isIdlTypeHashMap(ty) || isIdlTypeBTreeMap(ty)
+}
+
+// -----------------
+// Sets
+// -----------------
+export function isIdlTypeHashSet(ty: IdlType): ty is IdlTypeHashSet {
+  return (ty as IdlTypeHashSet).hashSet != null
+}
+
+export function isIdlTypeBTreeSet(ty: IdlType): ty is IdlTypeBTreeSet {
+  return (ty as IdlTypeBTreeSet).bTreeSet != null
+}
+
+export function isIdlTypeSet(ty: IdlType): ty is IdlTypeSet {
+  return isIdlTypeHashSet(ty) || isIdlTypeBTreeSet(ty)
 }
 
 // -----------------
