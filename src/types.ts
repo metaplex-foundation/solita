@@ -15,6 +15,7 @@ import {
 } from '@metaplex-foundation/beet-solana'
 import { SerdePackage } from './serdes'
 import { strict as assert } from 'assert'
+import { ResolvedKnownPubkey } from './known-pubkeys'
 
 // -----------------
 // Config
@@ -43,6 +44,75 @@ export type IdlInstructionAccount = {
   isSigner: boolean
   desc?: string
   optional?: boolean
+  pda?: PotentialIdlPda
+}
+
+export type ProcessedAccountKey = IdlInstructionAccount & {
+  knownPubkey?: ResolvedKnownPubkey
+  optional: boolean
+  pda?: IdlPda
+  eligiblePda: boolean
+}
+
+export type ProcessedAccountKeyWithPda = ProcessedAccountKey & { pda: IdlPda }
+
+export type PotentialIdlPda = {
+  seeds: IdlSeed<IdlType>[]
+  programId?: IdlSeed<IdlType>
+}
+
+export type IdlPda<
+  Seed extends IdlSeed = IdlSeed,
+  ProgramSeed extends IdlSeed = IdlSeed
+> = {
+  seeds: Seed[]
+  programId?: ProgramSeed
+}
+
+export type IdlPdaConst = IdlPda<IdlSeedConst, IdlSeedConst>
+
+export type IdlSeed<T extends IdlType = IdlTypeSeed> =
+  | IdlSeedConst<T>
+  | IdlSeedArg<T>
+  | IdlSeedAccount<T>
+
+export type IdlSeedExcludeAccount<T extends IdlType = IdlTypeSeed> = Exclude<
+  IdlSeed<T>,
+  IdlSeedAccount<T>
+>
+
+export type IdlSeedConst<T extends IdlType = IdlTypeSeed> = {
+  kind: 'const'
+  type: T
+  value: any
+}
+
+export type IdlSeedArg<T extends IdlType = IdlTypeSeed> = {
+  kind: 'arg'
+  type: T
+  path: string
+}
+
+export type IdlSeedAccount<T extends IdlType = IdlTypeSeed> = {
+  kind: 'account'
+  type: T
+  account?: string
+  path: string
+}
+
+export const SEED_TYPES = [
+  'u8',
+  'u16',
+  'u32',
+  'u64',
+  'string',
+  'publicKey',
+] as const
+export type IdlTypeSeedKeys = typeof SEED_TYPES[number]
+export type IdlTypeSeed = IdlTypeSeedKeys | IdlTypeSeedArray
+
+export type IdlTypeSeedArray = {
+  array: [idlType: 'u8', size: number]
 }
 
 export type IdlType =
@@ -249,6 +319,7 @@ export type ResolveFieldType = (
 export function isIdlTypeOption(ty: IdlType): ty is IdlTypeOption {
   return (ty as IdlTypeOption).option != null
 }
+
 export function isIdlTypeVec(ty: IdlType): ty is IdlTypeVec {
   return (ty as IdlTypeVec).vec != null
 }
@@ -270,6 +341,59 @@ export function isIdlTypeEnum(
   ty: IdlType | IdlFieldsType | IdlTypeEnum
 ): ty is IdlTypeEnum {
   return (ty as IdlTypeEnum).variants != null
+}
+
+// -----------------
+// Pdas
+// -----------------
+export function isProcessedAccountKeyWithPda(
+  key: ProcessedAccountKey
+): key is ProcessedAccountKeyWithPda {
+  return key.pda !== undefined && isIdlPdaEligible(key.pda)
+}
+
+export function isIdlTypeSeedArray(ty: IdlType): ty is IdlTypeSeedArray {
+  const array = (ty as IdlTypeSeedArray).array
+  return array != null && array[0] === 'u8'
+}
+
+export function isIdlTypeSeed(ty: IdlType): ty is IdlTypeSeed {
+  return isIdlTypeSeedArray(ty) || SEED_TYPES.includes(ty as IdlTypeSeedKeys)
+}
+
+export function isIdlSeedConst(seed: IdlSeed): seed is IdlSeedConst {
+  return seed.kind === 'const'
+}
+
+export function isIdlSeedArg(seed: IdlSeed): seed is IdlSeedArg {
+  return seed.kind === 'arg'
+}
+
+export function isIdlSeedAccount(seed: IdlSeed): seed is IdlSeedAccount {
+  return seed.kind === 'account'
+}
+
+export function isIdlPdaEligible(pda: PotentialIdlPda): pda is IdlPda {
+  for (const seed of pda.seeds) {
+    if (!isIdlTypeSeed(seed.type)) return false
+  }
+  return pda.programId ? isIdlTypeSeed(pda.programId.type) : true
+}
+
+export function isIdlPdaConst(pda: IdlPda): pda is IdlPdaConst {
+  for (const seed of pda.seeds) {
+    if (!isIdlSeedConst(seed)) return false
+  }
+  return pda.programId ? isIdlSeedConst(pda.programId) : true
+}
+
+export function isIdlPdaExcludeAccount(
+  pda: IdlPda
+): pda is IdlPda<IdlSeedExcludeAccount, IdlSeedExcludeAccount> {
+  for (const seed of pda.seeds) {
+    if (isIdlSeedAccount(seed)) return false
+  }
+  return pda.programId ? !isIdlSeedAccount(pda.programId) : true
 }
 
 // -----------------
@@ -435,11 +559,13 @@ export const BIGNUM = [
   'i512',
 ] as const
 export type Bignum = typeof BIGNUM[number]
+
 export function isNumberLikeType(ty: IdlType): ty is NumbersTypeMapKey {
   return (
     typeof ty === 'string' && numbersTypeMap[ty as NumbersTypeMapKey] != null
   )
 }
+
 export function isPrimitiveType(ty: IdlType): ty is PrimitiveType {
   return isNumberLikeType(ty) && !BIGNUM.includes(ty as Bignum)
 }
