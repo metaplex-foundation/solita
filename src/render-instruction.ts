@@ -1,7 +1,6 @@
 import {
   IdlInstruction,
   IdlInstructionArg,
-  IdlAccountsCollection,
   SOLANA_WEB3_EXPORT_NAME,
   IdlInstructionAccount,
   SOLANA_SPL_TOKEN_PACKAGE,
