@@ -10,7 +10,7 @@ import mixedEnumsWithCustomTypesJson from './fixtures/feat-mixed-enums+custom-ty
 import mixedEnumsJson from './fixtures/feat-mixed-enums.json'
 import tuplesJson from './fixtures/feat-tuples.json'
 import setsJson from './fixtures/feat-sets.json'
-import collectionAccountsJson from './fixtures/collection-accounts.json'
+import collectionAccountsJson from './fixtures/feat-collection-accounts.json'
 
 // -----------------
 // feat-account-padding
