@@ -10,6 +10,7 @@ import {
   SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
   PrimitiveTypeKey,
+  isAccountsCollection,
 } from './types'
 import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -119,9 +120,10 @@ ${typeMapperImports.join('\n')}`.trim()
   private processIxAccounts(): ProcessedAccountKey[] {
     let processedAccountsKey: ProcessedAccountKey[] = []
     for (const acc of this.ix.accounts) {
-      if (this.isAccountsCollection(acc)) {
+      if (isAccountsCollection(acc)) {
         for (const ac of acc.accounts) {
-          // as there are cases where the collection of the accounts is reused on the same ix, is needed to change the name of the account
+          // as there are cases where the collection of the accounts is reused
+          // on the same ix, is needed to change the name of the account
           ac.name += acc.name.charAt(0).toUpperCase().concat(acc.name.slice(1))
           const knownPubkey = resolveKnownPubkey(ac.name)
           const optional = ac.optional ?? false
@@ -142,12 +144,6 @@ ${typeMapperImports.join('\n')}`.trim()
       }
     }
     return processedAccountsKey
-  }
-
-  private isAccountsCollection(
-    account: IdlInstructionAccount | IdlAccountsCollection
-  ): account is IdlAccountsCollection {
-    return (account as IdlAccountsCollection).accounts !== undefined
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {

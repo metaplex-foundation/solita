@@ -418,6 +418,15 @@ export function isIdlInstructionAccountWithDesc(
 }
 
 // -----------------
+// Accounts
+// -----------------
+export function isAccountsCollection(
+  account: IdlInstructionAccount | IdlAccountsCollection
+): account is IdlAccountsCollection {
+  return (account as IdlAccountsCollection).accounts != null
+}
+
+// -----------------
 // Padding
 // -----------------
 export function hasPaddingAttr(field: IdlField): boolean {
