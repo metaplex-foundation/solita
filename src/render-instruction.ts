@@ -122,9 +122,8 @@ ${typeMapperImports.join('\n')}`.trim()
     for (const acc of this.ix.accounts) {
       if (isAccountsCollection(acc)) {
         for (const ac of acc.accounts) {
-          // as there are cases where the collection of the accounts is reused
-          // on the same ix, is needed to change the name of the account
-          ac.name += acc.name.charAt(0).toUpperCase().concat(acc.name.slice(1))
+          // Make collection items easy to identify and avoid name clashes
+          ac.name = this.deriveCollectionAccountsName(ac.name, acc.name)
           const knownPubkey = resolveKnownPubkey(ac.name)
           const optional = ac.optional ?? false
           if (knownPubkey == null) {
@@ -144,6 +143,18 @@ ${typeMapperImports.join('\n')}`.trim()
       }
     }
     return processedAccountsKey
+  }
+
+  private deriveCollectionAccountsName(
+    accountName: string,
+    collectionName: string
+  ) {
+    const camelAccount = accountName
+      .charAt(0)
+      .toUpperCase()
+      .concat(accountName.slice(1))
+
+    return `${collectionName}Item${camelAccount}`
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
