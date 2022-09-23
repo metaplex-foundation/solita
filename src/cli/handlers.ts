@@ -17,6 +17,10 @@ import { generateTypeScriptSDK } from './gen-typescript'
 import { logDebug, logError, logInfo } from '../utils'
 import { Options as PrettierOptions } from 'prettier'
 
+import { red } from 'ansi-colors'
+
+const handlerErrorRx = /^Error\:/
+
 export function handleAnchor(
   config: SolitaConfigAnchor,
   prettierConfig?: PrettierOptions
@@ -121,14 +125,21 @@ async function handle(
           )
           resolve({ exitCode })
         } else {
-          const errorMsg = `${tool} returned with non-zero exit code. Please review the output above to diagnose the issue`
+          const errorMsg = red(
+            `${tool} returned with non-zero exit code. Please review the output above to diagnose the issue.`
+          )
           resolve({ exitCode, errorMsg })
         }
       })
 
     idlGenerator.stdout.on('data', (buf) => process.stdout.write(buf))
     idlGenerator.stderr.on('data', (buf) => {
-      process.stderr.write(buf)
+      const dataStr = buf.toString()
+      if (handlerErrorRx.test(dataStr)) {
+        logError(red(dataStr))
+      } else {
+        process.stderr.write(buf)
+      }
     })
   })
 }
