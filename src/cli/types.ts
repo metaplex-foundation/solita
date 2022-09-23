@@ -12,6 +12,7 @@ export type SolitaConfigBase = {
   rustbin?: RustbinConfig
   typeAliases?: TypeAliases
   serializers?: Serializers
+  removeExistingIdl?: boolean
 }
 
 export type SolitaConfigAnchor = SolitaConfigBase & {

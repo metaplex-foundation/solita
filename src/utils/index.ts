@@ -72,6 +72,16 @@ export function withoutTsExtension(p: string) {
   return p.replace(/\.ts$/, '')
 }
 
+export async function removeFileIfExists(file: string) {
+  try {
+    await fs.access(file)
+  } catch (_) {
+    return false
+  }
+  await fs.rm(file)
+  return true
+}
+
 export function prependGeneratedWarning(code: string) {
   return `
 /**
