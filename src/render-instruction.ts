@@ -9,6 +9,7 @@ import {
   SOLANA_WEB3_PACKAGE,
   isIdlInstructionAccountWithDesc,
   PrimitiveTypeKey,
+  isAccountsCollection,
 } from './types'
 import { strict as assert } from 'assert'
 import { ForceFixable, TypeMapper } from './type-mapper'
@@ -116,13 +117,43 @@ ${typeMapperImports.join('\n')}`.trim()
   // Accounts
   // -----------------
   private processIxAccounts(): ProcessedAccountKey[] {
-    return this.ix.accounts.map((acc) => {
-      const knownPubkey = resolveKnownPubkey(acc.name)
-      const optional = acc.optional ?? false
-      return knownPubkey == null
-        ? { ...acc, optional }
-        : { ...acc, knownPubkey, optional }
-    })
+    let processedAccountsKey: ProcessedAccountKey[] = []
+    for (const acc of this.ix.accounts) {
+      if (isAccountsCollection(acc)) {
+        for (const ac of acc.accounts) {
+          // Make collection items easy to identify and avoid name clashes
+          ac.name = this.deriveCollectionAccountsName(ac.name, acc.name)
+          const knownPubkey = resolveKnownPubkey(ac.name)
+          const optional = ac.optional ?? false
+          if (knownPubkey == null) {
+            processedAccountsKey.push({ ...ac, optional })
+          } else {
+            processedAccountsKey.push({ ...ac, knownPubkey, optional })
+          }
+        }
+      } else {
+        const knownPubkey = resolveKnownPubkey(acc.name)
+        const optional = acc.optional ?? false
+        if (knownPubkey == null) {
+          processedAccountsKey.push({ ...acc, optional })
+        } else {
+          processedAccountsKey.push({ ...acc, knownPubkey, optional })
+        }
+      }
+    }
+    return processedAccountsKey
+  }
+
+  private deriveCollectionAccountsName(
+    accountName: string,
+    collectionName: string
+  ) {
+    const camelAccount = accountName
+      .charAt(0)
+      .toUpperCase()
+      .concat(accountName.slice(1))
+
+    return `${collectionName}Item${camelAccount}`
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {

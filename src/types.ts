@@ -160,7 +160,7 @@ export type IdlInstructionArg = {
 
 export type IdlInstruction = {
   name: string
-  accounts: IdlInstructionAccount[]
+  accounts: IdlInstructionAccount[] | IdlAccountsCollection[]
   args: IdlInstructionArg[]
 }
 
@@ -175,6 +175,11 @@ export type IdlAccountType = {
 export type IdlAccount = {
   name: string
   type: IdlAccountType
+}
+
+export type IdlAccountsCollection = {
+  name: string
+  accounts: IdlInstructionAccount[]
 }
 
 export type IdlError = {
@@ -410,6 +415,15 @@ export function isIdlInstructionAccountWithDesc(
   ty: IdlInstructionAccount
 ): ty is IdlInstructionAccountWithDesc {
   return typeof (ty as IdlInstructionAccountWithDesc).desc === 'string'
+}
+
+// -----------------
+// Accounts
+// -----------------
+export function isAccountsCollection(
+  account: IdlInstructionAccount | IdlAccountsCollection
+): account is IdlAccountsCollection {
+  return (account as IdlAccountsCollection).accounts != null
 }
 
 // -----------------
