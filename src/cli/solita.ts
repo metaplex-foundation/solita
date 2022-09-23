@@ -2,7 +2,13 @@
 
 import path from 'path'
 import fs from 'fs'
-import { canAccess, logDebug, logError, logInfo } from '../utils'
+import {
+  canAccess,
+  logDebug,
+  logError,
+  logInfo,
+  removeFileIfExists,
+} from '../utils'
 import {
   isErrorResult,
   isSolitaConfigAnchor,
@@ -42,6 +48,19 @@ async function main() {
       `Unable to find solita config '.solitarc.js' in the current directory (${process.cwd()} `
     )
   }
+
+  const removeIdl = solitaConfig.removeExistingIdl ?? true
+  if (removeIdl) {
+    const { idlDir, programName } = solitaConfig
+    const idlFile = path.join(idlDir, `${programName}.json`)
+    const removed = await removeFileIfExists(idlFile)
+    if (removed) {
+      logInfo(
+        `Removed existing IDL at ${idlFile}.\nDisable this by setting 'removeExistingIdl: false' inside the '.solitarc.js' config.`
+      )
+    }
+  }
+
   const prettierRes = await tryLoadLocalConfigRc(PRETTIER_CONFIG_RCS)
   const prettierConfig = prettierRes?.config
   if (prettierConfig != null) {
