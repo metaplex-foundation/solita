@@ -5,11 +5,16 @@ import {
   ConfirmInstallArgs,
 } from '@metaplex-foundation/rustbin'
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
-import { SolitaConfig, SolitaConfigAnchor, SolitaConfigShank } from './types'
+import {
+  SolitaConfig,
+  SolitaConfigAnchor,
+  SolitaConfigShank,
+  SolitaHandlerResult,
+} from './types'
 import path from 'path'
 import { enhanceIdl } from './enhance-idl'
 import { generateTypeScriptSDK } from './gen-typescript'
-import { logError, logInfo } from '../utils'
+import { logDebug, logError, logInfo } from '../utils'
 import { Options as PrettierOptions } from 'prettier'
 
 export function handleAnchor(
@@ -89,28 +94,42 @@ async function handle(
     )
   }
 
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<SolitaHandlerResult>((resolve, reject) => {
+    const tool = path.basename(fullPathToBinary)
     const idlGenerator = spawn(fullPathToBinary, spawnArgs, spawnOpts)
       .on('error', (err) => {
         logError(`${programName} idl generation failed`)
         reject(err)
       })
-      .on('exit', async () => {
-        logInfo('IDL written to: %s', path.join(idlDir, `${programName}.json`))
-        const idl = await enhanceIdl(config, binVersion, libVersion)
-        await generateTypeScriptSDK(
-          idl,
-          sdkDir,
-          prettierConfig,
-          config.typeAliases,
-          config.serializers,
-          anchorRemainingAccounts
-        )
-        resolve()
+      .on('exit', async (exitCode) => {
+        exitCode ??= 0
+
+        logDebug(`${tool} completed with code ${exitCode}`)
+        if (exitCode == 0) {
+          logInfo(
+            'IDL written to: %s',
+            path.join(idlDir, `${programName}.json`)
+          )
+          const idl = await enhanceIdl(config, binVersion, libVersion)
+          await generateTypeScriptSDK(
+            idl,
+            sdkDir,
+            prettierConfig,
+            config.typeAliases,
+            config.serializers,
+            anchorRemainingAccounts
+          )
+          resolve({ exitCode })
+        } else {
+          const errorMsg = `${tool} returned with non-zero exit code. Please review the output above to diagnose the issue`
+          resolve({ exitCode, errorMsg })
+        }
       })
 
     idlGenerator.stdout.on('data', (buf) => process.stdout.write(buf))
-    idlGenerator.stderr.on('data', (buf) => process.stderr.write(buf))
+    idlGenerator.stderr.on('data', (buf) => {
+      process.stderr.write(buf)
+    })
   })
 }
 

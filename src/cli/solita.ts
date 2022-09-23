@@ -3,8 +3,14 @@
 import path from 'path'
 import fs from 'fs'
 import { canAccess, logDebug, logError, logInfo } from '../utils'
-import { isSolitaConfigAnchor, isSolitaConfigShank } from './types'
+import {
+  isErrorResult,
+  isSolitaConfigAnchor,
+  isSolitaConfigShank,
+  SolitaHandlerResult,
+} from './types'
 import { handleAnchor, handleShank } from './handlers'
+import { strict as assert } from 'assert'
 
 enum Loader {
   JSON,
@@ -43,13 +49,28 @@ async function main() {
       `Found '${prettierRes.rcFile}' in current directory and using that to format code`
     )
   }
+  let handlerResult: SolitaHandlerResult | undefined
   if (isSolitaConfigAnchor(solitaConfig)) {
-    await handleAnchor(solitaConfig, prettierConfig)
+    handlerResult = await handleAnchor(solitaConfig, prettierConfig)
   }
   if (isSolitaConfigShank(solitaConfig)) {
-    await handleShank(solitaConfig, prettierConfig)
+    handlerResult = await handleShank(solitaConfig, prettierConfig)
   }
-  logInfo('Success!')
+  assert(
+    handlerResult != null,
+    `IDL generator ${solitaConfig.idlGenerator} is not supported`
+  )
+
+  if (isErrorResult(handlerResult)) {
+    logError(handlerResult.errorMsg)
+    assert(
+      handlerResult.exitCode != 0,
+      'Handler exit code should be non-zero if an error was encountered'
+    )
+    process.exit(handlerResult.exitCode)
+  } else {
+    logInfo('Success!')
+  }
 }
 
 main()

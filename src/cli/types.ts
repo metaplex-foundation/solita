@@ -26,6 +26,8 @@ export type SolitaConfigShank = SolitaConfigBase & {
 
 export type SolitaConfig = SolitaConfigAnchor | SolitaConfigShank
 
+export type SolitaHandlerResult = { exitCode: number; errorMsg?: string }
+
 // -----------------
 // Guards
 // -----------------
@@ -39,4 +41,10 @@ export function isSolitaConfigShank(
   config: SolitaConfig
 ): config is SolitaConfigShank {
   return config.idlGenerator === 'shank'
+}
+
+export function isErrorResult(
+  result: SolitaHandlerResult
+): result is SolitaHandlerResult & { errorMsg: string } {
+  return result.errorMsg != null
 }
