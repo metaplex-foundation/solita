@@ -37,6 +37,7 @@ class InstructionRenderer {
   readonly accountsTypename: string
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
+  private readonly defaultOptionalsToProgramId: boolean
   private readonly instructionDiscriminator: InstructionDiscriminator
   private readonly programIdPubkey: string
 
@@ -65,6 +66,7 @@ class InstructionRenderer {
       typeMapper
     )
     this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
+    this.defaultOptionalsToProgramId = !!ix.defaultOptionalsToProgramId
   }
 
   // -----------------
@@ -157,15 +159,19 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
-    const requireds = processedKeys.filter((x) => !x.optional)
-    const optionals = processedKeys.filter((x, idx) => {
-      if (!x.optional) return false
-      assert(
-        idx >= requireds.length,
-        `All optional accounts need to follow required accounts, ${x.name} is not`
-      )
-      return true
-    })
+    const requireds = this.defaultOptionalsToProgramId
+      ? processedKeys
+      : processedKeys.filter((x) => !x.optional)
+    const optionals = this.defaultOptionalsToProgramId
+      ? []
+      : processedKeys.filter((x, idx) => {
+          if (!x.optional) return false
+          assert(
+            idx >= requireds.length,
+            `All optional accounts need to follow required accounts, ${x.name} is not`
+          )
+          return true
+        })
 
     const anchorRemainingAccounts =
       this.renderAnchorRemainingAccounts && processedKeys.length > 0
@@ -179,18 +185,27 @@ ${typeMapperImports.join('\n')}`.trim()
         : ''
 
     const requiredKeys = requireds
-      .map(({ name, isMut, isSigner, knownPubkey }) => {
-        const pubkey =
-          knownPubkey == null
-            ? `accounts.${name}`
-            : `accounts.${name} ?? ${renderKnownPubkeyAccess(
-                knownPubkey,
-                this.programIdPubkey
-              )}`
+      .map(({ name, isMut, isSigner, knownPubkey, optional }) => {
+        let pubkey, mut, signer
+        if (optional) {
+          pubkey = `accounts.${name} ?? programId`
+          mut = isMut ? `!!accounts.${name}` : 'false'
+          signer = isSigner ? `!!accounts.${name}` : 'false'
+        } else {
+          pubkey =
+            knownPubkey == null
+              ? `accounts.${name}`
+              : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+                  knownPubkey,
+                  this.programIdPubkey
+                )}`
+          mut = isMut.toString()
+          signer = isSigner.toString()
+        }
         return `{
       pubkey: ${pubkey},
-      isWritable: ${isMut.toString()},
-      isSigner: ${isSigner.toString()},
+      isWritable: ${mut},
+      isSigner: ${signer},
     }`
       })
       .join(',\n    ')
@@ -369,6 +384,7 @@ ${accountsType}
      * Creates a _${this.upperCamelIxName}_ instruction.
     ${accountsParamDoc}${createInstructionArgsComment}
      * @category Instructions
+     * @category ${this.upperCamelIxName}
      * @category ${this.upperCamelIxName}
      * @category generated
      */
