@@ -271,7 +271,7 @@ test('ix: three accounts, two optional, defaultOptionalsToProgramId', async (t) 
       /useAuthorityRecord\?\: web3\.PublicKey/,
       /burner\?\: web3\.PublicKey/,
       // Ensuring that the keys and mut/signer is set correctly
-      /pubkey\: accounts\.useAuthorityRecord \?\? programId,\n.+isWritable\: !!accounts\.useAuthorityRecord,\n.+isSigner\: false,/,
+      /pubkey\: accounts\.useAuthorityRecord \?\? programId,\n.+isWritable\: accounts\.useAuthorityRecord \?\? false,\n.+isSigner\: false,/,
       /pubkey\: accounts\.burner \?\? programId,\n.+isWritable\: false,\n.+isSigner\: false,/,
     ],
     nonrxs: [

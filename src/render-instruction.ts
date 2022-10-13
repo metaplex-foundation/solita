@@ -189,8 +189,8 @@ ${typeMapperImports.join('\n')}`.trim()
         let pubkey, mut, signer
         if (optional) {
           pubkey = `accounts.${name} ?? programId`
-          mut = isMut ? `!!accounts.${name}` : 'false'
-          signer = isSigner ? `!!accounts.${name}` : 'false'
+          mut = isMut ? `accounts.${name} ?? false` : 'false'
+          signer = isSigner ? `accounts.${name} ?? false` : 'false'
         } else {
           pubkey =
             knownPubkey == null
