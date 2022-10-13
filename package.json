@@ -22,7 +22,7 @@
     "test:anchor:basic3": "cd ./test/anchor-examples/basic-3 && yarn test",
     "test:anchor:basic4": "cd ./test/anchor-examples/basic-4 && yarn test",
     "lint": "prettier -c ./src/",
-    "lint:fix": "prettier --format ./src",
+    "lint:fix": "prettier --write ./src",
     "doc": "rimraf ./docs && typedoc",
     "doc:update": "./sh/update-docs",
     "doctoc": "doctoc README.md"
