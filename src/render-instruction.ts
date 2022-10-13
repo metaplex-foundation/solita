@@ -385,7 +385,6 @@ ${accountsType}
     ${accountsParamDoc}${createInstructionArgsComment}
      * @category Instructions
      * @category ${this.upperCamelIxName}
-     * @category ${this.upperCamelIxName}
      * @category generated
      */
     export function create${this.upperCamelIxName}Instruction(
