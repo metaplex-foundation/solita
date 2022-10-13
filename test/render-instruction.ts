@@ -263,14 +263,16 @@ test('ix: three accounts, two optional, defaultOptionalsToProgramId', async (t) 
     args: [],
   }
   await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    logCode: true,
+    verify: true,
     rxs: [
       // Ensuring that the pubkeys for optional accounts aren't required
       /authority\: web3\.PublicKey/,
       /useAuthorityRecord\?\: web3\.PublicKey/,
       /burner\?\: web3\.PublicKey/,
       // Ensuring that the keys and mut/signer is set correctly
-      /pubkey\: accounts\.useAuthorityRecord \?\? programId,.+isWritable\: !!accounts\.useAuthorityRecord,.+isSigner\: false/,
-      /pubkey\: accounts\.burner \?\? programId,.+isWritable\: false,.+isSigner\: false/,
+      /pubkey\: accounts\.useAuthorityRecord \?\? programId,\n.+isWritable\: !!accounts\.useAuthorityRecord,\n.+isSigner\: false,/,
+      /pubkey\: accounts\.burner \?\? programId,\n.+isWritable\: false,\n.+isSigner\: false,/,
     ],
     nonrxs: [
       /if \(accounts.useAuthorityRecord != null\)/,
