@@ -235,10 +235,10 @@ test('ix: three accounts, two optional', async (t) => {
   })
 })
 
-test('ix: three accounts, two optional, defaultOptionalsToProgramId', async (t) => {
+test.only('ix: three accounts, two optional, defaultOptionalAccounts', async (t) => {
   const ix = <IdlInstruction>{
     name: 'choicy',
-    defaultOptionalsToProgramId: true,
+    defaultOptionalAccounts: true,
     accounts: [
       {
         name: 'authority',
@@ -278,7 +278,7 @@ test('ix: three accounts, two optional, defaultOptionalsToProgramId', async (t) 
       /if \(accounts.useAuthorityRecord != null\)/,
       /if \(accounts.burner != null\)/,
       /if \(accounts.useAuthorityRecord == null\).+throw new Error/,
-    ]
+    ],
   })
 })
 

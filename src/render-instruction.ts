@@ -37,7 +37,7 @@ class InstructionRenderer {
   readonly accountsTypename: string
   readonly instructionDiscriminatorName: string
   readonly structArgName: string
-  private readonly defaultOptionalsToProgramId: boolean
+  private readonly defaultOptionalAccounts: boolean
   private readonly instructionDiscriminator: InstructionDiscriminator
   private readonly programIdPubkey: string
 
@@ -66,7 +66,7 @@ class InstructionRenderer {
       typeMapper
     )
     this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
-    this.defaultOptionalsToProgramId = !!ix.defaultOptionalsToProgramId
+    this.defaultOptionalAccounts = !!ix.defaultOptionalsToProgramId
   }
 
   // -----------------
@@ -159,10 +159,10 @@ ${typeMapperImports.join('\n')}`.trim()
   }
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
-    const requireds = this.defaultOptionalsToProgramId
+    const requireds = this.defaultOptionalAccounts
       ? processedKeys
       : processedKeys.filter((x) => !x.optional)
-    const optionals = this.defaultOptionalsToProgramId
+    const optionals = this.defaultOptionalAccounts
       ? []
       : processedKeys.filter((x, idx) => {
           if (!x.optional) return false
