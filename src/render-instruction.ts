@@ -66,7 +66,7 @@ class InstructionRenderer {
       typeMapper
     )
     this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
-    this.defaultOptionalAccounts = !!ix.defaultOptionalsToProgramId
+    this.defaultOptionalAccounts = ix.defaultOptionalAccounts ?? false
   }
 
   // -----------------
@@ -189,8 +189,8 @@ ${typeMapperImports.join('\n')}`.trim()
         let pubkey, mut, signer
         if (optional) {
           pubkey = `accounts.${name} ?? programId`
-          mut = isMut ? `accounts.${name} ?? false` : 'false'
-          signer = isSigner ? `accounts.${name} ?? false` : 'false'
+          mut = isMut ? `accounts.${name} != null` : 'false'
+          signer = isSigner ? `accounts.${name} != null` : 'false'
         } else {
           pubkey =
             knownPubkey == null
