@@ -401,6 +401,10 @@ ${struct} `.trim()
           ]
     const programIdArg = `${comma}programId = ${this.programIdPubkey}`
 
+    const optionalAccountsComment = optionalAccountsStrategyDocComment(
+      this.defaultOptionalAccounts,
+      processedKeys.some((x) => x.optional)
+    )
     return `${imports}
 
 ${enums}
@@ -411,7 +415,7 @@ ${accountsType}
 
     /**
      * Creates a _${this.upperCamelIxName}_ instruction.
-    ${accountsParamDoc}${createInstructionArgsComment}
+    ${optionalAccountsComment}${accountsParamDoc}${createInstructionArgsComment}
      * @category Instructions
      * @category ${this.upperCamelIxName}
      * @category generated
@@ -512,4 +516,24 @@ function renderRequiredAccountMeta(
           programIdPubkey
         )}`
   return renderAccountMeta(pubkey, isMut.toString(), isSigner.toString())
+}
+
+function optionalAccountsStrategyDocComment(
+  defaultOptionalAccounts: boolean,
+  someAccountIsOptional: boolean
+) {
+  if (!someAccountIsOptional) return ''
+
+  if (defaultOptionalAccounts) {
+    return ` * 
+ * Optional accounts that are not provided default to the program ID since 
+ * this was indicated in the IDL from which this instruction was generated.
+`
+  }
+  return ` * 
+ * Optional accounts that are not provided will be omitted from the accounts
+ * array passed with the instruction.
+ * An optional account that is set cannot follow an optional account that is unset.
+ * Otherwise an Error is raised.
+`
 }
