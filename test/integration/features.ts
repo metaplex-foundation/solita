@@ -11,6 +11,7 @@ import mixedEnumsJson from './fixtures/feat-mixed-enums.json'
 import tuplesJson from './fixtures/feat-tuples.json'
 import setsJson from './fixtures/feat-sets.json'
 import collectionAccountsJson from './fixtures/feat-collection-accounts.json'
+import optionalAccountsJson from './fixtures/feat-optional-accounts.json'
 
 // -----------------
 // feat-account-padding
@@ -144,6 +145,17 @@ import collectionAccountsJson from './fixtures/feat-collection-accounts.json'
       ...idl.metadata,
       address: 'A1BvUFMKzoubnHEFhvhJxXyTfEN6r2DqCZxJFF9hfH3x',
     }
+    await checkIdl(t, idl, label)
+  })
+}
+// -----------------
+// feat-optional-accounts
+// -----------------
+{
+  const label = 'feat-optional-accounts'
+
+  test('renders type correct SDK for ' + label, async (t) => {
+    const idl = optionalAccountsJson as Idl
     await checkIdl(t, idl, label)
   })
 }
