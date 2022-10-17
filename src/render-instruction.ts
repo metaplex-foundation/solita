@@ -192,12 +192,17 @@ ${typeMapperImports.join('\n')}`.trim()
     return this.renderAccountMeta(pubkey, mut, signer)
   }
 
-  private renderAccountMetaArray(processedKeys: ProcessedAccountKey[]) {
+  private renderAccountMetaArray(
+    processedKeys: ProcessedAccountKey[],
+    inLineOptionalStrategy?: (key: ProcessedAccountKey) => string
+  ) {
     const metaElements = processedKeys
       .map((processedKey) => {
-        return processedKey.optional
-          ? this.renderDefaultOptionalAccountMeta(processedKey)
-          : this.renderRequiredAccountMeta(processedKey)
+        if (processedKey.optional && inLineOptionalStrategy) {
+          return inLineOptionalStrategy(processedKey)
+        } else {
+          return this.renderRequiredAccountMeta(processedKey)
+        }
       })
       .join(',\n    ')
     return `[\n    ${metaElements}\n  ]`
@@ -253,7 +258,10 @@ ${typeMapperImports.join('\n')}`.trim()
 
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
     const fixedAccountKeys = this.defaultOptionalAccounts
-      ? this.renderAccountMetaArray(processedKeys)
+      ? this.renderAccountMetaArray(
+          processedKeys,
+          this.renderDefaultOptionalAccountMeta.bind(this)
+        )
       : this.renderOptionalAtEndAccountMetas(processedKeys)
 
     const anchorRemainingAccounts =
