@@ -158,58 +158,64 @@ ${typeMapperImports.join('\n')}`.trim()
     return `${collectionName}Item${camelAccount}`
   }
 
-  private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
-    const requireds = this.defaultOptionalAccounts
-      ? processedKeys
-      : processedKeys.filter((x) => !x.optional)
-    const optionals = this.defaultOptionalAccounts
-      ? []
-      : processedKeys.filter((x, idx) => {
-          if (!x.optional) return false
-          assert(
-            idx >= requireds.length,
-            `All optional accounts need to follow required accounts, ${x.name} is not`
-          )
-          return true
-        })
-
-    const anchorRemainingAccounts =
-      this.renderAnchorRemainingAccounts && processedKeys.length > 0
-        ? `
-  if (accounts.anchorRemainingAccounts != null) {
-    for (const acc of accounts.anchorRemainingAccounts) {
-      keys.push(acc)
-    }
-  }
-`
-        : ''
-
-    const requiredKeys = requireds
-      .map(({ name, isMut, isSigner, knownPubkey, optional }) => {
-        let pubkey, mut, signer
-        if (optional) {
-          pubkey = `accounts.${name} ?? programId`
-          mut = isMut ? `accounts.${name} != null` : 'false'
-          signer = isSigner ? `accounts.${name} != null` : 'false'
-        } else {
-          pubkey =
-            knownPubkey == null
-              ? `accounts.${name}`
-              : `accounts.${name} ?? ${renderKnownPubkeyAccess(
-                  knownPubkey,
-                  this.programIdPubkey
-                )}`
-          mut = isMut.toString()
-          signer = isSigner.toString()
-        }
-        return `{
+  private renderAccountMeta(
+    pubkey: string,
+    isWritable: string,
+    isSigner: string
+  ): string {
+    return `{
       pubkey: ${pubkey},
-      isWritable: ${mut},
-      isSigner: ${signer},
+      isWritable: ${isWritable},
+      isSigner: ${isSigner},
     }`
+  }
+
+  private renderRequiredAccountMeta(processedKey: ProcessedAccountKey): string {
+    const { name, isMut, isSigner, knownPubkey } = processedKey
+    const pubkey =
+      knownPubkey == null
+        ? `accounts.${name}`
+        : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+            knownPubkey,
+            this.programIdPubkey
+          )}`
+    return this.renderAccountMeta(pubkey, isMut.toString(), isSigner.toString())
+  }
+
+  private renderDefaultOptionalAccountMeta(
+    processedKey: ProcessedAccountKey
+  ): string {
+    const { name, isMut, isSigner } = processedKey
+    const pubkey = `accounts.${name} ?? programId`
+    const mut = isMut ? `accounts.${name} != null` : 'false'
+    const signer = isSigner ? `accounts.${name} != null` : 'false'
+    return this.renderAccountMeta(pubkey, mut, signer)
+  }
+
+  private renderAccountMetaArray(processedKeys: ProcessedAccountKey[]) {
+    const metaElements = processedKeys
+      .map((processedKey) => {
+        return processedKey.optional
+          ? this.renderDefaultOptionalAccountMeta(processedKey)
+          : this.renderRequiredAccountMeta(processedKey)
       })
       .join(',\n    ')
+    return `[\n    ${metaElements}\n  ]`
+  }
 
+  private renderOptionalAtEndAccountMetas(
+    processedKeys: ProcessedAccountKey[]
+  ) {
+    const requireds = processedKeys.filter((x) => !x.optional)
+    const optionals = processedKeys.filter((x, idx) => {
+      if (!x.optional) return false
+      assert(
+        idx >= requireds.length,
+        `All optional accounts need to follow required accounts, ${x.name} is not`
+      )
+      return true
+    })
+    const requiredKeys = this.renderAccountMetaArray(requireds)
     const optionalKeys =
       optionals.length > 0
         ? optionals
@@ -225,22 +231,43 @@ ${typeMapperImports.join('\n')}`.trim()
                       .map((x) => `\\'accounts.${x.name}\\'`)
                       .join(', ')} need(s) to be provided as well.') }`
                   : ''
+              const pubkey = `accounts.${name}`
+              const accountMeta = this.renderAccountMeta(
+                pubkey,
+                isMut.toString(),
+                isSigner.toString()
+              )
               // NOTE: we purposely don't add the default resolution here since the intent is to
               // only pass that account when it is provided
               return `
   if (accounts.${name} != null) {
     ${checkRequireds}
-    keys.push({
-      pubkey: accounts.${name},
-      isWritable: ${isMut.toString()},
-      isSigner: ${isSigner.toString()},
-    })
+    keys.push(${accountMeta})
   }`
             })
             .join('\n') + '\n'
         : ''
 
-    return `[\n    ${requiredKeys}\n  ]\n${optionalKeys}\n${anchorRemainingAccounts}\n`
+    return `${requiredKeys}\n${optionalKeys}`
+  }
+
+  private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
+    const fixedAccountKeys = this.defaultOptionalAccounts
+      ? this.renderAccountMetaArray(processedKeys)
+      : this.renderOptionalAtEndAccountMetas(processedKeys)
+
+    const anchorRemainingAccounts =
+      this.renderAnchorRemainingAccounts && processedKeys.length > 0
+        ? `
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+`
+        : ''
+
+    return `${fixedAccountKeys}\n${anchorRemainingAccounts}\n`
   }
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
