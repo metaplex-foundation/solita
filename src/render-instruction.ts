@@ -124,7 +124,7 @@ ${typeMapperImports.join('\n')}`.trim()
       if (isAccountsCollection(acc)) {
         for (const ac of acc.accounts) {
           // Make collection items easy to identify and avoid name clashes
-          ac.name = this.deriveCollectionAccountsName(ac.name, acc.name)
+          ac.name = deriveCollectionAccountsName(ac.name, acc.name)
           const knownPubkey = resolveKnownPubkey(ac.name)
           const optional = ac.optional ?? false
           if (knownPubkey == null) {
@@ -146,64 +146,60 @@ ${typeMapperImports.join('\n')}`.trim()
     return processedAccountsKey
   }
 
-  private deriveCollectionAccountsName(
-    accountName: string,
-    collectionName: string
+  // -----------------
+  // AccountKeys
+  // -----------------
+
+  /*
+   * Main entry to render account metadata for provided account keys.
+   * The `defaultOptionalAccounts` strategy determines how optional accounts
+   * are rendered.
+   *
+   * a) If the defaultOptionalAccounts strategy is set all accounts will be
+   *    added to the accounts array, but default to the program id when they weren't
+   *    provided by the user.
+   *
+   * b) If the defaultOptionalAccounts strategy is not enabled optional accounts
+   *    that are not provided will be omitted from the accounts array.
+   *
+   * @private
+   */
+  private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
+    const fixedAccountKeys = this.defaultOptionalAccounts
+      ? this.renderAccountKeysRequiredOrDefaultToProgramId(processedKeys)
+      : this.renderAccountKeysNotDefaultingOptionals(processedKeys)
+
+    const anchorRemainingAccounts =
+      this.renderAnchorRemainingAccounts && processedKeys.length > 0
+        ? `
+  if (accounts.anchorRemainingAccounts != null) {
+    for (const acc of accounts.anchorRemainingAccounts) {
+      keys.push(acc)
+    }
+  }
+`
+        : ''
+
+    return `${fixedAccountKeys}\n${anchorRemainingAccounts}\n`
+  }
+
+  private renderAccountKeysRequiredOrDefaultToProgramId(
+    processedKeys: ProcessedAccountKey[]
   ) {
-    const camelAccount = accountName
-      .charAt(0)
-      .toUpperCase()
-      .concat(accountName.slice(1))
-
-    return `${collectionName}Item${camelAccount}`
-  }
-
-  private renderAccountMeta(
-    pubkey: string,
-    isWritable: string,
-    isSigner: string
-  ): string {
-    return `{
-      pubkey: ${pubkey},
-      isWritable: ${isWritable},
-      isSigner: ${isSigner},
-    }`
-  }
-
-  private renderRequiredAccountMeta(processedKey: ProcessedAccountKey): string {
-    const { name, isMut, isSigner, knownPubkey } = processedKey
-    const pubkey =
-      knownPubkey == null
-        ? `accounts.${name}`
-        : `accounts.${name} ?? ${renderKnownPubkeyAccess(
-            knownPubkey,
-            this.programIdPubkey
-          )}`
-    return this.renderAccountMeta(pubkey, isMut.toString(), isSigner.toString())
-  }
-
-  private renderDefaultOptionalAccountMeta(
-    processedKey: ProcessedAccountKey
-  ): string {
-    const { name, isMut, isSigner } = processedKey
-    const pubkey = `accounts.${name} ?? programId`
-    const mut = isMut ? `accounts.${name} != null` : 'false'
-    const signer = isSigner ? `accounts.${name} != null` : 'false'
-    return this.renderAccountMeta(pubkey, mut, signer)
-  }
-
-  private renderAccountMetaArray(processedKeys: ProcessedAccountKey[]) {
     const metaElements = processedKeys
       .map((processedKey) => {
         return processedKey.optional
-          ? this.renderDefaultOptionalAccountMeta(processedKey)
+          ? renderOptionalAccountMetaDefaultingToProgramId(processedKey)
           : this.renderRequiredAccountMeta(processedKey)
       })
       .join(',\n    ')
     return `[\n    ${metaElements}\n  ]`
   }
 
-  private renderOptionalAtEndAccountMetas(
+  // -----------------
+  // AccountKeys: with strategy to not defaultOptionalAccounts
+  // -----------------
+  private renderAccountKeysNotDefaultingOptionals(
     processedKeys: ProcessedAccountKey[]
   ) {
     const requireds = processedKeys.filter((x) => !x.optional)
@@ -215,7 +211,9 @@ ${typeMapperImports.join('\n')}`.trim()
       )
       return true
     })
-    const requiredKeys = this.renderAccountMetaArray(requireds)
+
+    const requiredKeys =
+      this.renderAccountKeysRequiredOrDefaultToProgramId(requireds)
     const optionalKeys =
       optionals.length > 0
         ? optionals
@@ -232,7 +230,7 @@ ${typeMapperImports.join('\n')}`.trim()
                       .join(', ')} need(s) to be provided as well.') }`
                   : ''
               const pubkey = `accounts.${name}`
-              const accountMeta = this.renderAccountMeta(
+              const accountMeta = renderAccountMeta(
                 pubkey,
                 isMut.toString(),
                 isSigner.toString()
@@ -251,24 +249,32 @@ ${typeMapperImports.join('\n')}`.trim()
     return `${requiredKeys}\n${optionalKeys}`
   }
 
-  private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
-    const fixedAccountKeys = this.defaultOptionalAccounts
-      ? this.renderAccountMetaArray(processedKeys)
-      : this.renderOptionalAtEndAccountMetas(processedKeys)
+  // -----------------
+  // AccountKeys: with strategy to defaultOptionalAccounts
+  // -----------------
 
-    const anchorRemainingAccounts =
-      this.renderAnchorRemainingAccounts && processedKeys.length > 0
-        ? `
-  if (accounts.anchorRemainingAccounts != null) {
-    for (const acc of accounts.anchorRemainingAccounts) {
-      keys.push(acc)
-    }
+  /*
+   * This renders optional accounts when the defaultOptionalAccounts strategy is
+   * enabled.
+   * This means that all accounts will be added to the accounts array, but default
+   * to the program id when they weren't provided by the user.
+   * @category private
+   */
+  private renderRequiredAccountMeta(processedKey: ProcessedAccountKey): string {
+    const { name, isMut, isSigner, knownPubkey } = processedKey
+    const pubkey =
+      knownPubkey == null
+        ? `accounts.${name}`
+        : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+            knownPubkey,
+            this.programIdPubkey
+          )}`
+    return renderAccountMeta(pubkey, isMut.toString(), isSigner.toString())
   }
-`
-        : ''
 
-    return `${fixedAccountKeys}\n${anchorRemainingAccounts}\n`
-  }
+  // -----------------
+  // AccountsType
+  // -----------------
 
   private renderAccountsType(processedKeys: ProcessedAccountKey[]) {
     if (processedKeys.length === 0) return ''
@@ -457,4 +463,42 @@ export function renderInstruction(
     renderAnchorRemainingAccounts
   )
   return renderer.render()
+}
+
+// -----------------
+// Utility Functions
+// -----------------
+
+function renderAccountMeta(
+  pubkey: string,
+  isWritable: string,
+  isSigner: string
+): string {
+  return `{
+      pubkey: ${pubkey},
+      isWritable: ${isWritable},
+      isSigner: ${isSigner},
+    }`
+}
+
+function deriveCollectionAccountsName(
+  accountName: string,
+  collectionName: string
+) {
+  const camelAccount = accountName
+    .charAt(0)
+    .toUpperCase()
+    .concat(accountName.slice(1))
+
+  return `${collectionName}Item${camelAccount}`
+}
+
+function renderOptionalAccountMetaDefaultingToProgramId(
+  processedKey: ProcessedAccountKey
+): string {
+  const { name, isMut, isSigner } = processedKey
+  const pubkey = `accounts.${name} ?? programId`
+  const mut = isMut ? `accounts.${name} != null` : 'false'
+  const signer = isSigner ? `accounts.${name} != null` : 'false'
+  return renderAccountMeta(pubkey, mut, signer)
 }
