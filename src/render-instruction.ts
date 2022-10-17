@@ -166,7 +166,7 @@ ${typeMapperImports.join('\n')}`.trim()
    */
   private renderIxAccountKeys(processedKeys: ProcessedAccountKey[]) {
     const fixedAccountKeys = this.defaultOptionalAccounts
-      ? this.renderAccountKeysRequiredOrDefaultToProgramId(processedKeys)
+      ? this.renderAccountKeysDefaultingOptionals(processedKeys)
       : this.renderAccountKeysNotDefaultingOptionals(processedKeys)
 
     const anchorRemainingAccounts =
@@ -181,19 +181,6 @@ ${typeMapperImports.join('\n')}`.trim()
         : ''
 
     return `${fixedAccountKeys}\n${anchorRemainingAccounts}\n`
-  }
-
-  private renderAccountKeysRequiredOrDefaultToProgramId(
-    processedKeys: ProcessedAccountKey[]
-  ) {
-    const metaElements = processedKeys
-      .map((processedKey) => {
-        return processedKey.optional
-          ? renderOptionalAccountMetaDefaultingToProgramId(processedKey)
-          : this.renderRequiredAccountMeta(processedKey)
-      })
-      .join(',\n    ')
-    return `[\n    ${metaElements}\n  ]`
   }
 
   // -----------------
@@ -212,8 +199,7 @@ ${typeMapperImports.join('\n')}`.trim()
       return true
     })
 
-    const requiredKeys =
-      this.renderAccountKeysRequiredOrDefaultToProgramId(requireds)
+    const requiredKeys = this.renderAccountKeysRequired(requireds)
     const optionalKeys =
       optionals.length > 0
         ? optionals
@@ -249,6 +235,15 @@ ${typeMapperImports.join('\n')}`.trim()
     return `${requiredKeys}\n${optionalKeys}`
   }
 
+  private renderAccountKeysRequired(processedKeys: ProcessedAccountKey[]) {
+    const metaElements = processedKeys
+      .map((processedKey) =>
+        renderRequiredAccountMeta(processedKey, this.programIdPubkey)
+      )
+      .join(',\n    ')
+    return `[\n    ${metaElements}\n  ]`
+  }
+
   // -----------------
   // AccountKeys: with strategy to defaultOptionalAccounts
   // -----------------
@@ -260,16 +255,17 @@ ${typeMapperImports.join('\n')}`.trim()
    * to the program id when they weren't provided by the user.
    * @category private
    */
-  private renderRequiredAccountMeta(processedKey: ProcessedAccountKey): string {
-    const { name, isMut, isSigner, knownPubkey } = processedKey
-    const pubkey =
-      knownPubkey == null
-        ? `accounts.${name}`
-        : `accounts.${name} ?? ${renderKnownPubkeyAccess(
-            knownPubkey,
-            this.programIdPubkey
-          )}`
-    return renderAccountMeta(pubkey, isMut.toString(), isSigner.toString())
+  private renderAccountKeysDefaultingOptionals(
+    processedKeys: ProcessedAccountKey[]
+  ) {
+    const metaElements = processedKeys
+      .map((processedKey) => {
+        return processedKey.optional
+          ? renderOptionalAccountMetaDefaultingToProgramId(processedKey)
+          : renderRequiredAccountMeta(processedKey, this.programIdPubkey)
+      })
+      .join(',\n    ')
+    return `[\n    ${metaElements}\n  ]`
   }
 
   // -----------------
@@ -501,4 +497,19 @@ function renderOptionalAccountMetaDefaultingToProgramId(
   const mut = isMut ? `accounts.${name} != null` : 'false'
   const signer = isSigner ? `accounts.${name} != null` : 'false'
   return renderAccountMeta(pubkey, mut, signer)
+}
+
+function renderRequiredAccountMeta(
+  processedKey: ProcessedAccountKey,
+  programIdPubkey: string
+): string {
+  const { name, isMut, isSigner, knownPubkey } = processedKey
+  const pubkey =
+    knownPubkey == null
+      ? `accounts.${name}`
+      : `accounts.${name} ?? ${renderKnownPubkeyAccess(
+          knownPubkey,
+          programIdPubkey
+        )}`
+  return renderAccountMeta(pubkey, isMut.toString(), isSigner.toString())
 }
