@@ -4,6 +4,7 @@ import { Idl } from '../../src/solita'
 import test from 'tape'
 import { checkIdl } from '../utils/check-idl'
 
+import anchorOptional from './fixtures/anchor-optional.json'
 import auctionHouseAnchor24Json from './fixtures/auction_house-1.1.4-anchor-0.24.2.json'
 import auctionHouseJson from './fixtures/auction_house.json'
 import fanoutJson from './fixtures/fanout.json'
@@ -15,6 +16,21 @@ import shankTicTacToeJson from './fixtures/shank_tictactoe.json'
 import shankTokenMetadataJson from './fixtures/shank_token_metadata.json'
 import shankTokenVaultJson from './fixtures/shank_token_vault.json'
 
+
+// -----------------
+// anchor-optional
+// -----------------
+{
+  const label = 'anchor-optional'
+
+  test('renders type correct SDK for ' + label, async (t) => {
+    const idl = anchorOptional as Idl
+    idl.instructions.map(ix => {
+      ix.defaultOptionalAccounts = true
+    })
+    await checkIdl(t, idl, label)
+  })
+}
 // -----------------
 // ah-1.1.4-anchor-0.24.2
 // -----------------
@@ -138,13 +154,14 @@ import shankTokenVaultJson from './fixtures/shank_token_vault.json'
       const code = await fs.readFile(fullPath, 'utf8')
       t.match(code, rx, `Code inside ${relPath} matches ${rx.toString()}`)
     }
+
     await verifyCodeMatches(
       'types/Data.ts',
-      /FixableBeetArgsStruct<\s*Data\s*>/
+      /FixableBeetArgsStruct<\s*Data\s*>/,
     )
     await verifyCodeMatches(
       'instructions/CreateMetadataAccount.ts',
-      /FixableBeetArgsStruct<\s*CreateMetadataAccountInstructionArgs/
+      /FixableBeetArgsStruct<\s*CreateMetadataAccountInstructionArgs/,
     )
   })
 }
