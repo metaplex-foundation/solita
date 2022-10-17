@@ -41,6 +41,9 @@ export function adaptIdl(idl: Idl) {
   }
 }
 
+// -----------------
+// Types
+// -----------------
 function transformDefinition(def: IdlDefinedTypeDefinition) {
   const ty = def.type
   if (isFieldsType(ty)) {
@@ -97,3 +100,7 @@ function transformFields(ty: IdlFieldsType) {
   }
   return ty
 }
+
+// -----------------
+// Instruction
+// -----------------
