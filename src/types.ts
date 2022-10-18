@@ -160,6 +160,7 @@ export type IdlInstructionArg = {
 
 export type IdlInstruction = {
   name: string
+  defaultOptionalAccounts?: boolean
   accounts: IdlInstructionAccount[] | IdlAccountsCollection[]
   args: IdlInstructionArg[]
 }

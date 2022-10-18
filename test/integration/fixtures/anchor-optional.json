@@ -1,0 +1,193 @@
+{
+  "version": "0.1.0",
+  "name": "optional",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        },
+        {
+          "name": "optionalAccount",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "optional": true
+        },
+        {
+          "name": "required",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "optionalPda",
+          "isMut": true,
+          "isSigner": false,
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "value",
+          "type": "u64"
+        },
+        {
+          "name": "key",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "update",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        },
+        {
+          "name": "optionalPda",
+          "isMut": true,
+          "isSigner": false,
+          "optional": true
+        },
+        {
+          "name": "optionalAccount",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "value",
+          "type": "u64"
+        },
+        {
+          "name": "key",
+          "type": "publicKey"
+        },
+        {
+          "name": "pdaBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "realloc",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        },
+        {
+          "name": "optionalPda",
+          "isMut": true,
+          "isSigner": false,
+          "optional": true
+        },
+        {
+          "name": "required",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "optional": true
+        },
+        {
+          "name": "optionalAccount",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newSize",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "close",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        },
+        {
+          "name": "optionalPda",
+          "isMut": true,
+          "isSigner": false,
+          "optional": true
+        },
+        {
+          "name": "dataAccount",
+          "isMut": true,
+          "isSigner": true,
+          "optional": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "optional": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DataPda",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dataAccount",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DataAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "data",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ReallocFailed",
+      "msg": "Failed realloc"
+    }
+  ],
+  "metadata": {
+    "address": "FNqz6pqLAwvMSds2FYjR4nKV3moVpPNtvkfGFrqLKrgG"
+  }
+}

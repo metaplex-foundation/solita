@@ -232,6 +232,55 @@ test('ix: three accounts, two optional', async (t) => {
       // provided, but not only the second optional pubkey
       /if \(accounts.useAuthorityRecord == null\).+throw new Error/,
     ],
+    nonrxs: [
+      /pubkey\: accounts\.useAuthorityRecord \?\? programId,\n.+isWritable\: accounts\.useAuthorityRecord != null,\n.+isSigner\: false,/,
+      /pubkey\: accounts\.burner \?\? programId,\n.+isWritable\: false,\n.+isSigner\: false,/,
+    ],
+  })
+})
+
+test('ix: three accounts, two optional, defaultOptionalAccounts', async (t) => {
+  const ix = <IdlInstruction>{
+    name: 'choicy',
+    defaultOptionalAccounts: true,
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'useAuthorityRecord',
+        isMut: true,
+        isSigner: false,
+        desc: 'Use Authority Record PDA If present the program Assumes a delegated use authority',
+        optional: true,
+      },
+      {
+        name: 'burner',
+        isMut: false,
+        isSigner: false,
+        desc: 'Program As Signer (Burner)',
+        optional: true,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      // Ensuring that the pubkeys for optional accounts aren't required
+      /authority\: web3\.PublicKey/,
+      /useAuthorityRecord\?\: web3\.PublicKey/,
+      /burner\?\: web3\.PublicKey/,
+      // Ensuring that the keys and mut/signer is set correctly
+      /pubkey\: accounts\.useAuthorityRecord \?\? programId,\n.+isWritable\: accounts\.useAuthorityRecord != null,\n.+isSigner\: false,/,
+      /pubkey\: accounts\.burner \?\? programId,\n.+isWritable\: false,\n.+isSigner\: false,/,
+    ],
+    nonrxs: [
+      /if \(accounts.useAuthorityRecord != null\)/,
+      /if \(accounts.burner != null\)/,
+      /if \(accounts.useAuthorityRecord == null\).+throw new Error/,
+    ],
   })
 })
 
