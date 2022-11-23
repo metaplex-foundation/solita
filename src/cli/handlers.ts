@@ -66,7 +66,7 @@ export function handleShank(
     libName: 'shank',
     cargoToml: path.join(programDir, 'Cargo.toml'),
     dryRun: false,
-    ...config.rustbin
+    ...config.rustbin,
   }
 
   return handle(
