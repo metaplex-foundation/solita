@@ -79,6 +79,25 @@ export function handleShank(
   )
 }
 
+async function processIdl(
+  config: SolitaConfig,
+  binVersion: string,
+  libVersion: string,
+  prettierConfig?: PrettierOptions,
+  anchorRemainingAccounts?: boolean
+): Promise<void> {
+  // TODO: handle case where IDL does not exist
+  const idl = await enhanceIdl(config, binVersion, libVersion)
+  await generateTypeScriptSDK(
+    idl,
+    config.sdkDir,
+    prettierConfig,
+    config.typeAliases,
+    config.serializers,
+    anchorRemainingAccounts
+  )
+}
+
 async function handle(
   config: SolitaConfig,
   rustbinConfig: RustbinConfig,
@@ -87,7 +106,7 @@ async function handle(
   prettierConfig?: PrettierOptions,
   anchorRemainingAccounts?: boolean
 ) {
-  const { programName, idlDir, sdkDir } = config
+  const { programName, idlDir } = config
 
   const { fullPathToBinary, binVersion, libVersion }: RustbinMatchReturn =
     await rustbinMatch(rustbinConfig, confirmAutoMessageLog)
@@ -97,6 +116,17 @@ async function handle(
       `rustbin was unable to determine installed version ${rustbinConfig.binaryName}, it may ` +
         `not have been installed correctly.`
     )
+  }
+
+  if (config.removeExistingIdl === false) {
+    await processIdl(
+      config,
+      binVersion,
+      libVersion,
+      prettierConfig,
+      anchorRemainingAccounts
+    )
+    return { exitCode: 0 }
   }
 
   return new Promise<SolitaHandlerResult>((resolve, reject) => {
@@ -115,13 +145,11 @@ async function handle(
             'IDL written to: %s',
             path.join(idlDir, `${programName}.json`)
           )
-          const idl = await enhanceIdl(config, binVersion, libVersion)
-          await generateTypeScriptSDK(
-            idl,
-            sdkDir,
+          await processIdl(
+            config,
+            binVersion,
+            libVersion,
             prettierConfig,
-            config.typeAliases,
-            config.serializers,
             anchorRemainingAccounts
           )
           resolve({ exitCode })

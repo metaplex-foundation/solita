@@ -3,3 +3,5 @@ dist/
 yarn.lock
 test/integration/output
 .crates/
+
+node_modules
