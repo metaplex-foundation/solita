@@ -217,47 +217,46 @@ ${typeMapperImports.join('\n')}`.trim()
       return ''
     }
 
-    const statements =
-      processedKeys
-        .map((processedKey, idx) => {
-          if (!processedKey.optional) {
-            const accountMeta = renderRequiredAccountMeta(
-              processedKey,
-              this.programIdPubkey
-            )
-            return `keys.push(${accountMeta})`
-          }
-
-          const requiredOptionals = processedKeys
-            .slice(0, idx)
-            .filter((x) => x.optional)
-          const requiredChecks = requiredOptionals
-            .map((x) => `accounts.${x.name} == null`)
-            .join(' || ')
-          const checkRequireds =
-            requiredChecks.length > 0
-              ? `if (${requiredChecks}) { throw new Error('When providing \\'${processedKey.name}\\' then ` +
-                `${requiredOptionals
-                  .map((x) => `\\'accounts.${x.name}\\'`)
-                  .join(', ')} need(s) to be provided as well.') }`
-              : ''
-          const pubkey = `accounts.${processedKey.name}`
-          const accountMeta = renderAccountMeta(
-            pubkey,
-            processedKey.isMut.toString(),
-            processedKey.isSigner.toString()
+    const statements = processedKeys
+      .map((processedKey, idx) => {
+        if (!processedKey.optional) {
+          const accountMeta = renderRequiredAccountMeta(
+            processedKey,
+            this.programIdPubkey
           )
+          return `keys.push(${accountMeta})`
+        }
 
-          // renderRequiredAccountMeta
-          // NOTE: we purposely don't add the default resolution here since the intent is to
-          // only pass that account when it is provided
-          return `
+        const requiredOptionals = processedKeys
+          .slice(0, idx)
+          .filter((x) => x.optional)
+        const requiredChecks = requiredOptionals
+          .map((x) => `accounts.${x.name} == null`)
+          .join(' || ')
+        const checkRequireds =
+          requiredChecks.length > 0
+            ? `if (${requiredChecks}) { throw new Error('When providing \\'${processedKey.name}\\' then ` +
+              `${requiredOptionals
+                .map((x) => `\\'accounts.${x.name}\\'`)
+                .join(', ')} need(s) to be provided as well.') }`
+            : ''
+        const pubkey = `accounts.${processedKey.name}`
+        const accountMeta = renderAccountMeta(
+          pubkey,
+          processedKey.isMut.toString(),
+          processedKey.isSigner.toString()
+        )
+
+        // renderRequiredAccountMeta
+        // NOTE: we purposely don't add the default resolution here since the intent is to
+        // only pass that account when it is provided
+        return `
 if (accounts.${processedKey.name} != null) {
   ${checkRequireds}
   keys.push(${accountMeta})
 }`.trim()
-        })
-        .join('\n')
+      })
+      .join('\n')
 
     return `\n${statements}\n`
   }
