@@ -255,9 +255,9 @@ ${typeMapperImports.join('\n')}`.trim()
 if (accounts.${processedKey.name} != null) {
   ${checkRequireds}
   keys.push(${accountMeta})
-}`
+}`.trim()
         })
-        .join('\n') + '\n'
+        .join('\n')
 
     return `\n${statements}\n`
   }
