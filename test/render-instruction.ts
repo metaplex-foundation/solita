@@ -239,6 +239,63 @@ test('ix: three accounts, two optional', async (t) => {
   })
 })
 
+test('ix: five accounts composed of two required, two optional and one required', async (t) => {
+  const ix = <IdlInstruction>{
+    name: 'sandwichedOptionalAccounts',
+    accounts: [
+      {
+        name: 'authority',
+        isMut: false,
+        isSigner: true,
+      },
+      {
+        name: 'metadata',
+        isMut: true,
+        isSigner: false,
+      },
+      {
+        name: 'useAuthorityRecord',
+        isMut: true,
+        isSigner: false,
+        desc: 'Use Authority Record PDA If present the program Assumes a delegated use authority',
+        optional: true,
+      },
+      {
+        name: 'burner',
+        isMut: false,
+        isSigner: false,
+        desc: 'Program As Signer (Burner)',
+        optional: true,
+      },
+      {
+        name: 'masterEdition',
+        isMut: false,
+        isSigner: false,
+      },
+    ],
+    args: [],
+  }
+  await checkRenderedIx(t, ix, [BEET_PACKAGE, SOLANA_WEB3_PACKAGE], {
+    rxs: [
+      // Ensuring that the pubkeys for optional accounts aren't required
+      /authority\: web3\.PublicKey/,
+      /metadata\: web3\.PublicKey/,
+      /useAuthorityRecord\?\: web3\.PublicKey/,
+      /burner\?\: web3\.PublicKey/,
+      /masterEdition\: web3\.PublicKey/,
+      // Ensuring we are pushing the last 3 accounts.
+      /keys\.push\(\{\s+pubkey\: accounts\.useAuthorityRecord,/,
+      /keys\.push\(\{\s+pubkey\: accounts\.burner,/,
+      /keys\.push\(\{\s+pubkey\: accounts\.masterEdition,/,
+    ],
+    nonrxs: [
+      // Ensuring we are not pushing the first 2 accounts.
+      /keys\.push\(\{\s+pubkey\: accounts\.authority,/,
+      /keys\.push\(\{\s+pubkey\: accounts\.metadata,/,
+    ]
+  })
+})
+
 test('ix: three accounts, two optional, defaultOptionalAccounts', async (t) => {
   const ix = <IdlInstruction>{
     name: 'choicy',
