@@ -41,7 +41,7 @@ export function renderTypeDataEnumBeet(args: {
 
   return `export const ${beetVarName} = ${BEET_EXPORT_NAME}.dataEnum<${enumRecordName}>([
   ${renderedBeets} 
-]) as ${BEET_EXPORT_NAME}.${beetType}<${typeName}>
+]) as ${BEET_EXPORT_NAME}.${beetType}<${typeName}, ${typeName}>
 `
 }
 
