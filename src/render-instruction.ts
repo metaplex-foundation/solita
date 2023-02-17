@@ -125,7 +125,7 @@ ${typeMapperImports.join('\n')}`.trim()
           // Make collection items easy to identify and avoid name clashes
           ac.name = deriveCollectionAccountsName(ac.name, acc.name)
           const knownPubkey = resolveKnownPubkey(ac.name)
-          const optional = ac.optional ?? false
+          const optional = ac.optional ?? ac.isOptional ?? false
           if (knownPubkey == null) {
             processedAccountsKey.push({ ...ac, optional })
           } else {
@@ -134,7 +134,7 @@ ${typeMapperImports.join('\n')}`.trim()
         }
       } else {
         const knownPubkey = resolveKnownPubkey(acc.name)
-        const optional = acc.optional ?? false
+        const optional = acc.optional ?? acc.isOptional ?? false
         if (knownPubkey == null) {
           processedAccountsKey.push({ ...acc, optional })
         } else {

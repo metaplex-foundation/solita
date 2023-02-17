@@ -43,6 +43,7 @@ export type IdlInstructionAccount = {
   isSigner: boolean
   desc?: string
   optional?: boolean
+  isOptional?: boolean
 }
 
 export type IdlType =
