@@ -450,7 +450,7 @@ export const BIGNUM = [
   'i256',
   'i512',
 ] as const
-export type Bignum = typeof BIGNUM[number]
+export type Bignum = (typeof BIGNUM)[number]
 export function isNumberLikeType(ty: IdlType): ty is NumbersTypeMapKey {
   return (
     typeof ty === 'string' && numbersTypeMap[ty as NumbersTypeMapKey] != null
