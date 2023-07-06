@@ -162,6 +162,7 @@ export type IdlInstructionArg = {
 export type IdlInstruction = {
   name: string
   defaultOptionalAccounts?: boolean
+  legacyOptionalAccountsStrategy?: boolean
   accounts: IdlInstructionAccount[] | IdlAccountsCollection[]
   args: IdlInstructionArg[]
 }

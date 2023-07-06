@@ -65,7 +65,7 @@ class InstructionRenderer {
       typeMapper
     )
     this.programIdPubkey = `new ${SOLANA_WEB3_EXPORT_NAME}.PublicKey('${this.programId}')`
-    this.defaultOptionalAccounts = ix.defaultOptionalAccounts ?? false
+    this.defaultOptionalAccounts = !ix.legacyOptionalAccountsStrategy
   }
 
   // -----------------

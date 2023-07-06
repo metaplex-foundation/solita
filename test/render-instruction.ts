@@ -195,6 +195,7 @@ test('ix: two accounts and two args', async (t) => {
 test('ix: three accounts, two optional', async (t) => {
   const ix = <IdlInstruction>{
     name: 'choicy',
+    legacyOptionalAccountsStrategy: true,
     accounts: [
       {
         name: 'authority',
@@ -242,6 +243,7 @@ test('ix: three accounts, two optional', async (t) => {
 test('ix: five accounts composed of two required, two optional and one required', async (t) => {
   const ix = <IdlInstruction>{
     name: 'sandwichedOptionalAccounts',
+    legacyOptionalAccountsStrategy: true,
     accounts: [
       {
         name: 'authority',
@@ -292,14 +294,13 @@ test('ix: five accounts composed of two required, two optional and one required'
       // Ensuring we are not pushing the first 2 accounts.
       /keys\.push\(\{\s+pubkey\: accounts\.authority,/,
       /keys\.push\(\{\s+pubkey\: accounts\.metadata,/,
-    ]
+    ],
   })
 })
 
 test('ix: three accounts, two optional, defaultOptionalAccounts', async (t) => {
   const ix = <IdlInstruction>{
     name: 'choicy',
-    defaultOptionalAccounts: true,
     accounts: [
       {
         name: 'authority',
@@ -431,6 +432,7 @@ test('ix: with args one system program account and programId', async (t) => {
 test('ix: empty args one system program account + one optional rent account', async (t) => {
   const ix = {
     name: 'empyArgsWithSystemProgram',
+    legacyOptionalAccountsStrategy: true,
     accounts: [
       {
         name: 'authority',
