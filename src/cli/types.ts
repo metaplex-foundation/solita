@@ -13,6 +13,7 @@ export type SolitaConfigBase = {
   typeAliases?: TypeAliases
   serializers?: Serializers
   removeExistingIdl?: boolean
+  binaryArgs?: string
 }
 
 export type SolitaConfigAnchor = SolitaConfigBase & {

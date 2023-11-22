@@ -13,4 +13,5 @@ module.exports = {
   sdkDir,
   binaryInstallDir,
   programDir,
+  binaryArgs: "-- --features testing"
 }
