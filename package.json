@@ -1,6 +1,6 @@
 {
   "name": "@metaplex-foundation/solita",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "description": "Generates SDK API from solana contract IDL.",
   "main": "dist/src/solita.js",
   "types": "dist/src/solita.d.ts",
