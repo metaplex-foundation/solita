@@ -26,7 +26,8 @@ export function handleAnchor(
   prettierConfig?: PrettierOptions
 ) {
   const { idlDir, binaryInstallDir, programDir } = config
-  const spawnArgs = ['build', '--idl', idlDir]
+  const binaryArgs = config.binaryArgs?.split(' ') ?? []
+  const spawnArgs = ['build', '--idl', idlDir, ...binaryArgs]
   const spawnOpts: SpawnOptionsWithoutStdio = {
     cwd: programDir,
   }
