@@ -2,6 +2,9 @@ import { TypeMapper } from './type-mapper'
 import {
   IdlInstruction,
   IdlInstructionArg,
+  IdlType,
+  IdlTypeArray,
+  isIdlTypeArray,
   isShankIdlInstruction,
 } from './types'
 import {
@@ -9,6 +12,10 @@ import {
   anchorDiscriminatorType,
   instructionDiscriminator,
 } from './utils'
+
+export function isAnchorDiscriminatorFormat(ty: IdlType): ty is IdlTypeArray {
+  return isIdlTypeArray(ty) && ty.array[0] == 'u8' && ty.array[1] == 8
+}
 
 export class InstructionDiscriminator {
   constructor(
@@ -26,11 +33,16 @@ export class InstructionDiscriminator {
   getField(): IdlInstructionArg {
     if (isShankIdlInstruction(this.ix)) {
       const ty = this.ix.discriminant.type
-      this.typeMapper.assertBeetSupported(
-        ty,
-        `instruction ${this.ix.name} discriminant field`
-      )
-      return { name: this.fieldName, type: ty }
+
+      if (isAnchorDiscriminatorFormat(ty)) {
+        return { name: this.fieldName, type: ty }
+      } else {
+        this.typeMapper.assertBeetSupported(
+          ty,
+          `instruction ${this.ix.name} discriminant field`
+        )
+        return { name: this.fieldName, type: ty }
+      }
     }
 
     return anchorDiscriminatorField(this.fieldName)
